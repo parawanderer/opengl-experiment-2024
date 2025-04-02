@@ -5,11 +5,10 @@
 
 #include "WorldMathUtils.h"
 
-#define WALKING_SPEED_M_PER_SEC 1.42f
-#define SMALL_Y_OFFSET  glm::vec3(0.0f, 0.1f, 0.0f)
-#define TIME_BETWEEN_CHOOSING_BEHAVIOURS_SEC 20 
-
-#define NOMAD_HEIGHT 1.9f
+constexpr auto WALKING_SPEED_M_PER_SEC = 1.5f;
+constexpr auto SMALL_Y_OFFSET = glm::vec3(0.0f, 0.1f, 0.0f);
+constexpr auto TIME_BETWEEN_CHOOSING_BEHAVIOURS_SEC = 20;
+constexpr auto NOMAD_HEIGHT = 1.9f;
 
 // out of the ones available in its .fbx file...
 // the animations are sources from https://www.mixamo.com/#/

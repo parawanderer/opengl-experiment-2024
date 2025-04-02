@@ -1,6 +1,6 @@
 #include "CameraManager.h"
 
-constexpr auto PLAYER_HEIGHT_WOLD_SPACE = 1.8f;
+constexpr auto PLAYER_HEIGHT_WOLD_SPACE = 1.9f;
 constexpr auto STARTING_VELOCITY_OF_JUMP = 5.0f;
 
 CameraManager::CameraManager(

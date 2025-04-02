@@ -75,7 +75,7 @@
 #define INITIAL_HEIGHT 800
 
 
-#define RENDER_DEBUG_OBJECTS false
+#define RENDER_DEBUG_OBJECTS true
 
 constexpr auto SCREEN_OUTPUT_BUFFER_ID = 0;
 
@@ -101,7 +101,6 @@ CameraManager camMgr(
 constexpr float RENDER_DISTANCE = 2000.0f;
 
 glm::vec3 sunPos(1024.0f, 750.0f, -2000.0f);
-//glm::vec3 sunPos(0.0f, 140.0f, -2000.0f);
 glm::vec3 sunLightColor = Colors::WHITE;
 
 #pragma endregion
@@ -144,7 +143,6 @@ int main()
 #pragma region SHADERS_AND_POSTPROCESSING
 	Shader genericShader = Shader::fromFiles(SHADER_MESH_VERT, SHADER_MESH_FRAG);
 	genericShader.use();
-	//genericShader.setVec3("light.position", sunPos);
 	genericShader.setVec3("lightPos", sunPos);
 	genericShader.setVec3("light.ambient", sunLightColor * 0.5f);
 	genericShader.setVec3("light.diffuse", sunLightColor * 1.0f);
@@ -253,6 +251,11 @@ int main()
 		PARTCILE_SANDWORMDUST_SPAWN_PER_FRAME,
 		PARTCILE_SANDWORMDUST_SIZE_W_H
 	);
+
+	// TODO: Some interesting particles I'd like to do (later):
+	// - jump sand displacement particles (sand in all directions in circle, reuse texture for the current particles (among others?) https://www.youtube.com/watch?v=WFfS7HcG8qE
+	// - footstep particles (footsteps following player and human characters). They should orient themselves on the ground and use a texture like this: https://ambientcg.com/view?id=Footsteps005
+	// - ground displacement particles after sandworm travelled through an area?
 
 	std::vector<ParticleSystem*> particles = { &particles1, &particles2 };
 #pragma endregion
@@ -550,7 +553,7 @@ void renderTerrain(Shader& terrainShader, Terrain& terrain, const glm::mat4& vie
 	terrainShader.use();
 	for (int i = 0; i < smallLightSpherePositions.size(); ++i)
 	{
-		terrainShader.setVec3("attLights[" + std::to_string(i) + "].position", smallLightSpherePositions[i]);
+		terrainShader.setVec3("attLightPos[" + std::to_string(i) + "]", smallLightSpherePositions[i]);
 	}
 	terrain.render(view, projection, cameraPos);
 }

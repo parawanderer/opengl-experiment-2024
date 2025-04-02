@@ -8,24 +8,10 @@ struct Material {
 };
 
 struct Light {
-    vec3 position;
-
     vec3 ambient; // usually set to low value
     vec3 diffuse; // usually set to exact color of the light (e.g. bright white)
     vec3 specular; // usually also kept at vec3(1.0) to shine at full intensity
 };
-
-out vec4 FragColor;
-
-in vec3 Normal;
-in vec3 FragPos;
-in vec2 TexCoord;
-
-uniform Material material;
-uniform Light light;
-uniform vec3 viewPos;
-
-
 
 // attenuation test
 struct Attenuation {
@@ -35,16 +21,36 @@ struct Attenuation {
 };
 
 const int MAX_ATTENUATED_LIGHTS = 4;
+
 uniform Light attLights[MAX_ATTENUATED_LIGHTS];
 uniform Attenuation attConsts[MAX_ATTENUATED_LIGHTS];
 uniform int numAttLights;
+
+
+in vec3 FragPosWorld;
+in vec3 ViewPosWorld;
+
+in vec3 FragPos;
+in vec3 Normal;
+in vec2 TexCoord;
+
+in vec3 LightPos;
+in vec3 ViewPos;
+
+in vec3 attLightPosT[MAX_ATTENUATED_LIGHTS];
+in vec3 attLightPosWorld[MAX_ATTENUATED_LIGHTS];
+
+
+uniform Material material;
+uniform Light light;
+
+out vec4 FragColor;
 
 
 // fog
 const float FogEnd = 8000.0;
 const float ExpDensityFactor = 1.0;
 const vec3 FogColor = vec3(0.357, 0.325, 0.42);// vec3(0.537, 0.506, 0.6);
-
 
 const bool useBlinnPhong = true;
 
@@ -53,7 +59,7 @@ const bool useBlinnPhong = true;
 // I quite appreciate how this exponential function ends up looking visually on my terrain
 float calculateExponentialFog() 
 {
-    float cameraToPixelDist = length(FragPos - viewPos);
+    float cameraToPixelDist = length(FragPosWorld - ViewPosWorld);
     float distRatio = 4.0 * cameraToPixelDist / FogEnd;
     float fogFactor = exp(-distRatio * ExpDensityFactor * distRatio * ExpDensityFactor);
 
@@ -85,14 +91,13 @@ float computeSpecBlinnPhong(vec3 lightDir, vec3 norm, vec3 viewDir) {
 
 void main() 
 {
-    vec3 norm = normalize(Normal);
-    
-    // TODO: make normal mapping work for terrain
-    //vec3 norm = texture(material.normal, TexCoord).rgb; // normal map value in range [0,1] as stored in texture
-    //norm = normalize(norm * 2.0 - 1.0); // map it back to the actual range [-1, 1]
+    //vec3 norm = normalize(Normal);
+    vec3 norm = texture(material.normal, TexCoord).rgb;
+    norm = normalize(norm * 2.0 - 1.0);
 
-    vec3 lightDir = normalize(light.position - FragPos);
-    vec3 viewDir = normalize(viewPos - FragPos);
+
+    vec3 lightDir = normalize(LightPos - FragPos);
+    vec3 viewDir = normalize(ViewPos - FragPos);
     vec3 halfwayDir = normalize(lightDir + viewDir);
 
     // ambient
@@ -107,6 +112,9 @@ void main()
     float spec = useBlinnPhong ? computeSpecBlinnPhong(lightDir, norm, viewDir) : computeSpecPhong(lightDir, norm, viewDir);
     vec3 specular = light.specular * (spec * material.specular); 
 
+
+
+    // attenuated lights
     vec3 totalAmbient = vec3(0.0);
     vec3 totalDiffuseAtt = vec3(0.0);
     vec3 totalSpecularAtt = vec3(0.0);
@@ -115,9 +123,9 @@ void main()
         totalAmbient += attLights[i].ambient * ambientTex;
 
         // diffuse2 with attenuation
-        vec3 lightDirAtt = normalize(attLights[i].position - FragPos);
+        vec3 lightDirAtt = normalize(attLightPosT[i] - FragPos);
         float diff2 = max(dot(norm, lightDirAtt), 0.0);
-        float fatt = computeAttenuationFactor(attConsts[i].c1, attConsts[i].c2, attConsts[i].c3, length(attLights[i].position - FragPos));
+        float fatt = computeAttenuationFactor(attConsts[i].c1, attConsts[i].c2, attConsts[i].c3, length(attLightPosWorld[i] - FragPosWorld));
         vec3 diffuse2 = fatt * attLights[i].diffuse * diff2 * vec3(texture(material.diffuse, TexCoord));
         totalDiffuseAtt += diffuse2;
 
@@ -126,7 +134,9 @@ void main()
         vec3 specular2 = fatt * attLights[i].specular * (spec2 * material.specular); 
         totalSpecularAtt += specular2;
     }
-        
+
+
+    
     vec3 result = (ambient + totalAmbient) + (diffuse + totalDiffuseAtt) + (specular + totalSpecularAtt);
     vec4 nearFinalResult = vec4(result, 1.0);
 

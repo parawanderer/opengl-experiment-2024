@@ -39,10 +39,14 @@ void main()
     vec4 aPos4 = vec4(aPos, 1.0);
     TexCoord = aTexCoords;
 
+    // ============================================================
+    // Compute Normal and FragPos based on whether or not we
+    // need to do animation-related transforms
+    // ============================================================
     vec3 norm;
     vec3 fragPos;
-    
     if (doAnimate) { 
+
         // animated model
         vec4 totalPosition = vec4(0.0);
         vec3 totalNormal = vec3(0.0);
@@ -74,6 +78,9 @@ void main()
         gl_Position = projection * view * model * aPos4;
     }
 
+    // ============================================================
+    // Compute per-vertex attributes
+    // ============================================================
 
     // https://learnopengl.com/Advanced-Lighting/Normal-Mapping
     vec3 T = normalize(vec3(model * vec4(aTangent, 0.0)));

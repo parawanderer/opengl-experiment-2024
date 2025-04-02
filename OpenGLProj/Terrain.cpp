@@ -21,18 +21,8 @@
 #endif
 
 
-const float Terrain::_resizeFactor = 2.0f;
-
-void Terrain::insertNormContribution(unsigned int index0, unsigned int index1, unsigned int index2)
-{
-	glm::vec3 v1 = this->_vertices[index0].pos - this->_vertices[index1].pos;
-	glm::vec3 v2 = this->_vertices[index0].pos - this->_vertices[index2].pos;
-	glm::vec3 contrib = glm::cross(v1, v2);
-
-	this->_vertices[index0].normal += contrib;
-	this->_vertices[index1].normal += contrib;
-	this->_vertices[index2].normal += contrib;
-}
+constexpr auto RESIZE_FACTOR = 2.0f;
+constexpr auto TEXTURE_DIV_SCALING = 4.0f;
 
 /*
  * this builds out the following "tiles":
@@ -144,8 +134,6 @@ void Terrain::populateModelMatrices()
 
 void Terrain::generateVerticesFromHeightMap(unsigned short* data, int nChannels, float yScale, float yShift)
 {
-	const float textureDivScaling = 2.0f;
-
 	int index = 0;
 	for (unsigned int z = 0; z < this->_height; ++z)
 	{
@@ -154,9 +142,9 @@ void Terrain::generateVerticesFromHeightMap(unsigned short* data, int nChannels,
 			unsigned short* texel = data + (x + this->_width * z) * nChannels;
 			unsigned short y = texel[0];
 
-			const float xPos = -this->_width / _resizeFactor + x;
+			const float xPos = -this->_width / RESIZE_FACTOR + x;
 			const float yPos = (float)y * yScale - yShift;
-			const float zPos = -this->_height / _resizeFactor + z;
+			const float zPos = -this->_height / RESIZE_FACTOR + z;
 
 			this->_vertices[index].pos = glm::vec3(
 				xPos, // x
@@ -164,8 +152,8 @@ void Terrain::generateVerticesFromHeightMap(unsigned short* data, int nChannels,
 				zPos // z
 			);
 			this->_vertices[index].texture = glm::vec2(
-				xPos / textureDivScaling,
-				zPos / textureDivScaling
+				xPos / TEXTURE_DIV_SCALING,
+				zPos / TEXTURE_DIV_SCALING
 			);
 
 			this->_heightMap[x + this->_width * z] = yPos;
@@ -195,8 +183,6 @@ void Terrain::mapTriangles()
 			this->_indices.push_back(index1); // 1
 			this->_indices.push_back(index2); // 2
 
-			this->insertNormContribution(index0, index1, index2); // 3.1 calculate normals for smooth surface rendering (https://www.youtube.com/watch?v=bwq_y0zxpQM&list=PLA0dXqQjCx0S9qG5dWLsheiCJV-_eLUM0&index=6)
-
 			// second/right triangle:  (clockwise)
 			//                  ----2
 			//                  | / |
@@ -206,11 +192,75 @@ void Terrain::mapTriangles()
 			this->_indices.push_back(index3); // 3
 			this->_indices.push_back(index2); // 2
 
-			this->insertNormContribution(index1, index3, index2); // 3.1 calculate normals for smooth surface rendering
+			// the normals will later be averaged for smooth surface rendering (Phong)!
+			this->insertNormContribution(index0, index1, index2); // 3.1 calculate normals for smooth surface rendering 
+			this->insertNormContribution(index1, index3, index2); // (https://www.youtube.com/watch?v=bwq_y0zxpQM&list=PLA0dXqQjCx0S9qG5dWLsheiCJV-_eLUM0&index=6)
+
+			// compute tangent/bitangent! (^ they will also be averaged just as the normals are!)
+			this->insertTangentAndBitangentContribution(index0, index1, index2, index3);
 		}
 	}
 }
 
+void Terrain::insertNormContribution(unsigned int index0, unsigned int index1, unsigned int index2)
+{
+	glm::vec3 v1 = this->_vertices[index0].pos - this->_vertices[index1].pos;
+	glm::vec3 v2 = this->_vertices[index0].pos - this->_vertices[index2].pos;
+	glm::vec3 contrib = glm::cross(v1, v2);
+
+	this->_vertices[index0].normal += contrib;
+	this->_vertices[index1].normal += contrib;
+	this->_vertices[index2].normal += contrib;
+}
+
+void Terrain::insertTangentAndBitangentContribution(unsigned index0, unsigned index1, unsigned index2, unsigned index3)
+{
+	// first/left triangle:  (clockwise)
+	//                  0---2
+	//                  | / |
+	//                  1----
+
+	// second/right triangle:  (clockwise)
+	//                  ----2
+	//                  | / |
+	//                  1---3
+
+	TerrainVertex& v0 = this->_vertices[index0];
+	TerrainVertex& v1 = this->_vertices[index1];
+	TerrainVertex& v2 = this->_vertices[index2];
+	TerrainVertex& v3 = this->_vertices[index3];
+
+	auto [tangentTriangle1, biTangentTriangle1] = computeTangentAndBitangentForTriangle(
+		v2.pos,
+		v1.pos,
+		v0.pos,
+		v2.texture,
+		v1.texture,
+		v0.texture
+	);
+	v0.tangent += tangentTriangle1;
+	v1.tangent += tangentTriangle1;
+	v2.tangent += tangentTriangle1;
+	v0.biTangent += biTangentTriangle1;
+	v1.biTangent += biTangentTriangle1;
+	v2.biTangent += biTangentTriangle1;
+
+	auto [tangentTriangle2, biTangentTriangle2] = computeTangentAndBitangentForTriangle(
+		v2.pos,
+		v3.pos,
+		v1.pos,
+		v2.texture,
+		v3.texture,
+		v1.texture
+	);
+	v1.tangent += tangentTriangle2;
+	v3.tangent += tangentTriangle2;
+	v2.tangent += tangentTriangle2;
+	v1.biTangent += tangentTriangle2;
+	v3.biTangent += biTangentTriangle2;
+	v2.biTangent += biTangentTriangle2;
+
+}
 
 /**
  * inspired by the following articles/videos:
@@ -270,7 +320,10 @@ _terrainNormalMatrix(glm::mat3(glm::transpose(glm::inverse(_terrainModel))))
 	// 3. normalize all the vertex normals (average of all the plane normals that share this vertex. Up to 6 but possibly less!)
 	for (unsigned int i = 0; i < this->_vertices.size(); ++i)
 	{
-		this->_vertices[i].normal = glm::normalize(this->_vertices[i].normal);
+		TerrainVertex& vert = this->_vertices[i];
+		vert.normal = glm::normalize(vert.normal);
+		vert.tangent = -glm::normalize(vert.tangent); // correct the direction of this vector for normal mapping
+		vert.biTangent = glm::normalize(vert.biTangent);
 	}
 
 	// 4. OpenGL initialization of triangle data
@@ -287,22 +340,24 @@ void Terrain::setupMesh()
 	glGenVertexArrays(1, &this->_VAO);
 	glBindVertexArray(this->_VAO);
 
+
 	glGenBuffers(1, &this->_VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, this->_VBO);
 	glBufferData(GL_ARRAY_BUFFER, this->_vertices.size() * sizeof(TerrainVertex), &this->_vertices[0], GL_STATIC_DRAW);
+
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)0);
 	glEnableVertexAttribArray(1);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)offsetof(TerrainVertex, texture));
 	glEnableVertexAttribArray(2);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)offsetof(TerrainVertex, normal));
-	
 	// normal texture mapping
 	glEnableVertexAttribArray(3);
 	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)offsetof(TerrainVertex, tangent));
 	glEnableVertexAttribArray(4);
 	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)offsetof(TerrainVertex, normal));
 	
+
 
 	glGenBuffers(1, &this->_EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
@@ -322,10 +377,97 @@ void Terrain::setupShader(const glm::vec3& sunPos, const glm::vec3& sunLightColo
 	this->_shader->setVec3("material.specular", glm::vec3(0.949, 0.776, 0.431));
 	this->_shader->setFloat("material.shininess", 0.5f);
 	// light (sun)
-	this->_shader->setVec3("light.position", sunPos);
-	this->_shader->setVec3("light.ambient", sunLightColor * 0.4f);
-	this->_shader->setVec3("light.diffuse", sunLightColor * 0.9f);
+	this->_shader->setVec3("lightPos", sunPos);
+	this->_shader->setVec3("light.ambient", sunLightColor * 0.5f);
+	this->_shader->setVec3("light.diffuse", sunLightColor * 1.0f);
 	this->_shader->setVec3("light.specular", sunLightColor * 0.00f);
+}
+
+std::pair<std::pair<glm::vec3, glm::vec3>, std::pair<glm::vec3, glm::vec3>> Terrain::computeTangentAndBitangentForTrianglePlane(
+	const glm::vec3& p1,
+	const glm::vec3& p2, 
+	const glm::vec3& p3, 
+	const glm::vec3& p4, 
+	const glm::vec2& uv1, 
+	const glm::vec2& uv2,
+	const glm::vec2& uv3, 
+	const glm::vec2& uv4)
+{
+	// triangle 1
+	glm::vec3 edge1 = p2 - p1;
+	glm::vec3 edge2 = p3 - p1;
+	glm::vec2 deltaUV1 = uv2 - uv1;
+	glm::vec2 deltaUV2 = uv3 - uv1;
+
+	float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+	glm::vec3 tangent1 = glm::vec3(
+		f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x),
+		f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y),
+		f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z)
+	);
+
+	glm::vec3 bitangent1 = glm::vec3(
+		f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x),
+		f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y),
+		f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z)
+	);
+
+	//triangle 2
+	edge1 = p3 - p1;
+	edge2 = p4 - p1;
+	deltaUV1 = uv3 - uv1;
+	deltaUV2 = uv4 - uv1;
+
+	f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+	glm::vec3 tangent2 = glm::vec3(
+		f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x),
+		f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y),
+		f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z)
+	);
+
+	glm::vec3 bitangent2 = glm::vec3(
+		f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x),
+		f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y),
+		f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z)
+	);
+
+	return {
+		{tangent1, bitangent1},
+		{tangent2, bitangent2}
+	};
+}
+
+std::tuple<glm::vec3, glm::vec3> Terrain::computeTangentAndBitangentForTriangle(
+	const glm::vec3& p1,
+	const glm::vec3& p2, 
+	const glm::vec3& p3, 
+	const glm::vec2& uv1, 
+	const glm::vec2& uv2, 
+	const glm::vec2& uv3)
+{
+	glm::vec3 edge1 = p2 - p1;
+	glm::vec3 edge2 = p3 - p1;
+	glm::vec2 deltaUV1 = uv2 - uv1;
+	glm::vec2 deltaUV2 = uv3 - uv1;
+
+	float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+	glm::vec3 tangent = glm::vec3(
+		f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x),
+		f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y),
+		f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z)
+	);
+
+	glm::vec3 bitangent = glm::vec3(
+		f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x),
+		f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y),
+		f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z)
+	);
+
+
+	return { tangent, bitangent };
 }
 
 void Terrain::render(const glm::mat4& view, const glm::mat4& projection, const glm::vec3& viewPos)
@@ -376,8 +518,8 @@ float Terrain::getWorldHeightAt(float x, float z) const
 {
 	constexpr float allowedError = 0.001f;
 
-	const float xIndex = x + this->_width / _resizeFactor;
-	const float zIndex = z + this->_height / _resizeFactor;
+	const float xIndex = x + this->_width / RESIZE_FACTOR;
+	const float zIndex = z + this->_height / RESIZE_FACTOR;
 
 	const float xFloor = std::floor(xIndex);
 	const float zFloor = std::floor(zIndex);
