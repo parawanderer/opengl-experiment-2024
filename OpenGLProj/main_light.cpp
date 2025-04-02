@@ -6,7 +6,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "shader_m.h"
-#include "camera.h"
+#include "camera_m.h"
 
 #include <iostream>
 

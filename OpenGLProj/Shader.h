@@ -22,8 +22,9 @@ public:
      * Build a shader
      * \param vShaderCode vertex shader source code string
      * \param fShaderCode fragment shader source code string
+     * \param geomShaderCode geometry shader source code string
      */
-    Shader(const char* vShaderCode, const char* fShaderCode);
+    Shader(const char* vShaderCode, const char* fShaderCode, const char* geomShaderCode = nullptr);
 
     /**
      * Build a shader from the specified shader files at the given paths
@@ -31,12 +32,12 @@ public:
      * \param fragmentPath file path to fragment
      * \return Instance of Shader
      */
-    static Shader fromFiles(const char* vertexPath, const char* fragmentPath);
+    static Shader fromFiles(const char* vertexPath, const char* fragmentPath, const char* geomShaderCode = nullptr);
 
     /**
      * The same as Shader()
      */
-    static Shader fromSource(const char* vertexShaderCode, const char* fragmentShaderCode);
+    static Shader fromSource(const char* vertexShaderCode, const char* fragmentShaderCode, const char* geomShaderCode = nullptr);
 
     /**
      * \brief Makes use the shader/programs associated with the shader for now.
@@ -48,6 +49,7 @@ public:
     void setInt(const std::string& name, int value) const;
     void setFloat(const std::string& name, float value) const;
     void setMat4(const std::string& name, const glm::mat4& matrix) const;
+    void setMat3(const std::string& name, const glm::mat3& matrix) const;
     void setVec3(const std::string& name, const glm::vec3& vec) const;
 };
 #endif

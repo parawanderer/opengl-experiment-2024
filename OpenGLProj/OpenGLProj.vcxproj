@@ -135,12 +135,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\glad\src\glad.c" />
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ErrorUtils.cpp" />
     <ClCompile Include="Font.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="main_basic.cpp" />
     <ClCompile Include="main_light.cpp" />
     <ClCompile Include="Shader.cpp" />
+    <ClCompile Include="Terrain.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -153,21 +155,26 @@
     <None Include="shader2.vert" />
     <None Include="shader_lightsource.vert" />
     <None Include="terrain.frag" />
+    <None Include="terrain.geom" />
     <None Include="terrain.vert" />
+    <None Include="terrain_basic.frag" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="camera.h" />
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="camera_m.h" />
     <ClInclude Include="Colors.h" />
     <ClInclude Include="ErrorUtils.h" />
     <ClInclude Include="Font.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="shader_m.h" />
     <ClInclude Include="stb_image.h" />
+    <ClInclude Include="Terrain.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="awesomeface.png" />
     <Image Include="container.jpg" />
     <Image Include="iceland_heightmap.png" />
+    <Image Include="resources\perlin-noise-texture.png" />
     <Image Include="wall.jpg" />
   </ItemGroup>
   <ItemGroup>

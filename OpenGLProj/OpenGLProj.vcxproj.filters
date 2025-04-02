@@ -36,6 +36,12 @@
     <ClCompile Include="ErrorUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Terrain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="shader1.vert">
@@ -69,6 +75,12 @@
     <None Include="font.frag">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="terrain.geom">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="terrain_basic.frag">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shader.h">
@@ -77,7 +89,7 @@
     <ClInclude Include="stb_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="camera.h">
+    <ClInclude Include="camera_m.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="shader_m.h">
@@ -92,6 +104,12 @@
     <ClInclude Include="Colors.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Terrain.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="container.jpg">
@@ -104,6 +122,9 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="iceland_heightmap.png">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="resources\perlin-noise-texture.png">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

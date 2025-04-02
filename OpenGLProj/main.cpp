@@ -10,13 +10,14 @@
 #include FT_FREETYPE_H
 
 #define STB_IMAGE_IMPLEMENTATION
-#include <vector>
 
 #include "Colors.h"
 #include "ErrorUtils.h"
 #include "Font.h"
 #include "Shader.h"
 #include "stb_image.h"
+#include "Terrain.h"
+#include "Camera.h"
 
 #define INITIAL_WIDTH 1280
 #define INITIAL_HEIGHT 800
@@ -24,24 +25,21 @@
 
 #pragma region STATE
 
-glm::vec3 cameraPos = glm::vec3(-31.281975, 20.137228, -99.600090);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+Camera camera(
+	glm::vec3(-55, 43, -103), 
+	glm::vec3(0.0f, 0.0f, -1.0f), 
+	INITIAL_WIDTH, 
+	INITIAL_HEIGHT, 
+	10.0f
+);
 
 const float RENDER_DISTANCE = 1500.0f;
 
-float deltaTime = 0.0f; // time between current and last frame
-float lastFrame = 0.0f; // time of last frame
+// world:
 
-float pitch = 0.0f;
-float yaw = -90.0f;
-
-float lastX = INITIAL_WIDTH / 2;
-float lastY = INITIAL_HEIGHT / 2;
-
-bool firstMouse = true;
-
-float fov = 45.0f;
+// sun
+glm::vec3 sunPos(0.0f, 2000.0f, 0.0f);
+glm::vec3 sunLightColor = Colors::WHITE;
 
 #pragma endregion
 
@@ -53,40 +51,12 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height)
 
 void mouseCallback(GLFWwindow* window, double xpos, double ypos)
 {
-	if (firstMouse)
-	{
-		lastX = xpos;
-		lastY = ypos;
-		firstMouse = false;
-	}
-
-	float xoffset = xpos - lastX;
-	float yoffset = lastY - ypos; // reversed as y-coordinates range from bottom to top
-	lastX = xpos;
-	lastY = ypos;
-
-	const float sensitivity = 0.1f;
-	xoffset *= sensitivity;
-	yoffset *= sensitivity;
-
-	yaw += xoffset;
-	pitch += yoffset;
-
-	if (pitch > 89.0f) pitch = 89.0f;
-	if (pitch < -89.0f) pitch = -89.0f;
-
-	glm::vec3 direction;
-	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-	direction.y = sin(glm::radians(pitch));
-	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-	cameraFront = glm::normalize(direction);
+	camera.processMouse(window, xpos, ypos);
 }
 
 void scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	fov -= (float)yoffset;
-	if (fov < 1.0f) fov = 1.0f;
-	if (fov > 45.0f) fov = 45.0f;
+	camera.processScroll(window, xoffset, yoffset);
 }
 
 void processInput(GLFWwindow* window)
@@ -94,15 +64,7 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
-	const float cameraSpeed = deltaTime * 10.0f;
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		cameraPos += cameraSpeed * cameraFront;
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		cameraPos -= cameraSpeed * cameraFront;
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	camera.processInput(window);
 }
 
 
@@ -151,69 +113,35 @@ int main()
 	Font font("resources/calibri.ttf", &fontShader);
 
 	// terrain
-	Shader terrainShader = Shader::fromFiles("terrain.vert", "terrain.frag");
-
-	int width, height, nChannels;
-	unsigned char* data = stbi_load("iceland_heightmap.png",&width, &height, &nChannels, 0);
-
-	// vertex generation
-	std::vector<float> vertices;
-	float yScale = 64.0f / 256.0f;
-	float yShift = 16.0f;
-
-	for (unsigned int i = 0; i < height; ++i)
-	{
-		for (unsigned int j = 0; j < width; ++j)
-		{
-			// retrieve texel for (i, j) tex coord
-			unsigned char* texel = data + (j + width * i) * nChannels;
-			// raw height at coordinate
-			unsigned char y = texel[0];
-
-			// vertex
-			vertices.push_back(-height / 2.0f + i); // v.x
-			vertices.push_back((int)y * yScale - yShift); // v.y
-			vertices.push_back(-width / 2.0f + j ); // v.z
-		}
-	}
-	stbi_image_free(data);
-
-	std::vector<unsigned int> indices;
-	for (unsigned int i = 0; i < height - 1; i++ )
-	{
-		for (unsigned int j = 0; j < width; ++j)
-		{
-			for (unsigned int k = 0; k < 2; ++k)
-			{
-				indices.push_back(j + width * (i + k));
-			}
-		}
-	}
-
-	const unsigned int NUM_STRIPS = height - 1;
-	const unsigned int NUM_VERTS_PER_STRIP = width * 2;
-
-	unsigned int terrainVAO, terrainVBO, terrainEBO;
-	glGenVertexArrays(1, &terrainVAO);
-	glBindVertexArray(terrainVAO);
-
-	glGenBuffers(1, &terrainVBO);
-	glBindBuffer(GL_ARRAY_BUFFER, terrainVBO);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-	glEnableVertexAttribArray(0);
-
-	glGenBuffers(1, &terrainEBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrainEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+	const float yScaleMult = 64.0f;
+	const float yShift = 16.0f;
+	Terrain sandTerrain("resources/perlin-noise-texture.png", yScaleMult, yShift);
+	Shader terrainShader = Shader::fromFiles("terrain.vert", "terrain_basic.frag");
+	terrainShader.use();
+	const glm::mat4 terrainModel = glm::mat4(1.0f);
+	terrainShader.setMat4("model", terrainModel); // model transform (to world coords)
+	const glm::mat3 terrainNormalMatrix = glm::mat3(glm::transpose(glm::inverse(terrainModel)));
+	// matrix to model the normal if there's non-linear scaling going on in the model matrix
+	terrainShader.setMat3("normalMatrix", terrainNormalMatrix);
+	// material (terrain)
+	terrainShader.setVec3("material.ambient", Colors::SAND);
+	terrainShader.setVec3("material.diffuse", Colors::SAND);
+	terrainShader.setVec3("material.specular", Colors::WHITE); // no specular
+	terrainShader.setFloat("material.shininess", 32); // no shininess
+	// light (sun)
+	terrainShader.setVec3("light.position", sunPos);
+	terrainShader.setVec3("light.ambient", sunLightColor * 0.1f);
+	terrainShader.setVec3("light.diffuse", sunLightColor * 0.5f);
+	terrainShader.setVec3("light.specular", sunLightColor);
+	// view position/camera position
+	//terrainShader.setVec3("viewPos", cameraPos);// update in loop
 
 # pragma region MAIN_LOOP
 
 	while(!glfwWindowShouldClose(window))
 	{
-		float currentFrame = glfwGetTime();
-		deltaTime = currentFrame - lastFrame;
-		lastFrame = currentFrame;
+		camera.onNewFrame();
+		glm::vec3 cameraPos = camera.getPos();
 
 		// ** input **
 		processInput(window);
@@ -222,30 +150,23 @@ int main()
 		glClearColor(0.45f, 0.49f, 0.61f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-		// model/view/projection transformations
-		glm::mat4 model = glm::mat4(1.0f);
-		glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-		//printf("Cam: %f, %f, %f\n", cameraPos.x, cameraPos.y, cameraPos.z);
+		// ** view/projection transformations **
+		glm::mat4 view = camera.getView(); //glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 		glm::mat4 projection = glm::perspective(
-			glm::radians(45.0f), 
+			glm::radians(camera.getFov()), 
 			(float)INITIAL_WIDTH / (float)INITIAL_HEIGHT, 
 			0.1f, 
 			RENDER_DISTANCE
 		);
 
+		// ** terrain **
 		terrainShader.use();
-		terrainShader.setMat4("model", model);
 		terrainShader.setMat4("view", view);
 		terrainShader.setMat4("projection", projection);
+		terrainShader.setVec3("viewPos", cameraPos);
+		sandTerrain.render();
 
-		// render mesh strip by strip
-		glBindVertexArray(terrainVAO);
-		for(unsigned int strip = 0; strip < NUM_STRIPS; ++strip)
-		{
-			glDrawElements(GL_TRIANGLE_STRIP, NUM_VERTS_PER_STRIP, GL_UNSIGNED_INT, (void*)(sizeof(unsigned int) * NUM_VERTS_PER_STRIP * strip));
-		}
-
-		// text
+		// ** text overlay **
 		font.renderText(
 			std::format("X:{:.2f} Y:{:.2f}, Z:{:.2f}", cameraPos.x, cameraPos.y, cameraPos.z),
 			25.0f,
@@ -253,8 +174,6 @@ int main()
 			0.5f,
 			Colors::WHITE
 		);
-		// font.renderText(fontShader, "This is sample text", 25.0f, 25.0f, 1.0f, glm::vec3(0.5, 0.8f, 0.2f));
-		// font.renderText(fontShader, "(C) LearnOpenGL.com", 540.0f, 570.0f, 0.5f, glm::vec3(0.3, 0.7f, 0.9f));
 
 		// check and call events and swap the buffers
 		glfwSwapBuffers(window);
