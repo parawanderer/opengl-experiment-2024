@@ -138,7 +138,6 @@ void Sphere::setupSphere()
     glBindVertexArray(0);
 }
 
-
 void Sphere::draw(Shader& shader)
 {
     glBindVertexArray(this->_VAO);

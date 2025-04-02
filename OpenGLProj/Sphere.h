@@ -5,6 +5,11 @@
 #include "Shader.h"
 #include "Vertex.h"
 
+/**
+ * \brief Wrapper for instantiating a Sphere in OpenGL.
+ *
+ * The implementation is mainly based on: https://www.songho.ca/opengl/gl_sphere.html
+ */
 class Sphere
 {
 public:

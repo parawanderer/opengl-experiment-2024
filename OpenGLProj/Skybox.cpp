@@ -51,7 +51,7 @@ const float Skybox::_skyboxVertices[] = {
 };
 
 // cubemap / skybox https://learnopengl.com/Advanced-OpenGL/Cubemaps
-Skybox::Skybox(Shader* shader, std::vector<std::string>& faces) : _shader(shader)
+Skybox::Skybox(Shader* shader, const std::vector<std::string>& faces) : _shader(shader)
 {
 	glGenTextures(1, &this->_textureId);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, this->_textureId);

@@ -1,6 +1,9 @@
 ﻿#ifndef QUAD_MINE_H
 #define QUAD_MINE_H
 
+/**
+ * \brief Wrapper for instantiating an OpenGL quad
+ */
 class Quad
 {
 public:

@@ -8,7 +8,7 @@
 class Skybox
 {
 public:
-	Skybox(Shader* shader, std::vector<std::string>& faces);
+	Skybox(Shader* shader, const std::vector<std::string>& faces);
 
 	void render(glm::mat4 view, glm::mat4 projection);
 private:

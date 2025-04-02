@@ -1,6 +1,11 @@
-﻿#pragma once
+﻿#ifndef SPHERICALBOUNDINGBOXEDENTITY_MINE_H
+#define SPHERICALBOUNDINGBOXEDENTITY_MINE_H
+
 #include <glm/vec3.hpp>
 
+/**
+ * \brief An entity that has a spherical bounding box (used for intersection computation)
+ */
 class SphericalBoundingBoxedEntity
 {
 public:
@@ -8,3 +13,5 @@ public:
 	virtual float getRadiusSphericalBoundingBox() = 0;
 	virtual glm::vec3 getBoundMidPoint() = 0;
 };
+
+#endif

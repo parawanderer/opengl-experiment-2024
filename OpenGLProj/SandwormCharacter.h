@@ -5,6 +5,9 @@
 #include "Terrain.h"
 #include "WorldTimeManager.h"
 
+/**
+ * \brief Represents/manages the game state for one of these: https://dune.fandom.com/wiki/Sandworm?so=search
+ */
 class SandWormCharacter : public AnimatedEntity
 {
 public:
@@ -15,7 +18,7 @@ public:
 		ABOVE_GROUND = 1
 	};
 
-	SandWormCharacter(WorldTimeManager* time, Terrain* terrain, RenderableGameObject* sandwormGameObject, AnimationManager* animations, float initialX, float initialZ);
+	SandWormCharacter(const WorldTimeManager* time, const Terrain* terrain, RenderableGameObject* sandwormGameObject, AnimationSet* animations, float initialX, float initialZ);
 
 
 	void onNewFrame() override;
@@ -23,8 +26,8 @@ public:
 	void draw(Shader& shader) override;
 
 private:
-	WorldTimeManager* _time;
-	Terrain* _terrain;
+	const WorldTimeManager* _time;
+	const Terrain* _terrain;
 
 	RenderableGameObject* _model;
 	Animator _animator;

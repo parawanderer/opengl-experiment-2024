@@ -1,10 +1,10 @@
 ﻿#include "Animator.h"
 
-#include "AnimationManager.h"
+#include "AnimationSet.h"
 
 #define MAX_BONES 100
 
-Animator::Animator(AnimationManager* animation)
+Animator::Animator(AnimationSet* animation)
 :
 _animationManager(animation),
 _currentAnimation(nullptr),

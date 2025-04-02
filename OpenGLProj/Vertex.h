@@ -4,6 +4,9 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 
+/**
+ * \brief Basic OpenGL vertex data container
+ */
 struct Vertex
 {
 	glm::vec3 position;

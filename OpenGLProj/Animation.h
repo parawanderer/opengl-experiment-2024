@@ -1,15 +1,13 @@
 ﻿#ifndef ANIMATION_MINE_H
 #define ANIMATION_MINE_H
-
 #include <string>
 
-#include "AssimpNode.h"
 #include "Bone.h"
 #include "Model.h"
 
 
 /**
- * \brief Main reference: https://learnopengl.com/Guest-Articles/2020/Skeletal-Animation
+ * \brief A single animation belonging to a model (composed of one or more meshes). sMain reference: https://learnopengl.com/Guest-Articles/2020/Skeletal-Animation
  */
 class Animation
 {

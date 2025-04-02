@@ -48,7 +48,10 @@ public:
     void setFloat(const std::string& name, float value) const;
     void setMat4(const std::string& name, const glm::mat4& matrix) const;
     void setMat3(const std::string& name, const glm::mat3& matrix) const;
+    void setMat2(const std::string& name, const glm::mat2& matrix) const;
     void setVec3(const std::string& name, const glm::vec3& vec) const;
+    void setVec4(const std::string& name, const glm::vec4& vec) const;
+    void setVec2(const std::string& name, const glm::vec2& vec) const;
 
 private:
     static std::string readFile(const std::string& fileName);

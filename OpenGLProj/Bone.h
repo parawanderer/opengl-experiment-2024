@@ -41,7 +41,8 @@ struct KeyScale : public KeyItemBase
 
 
 /**
- * Single bone which reads all keyframes data from aiNodeAnim. It interpolates between its keys i.e Translation,Scale & Rotation based on the current animation time.
+ * Single bone which reads all keyframes data from aiNodeAnim.
+ * It interpolates between its keys i.e Translation,Scale & Rotation based on the current animation time.
  *
  * main ref: https://learnopengl.com/Guest-Articles/2020/Skeletal-Animation
  */

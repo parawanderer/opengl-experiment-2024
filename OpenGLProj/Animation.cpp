@@ -4,22 +4,6 @@
 #include <assimp/postprocess.h>
 
 
-// Animation::Animation(const std::string& animationPath, Model* model)
-// {
-// 	Assimp::Importer importer;
-// 	std::cout << "Loading animation file '" << animationPath << "'" << std::endl;
-// 	const aiScene* scene = importer.ReadFile(animationPath, aiProcess_Triangulate);
-// 	if (!scene || !scene->mRootNode) throw std::exception("Animation could not be found!");
-//
-// 	aiAnimation* animation = scene->mAnimations[0];
-// 	std::cout << "Loading animation '" << animation->mName.C_Str() << "'" << std::endl;
-//
-// 	this->_duration = animation->mDuration;
-// 	this->_ticksPerSecond = animation->mTicksPerSecond;
-// 	//this->readHierarchyData(this->_rootNode, scene->mRootNode);
-// 	this->readMissingBones(animation, model);
-// }
-
 Animation::Animation(aiAnimation* animation, Model* model)
 {
 	std::cout << "Loading animation '" << animation->mName.C_Str() << "'" << std::endl;

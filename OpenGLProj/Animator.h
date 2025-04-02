@@ -1,22 +1,26 @@
 ﻿#ifndef ANIMATOR_MINE_H
 #define ANIMATOR_MINE_H
 #include "Animation.h"
-#include "AnimationManager.h"
+#include "AnimationSet.h"
 
 /**
- * \brief Main reference: https://learnopengl.com/Guest-Articles/2020/Skeletal-Animation
+ * \brief Controller for playing animations and moving the animation state forward in time.
+ *
+ * Main reference: https://learnopengl.com/Guest-Articles/2020/Skeletal-Animation
  */
 class Animator
 {
 public:
-	Animator(AnimationManager* animation);
+	Animator(AnimationSet* animation);
 
 	/**
 	 * \brief advances current time with a rate of the ticksPerSecond of the animation and computes required bone transforms
 	 */
 	void updateAnimation(float deltaTime);
 
-	//void playAnimation(Animation* animation);
+	/**
+	 * \brief Play the animation by name
+	 */
 	void playAnimation(const std::string& animationName);
 
 	/**
@@ -25,11 +29,15 @@ public:
 	 */
 	void calculateBoneTransform(const AssimpNodeData* node, glm::mat4 parentTransform);
 
+	/**
+	 * \brief Gets the bone matrices used for animation. Must be called after calling updateAnimation();
+	 * \return Bone matrices to use when rendering the model to which this Animator belongs.
+	 */
 	const std::vector<glm::mat4>& getFinalBoneMatrices();
 
 private:
 	std::vector<glm::mat4> _finalBoneMatrices;
-	AnimationManager* _animationManager;
+	AnimationSet* _animationManager;
 	Animation* _currentAnimation;
 	float _currentTime;
 	float _deltaTime;

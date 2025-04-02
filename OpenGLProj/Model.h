@@ -6,14 +6,23 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 
+/**
+ * \brief A 3D model container. Contains one or more Meshes.
+ */
 class Model
 {
 public:
 	Model(const char* path);
+
+	/**
+	 * \brief Draw the model with the given shader
+	 */
 	void draw(Shader& shader);
 
 	std::map<std::string, BoneInfo>& getBoneInfoMap();
+
 	int getBoneCount() const;
+
 	void setBoneCount(int count);
 
 private:

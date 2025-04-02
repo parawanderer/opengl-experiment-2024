@@ -2,6 +2,9 @@
 #define UITEXTRENDERER_MINE_H
 #include "Font.h"
 
+/**
+ * \brief Renders UI-related elements for the screen. Should be one of the final elements to be rendered to the screen.
+ */
 class UITextRenderer
 {
 public:

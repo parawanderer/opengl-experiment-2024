@@ -1,6 +1,6 @@
 ﻿#include "SandWormCharacter.h"
 
-#define UNDERGROUND_OFFSET glm::vec3(0.0f, -8.0f, 0.0f)
+#define UNDERGROUND_OFFSET glm::vec3(0.0f, -22.0f, 0.0f)
 
 
 // animations that I made myself (as I made this model myself, initially following along with a tutorial for the model itself)
@@ -11,11 +11,11 @@ const std::string CHASING_APPEARS_ABOVEGROUND_ANIM = "moveappears";
 const std::string MOVING_BELOWGROUND_ANIM = "moveunder";
 
 SandWormCharacter::SandWormCharacter(
-	WorldTimeManager* time, 
-	Terrain* terrain, 
+	const WorldTimeManager* time,
+	const Terrain* terrain,
 	RenderableGameObject* 
 	sandwormGameObject,
-	AnimationManager* animations, 
+	AnimationSet* animations, 
 	float initialX, 
 	float initialZ)
 :
@@ -26,7 +26,7 @@ SandWormCharacter::SandWormCharacter(
 	_currentPos(terrain->getWorldHeightVecFor(initialX, initialZ) + UNDERGROUND_OFFSET),
 	_currentFront(glm::vec3(0.0, 0.0, -1.0))
 {
-	this->_animator.playAnimation(CHASING_APPEARS_ABOVEGROUND_ANIM);
+	this->_animator.playAnimation(CHASING_ABOVEGROUND_ANIM);
 }
 
 void SandWormCharacter::onNewFrame()
@@ -38,6 +38,7 @@ void SandWormCharacter::onNewFrame()
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::translate(model, this->_currentPos); // place worm at current position
 	model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0, 1.0, 0.0)); // rotate it
+	model = glm::scale(model, glm::vec3(2.0f)); // rotate it
 	this->_model->setModelTransform(model);
 }
 

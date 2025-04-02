@@ -1,11 +1,15 @@
 ﻿#ifndef NOMADCHARACTER_MINE_H
 #define NOMADCHARACTER_MINE_H
+
 #include "AnimatedEntity.h"
 #include "Animator.h"
 #include "RenderableGameObject.h"
 #include "Terrain.h"
 #include "WorldTimeManager.h"
 
+/**
+ * \brief Represents a "Nomad" NPC character in the game. Manages a single Nomad's state
+ */
 class NomadCharacter : public AnimatedEntity
 {
 public:
@@ -15,13 +19,13 @@ public:
 		WALKING = 1
 	};
 
-	NomadCharacter(WorldTimeManager* time, Terrain* terrain, RenderableGameObject* nomadGameObject, AnimationManager* animations, float initialX, float initialZ);
+	NomadCharacter(const WorldTimeManager* time, const Terrain* terrain, RenderableGameObject* nomadGameObject, AnimationSet* animations, float initialX, float initialZ);
 
 	void onNewFrame() override;
 	void draw(Shader& shader) override;
 private:
-	WorldTimeManager* _time;
-	Terrain* _terrain;
+	const WorldTimeManager* _time;
+	const Terrain* _terrain;
 
 	RenderableGameObject* _model;
 	Animator _animator;

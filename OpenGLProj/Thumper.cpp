@@ -7,7 +7,7 @@ const std::string ROTATING_TOP_ANIM = "activate";
 
 const float THUMPER_MODEL_SCALE = 1.0f;
 
-Thumper::Thumper(WorldTimeManager* time, SphericalBoxedGameObject* thumper, AnimationManager* animations):
+Thumper::Thumper(WorldTimeManager* time, SphericalBoxedGameObject* thumper, AnimationSet* animations):
 _time(time),
 _model(thumper),
 _animator(animations)

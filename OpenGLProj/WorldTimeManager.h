@@ -1,6 +1,9 @@
 ﻿#ifndef WORLDTIMEMANAGER_MINE_H
 #define WORLDTIMEMANAGER_MINE_H
 
+/**
+ * \brief Utility state wrapper for world time. onNewFrame() Should be called at the start of the main loop
+ */
 class WorldTimeManager
 {
 public:

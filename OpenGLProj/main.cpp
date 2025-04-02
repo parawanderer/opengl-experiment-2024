@@ -41,8 +41,12 @@
 #include "WorldMathUtils.h"
 #include "PlayerState.h"
 #include "CarriedGameObject.h"
+#include "FileConstants.h"
 #include "GameObjectConstants.h"
 #include "NomadCharacter.h"
+#include "OrnithopterCharacter.h"
+#include "Particle.h"
+#include "ParticleSystem.h"
 #include "SandWormCharacter.h"
 #include "Thumper.h"
 #include "WorldTimeManager.h"
@@ -68,6 +72,9 @@
 
 constexpr auto SCREEN_OUTPUT_BUFFER_ID = 0;
 
+
+
+
 #pragma region STATE
 
 int currentWidth = INITIAL_WIDTH;
@@ -85,15 +92,14 @@ CameraManager camMgr(
 	10.0f
 );
 
-const float RENDER_DISTANCE = 1500.0f;
+constexpr float RENDER_DISTANCE = 1500.0f;
 
-// world:
-
-// sun
 glm::vec3 sunPos(1024.0f, 750.0f, -2000.0f);
 glm::vec3 sunLightColor = Colors::WHITE;
 
 #pragma endregion
+
+
 
 GLFWwindow* init();
 
@@ -107,10 +113,10 @@ void processInput(GLFWwindow* window);
 
 void processKey(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-glm::mat4 computeOrnithroperModelTransform(const float t);
 
 
 // temporary things for the course assignment specifically
+// (my idea is to keep this toy project around for personal purposes later and these will be removed after the assignment)
 
 void setupAttenuatedLightSpheres(Shader& targetShader, const float c1, const float c2, const float c3);
 
@@ -119,13 +125,15 @@ std::vector<glm::vec3> computeAttenuatedLightSpheresPos(Terrain& terrain, const 
 void renderTerrain(Shader& terrainShader, Terrain& terrain, const glm::mat4& view, const glm::mat4& projection, const glm::vec3& cameraPos, const std::vector<glm::vec3>& smallLightSpherePositions);
 
 
+
+
 int main()
 {
 	GLFWwindow* window = init();
 	if (window == nullptr) return -1;
 
 #pragma region SHADERS_AND_POSTPROCESSING
-	Shader genericShader = Shader::fromFiles("mesh.vert", "mesh.frag");
+	Shader genericShader = Shader::fromFiles(SHADER_MESH_VERT, SHADER_MESH_FRAG);
 	genericShader.use();
 	genericShader.setVec3("light.position", sunPos);
 	genericShader.setVec3("light.ambient", sunLightColor * 0.5f);
@@ -133,41 +141,37 @@ int main()
 	genericShader.setVec3("light.specular", sunLightColor * 1.0f);
 	genericShader.setBool("doAnimate", false);
 
-	Quad quad;
-	DistanceFieldPostProcessor distanceFieldPostProcessor(&quad, currentWidth, currentHeight);
+	Shader particlesShader = Shader::fromFiles(SHADER_PARTICLES_VERT, SHADER_PARTICLES_FRAG);
+
+	Quad screen2Dquad;
+	DistanceFieldPostProcessor distanceFieldPostProcessor(&screen2Dquad, currentWidth, currentHeight);
 	distanceFieldPostProcessor.setOutlineSize(0.003f);
 	distanceFieldPostProcessor.setOutlinePulsate(true);
 
 #pragma endregion
 
 #pragma region GAME_MODELS
-	// backpack
-	//Model backpack("resources/models/backpack/backpack.obj");
-	// glm::mat4 backpackModel = glm::mat4(1.0f);
-	// backpackModel = glm::translate(backpackModel, glm::vec3(0.0f, 80.0f, 0.0f));
-	// backpackModel = glm::scale(backpackModel, glm::vec3(1.0f, 1.0f, 1.0f));	
+	RenderableGameObject ornithopterObject(MODEL_ORNITHOPTER);
 
-	RenderableGameObject ornithopter("resources/models/dune-ornithopter/ornithopter_edit.dae");
-
-	Model thumperModel("resources/models/thumper_dune/Thumper.fbx"); // reuse the model
-	AnimationManager thumperAnimations("resources/models/thumper_dune/Thumper.fbx", &thumperModel);
+	Model thumperModel(MODEL_THUMPER); // reuse the model
+	AnimationSet thumperAnimations(MODEL_THUMPER, &thumperModel);
 	SphericalBoxedGameObject thumperObj1(&thumperModel, 0.4f);
 	SphericalBoxedGameObject thumperObj2(&thumperModel, 0.4f);
 
-	RenderableGameObject nomad("resources/models/rust-nomad/RustNomad.fbx");
-	AnimationManager nomadAnimations("resources/models/rust-nomad/RustNomad.fbx", nomad.getObjectModel());
+	RenderableGameObject nomadObject(MODEL_NOMAD);
+	AnimationSet nomadAnimations(MODEL_NOMAD, nomadObject.getObjectModel());
 
-	RenderableGameObject sandWorm("resources/models/sandworm2/Sandworm.fbx");
-	AnimationManager sandWormAnimations("resources/models/sandworm2/Sandworm.fbx", sandWorm.getObjectModel());
+	RenderableGameObject sandWormObject(MODEL_SANDWORM);
+	AnimationSet sandWormAnimations(MODEL_SANDWORM, sandWormObject.getObjectModel());
 
-	Model containerSmall("resources/models/military-container-free/Military_Container.dae");
-	RenderableGameObject containerS1(&containerSmall);
-	RenderableGameObject containerS2(&containerSmall);
+	Model containerSmallModel(MODEL_CONTAINER_SMALL);
+	RenderableGameObject containerSObject1(&containerSmallModel);
+	RenderableGameObject containerSObject2(&containerSmallModel);
 
-	Model containerLarge("resources/models/cargo-container/Container.dae");
-	RenderableGameObject containerL1(&containerLarge);
-	RenderableGameObject containerL2(&containerLarge);
-	RenderableGameObject containerL3(&containerLarge);
+	Model containerLargeModel(MODEL_CONTAINER_LARGE);
+	RenderableGameObject containerLObject1(&containerLargeModel);
+	RenderableGameObject containerLObject2(&containerLargeModel);
+	RenderableGameObject containerLObject3(&containerLargeModel);
 
 
 	// I'll use this as my second light source
@@ -179,30 +183,22 @@ int main()
 #pragma endregion
 
 #pragma region TEXT
-	Shader fontShader = Shader::fromFiles("font.vert", "font.frag");
+	Shader fontShader = Shader::fromFiles(SHADER_FONT_VERT, SHADER_FONT_FRAG);
 	glm::mat4 textProjection = glm::ortho(0.0f, (float)currentWidth, 0.0f, (float)currentHeight);
 	fontShader.use();
 	fontShader.setMat4("projection", textProjection);
-	Font font("resources/font/play/Play-Regular.ttf", &fontShader);
+	Font font(FONT_PLAY_REGULAR, &fontShader);
 	UITextRenderer uiText(&font);
 #pragma endregion
 
 #pragma region SKYBOX
-	std::vector<std::string> skyboxFaces{
-		"resources/skybox2/right.jpg",
-		"resources/skybox2/left.jpg",
-		"resources/skybox2/top.jpg",
-		"resources/skybox2/bottom.jpg",
-		"resources/skybox2/front.jpg",
-		"resources/skybox2/back.jpg",
-	};
-	Shader skyboxShader = Shader::fromFiles("skybox.vert", "skybox.frag");
-	Skybox skybox(&skyboxShader, skyboxFaces);
+	Shader skyboxShader = Shader::fromFiles(SHADER_SKYBOX_VERT, SHADER_SKYBOX_FRAG);
+	Skybox skybox(&skyboxShader, SKYBOX_FACES);
 #pragma endregion
 
 #pragma region SUN
 	// this is currently a cube which is not necessarily ideal (however it's far out of range to see when spawning in the map)
-	Shader lightCubeShader = Shader::fromFiles("shader_lightsource.vert", "shader_lightsource.frag");
+	Shader lightCubeShader = Shader::fromFiles(SHADER_LIGHTSOURCE_VERT, SHADER_LIGHTSOURCE_FRAG);
 	glm::mat4 lightCubeModel = glm::mat4(1.0f);
 	lightCubeModel = glm::translate(lightCubeModel, sunPos);
 	lightCubeModel = glm::scale(lightCubeModel, glm::vec3(10.0f));
@@ -210,15 +206,15 @@ int main()
 #pragma endregion
 
 #pragma region TERRAIN
-	Shader terrainShader = Shader::fromFiles("terrain.vert", "terrain.frag");
+	Shader terrainShader = Shader::fromFiles(SHADER_TERRAIN_VERT, SHADER_TERRAIN_FRAG);
 	Terrain sandTerrain(
 		&terrainShader, 
-		"resources/terrain/heightmap/yetanothermap2.png",
-		"resources/terrain/texture/sand_texture.jpg",
-		"resources/terrain/texture/sand_texture2.jpg",
-		"resources/terrain/texture/testtt.jpg",
-		192.0f,
-		32.0f,
+		TERRAIN_HEIGHTMAP,
+		TERRAIN_TEXTURE_PRIMARY,
+		TERRAIN_TEXTURE_DARKER,
+		TERRAIN_NORMAL_MAP,
+		TERRAIN_Y_SCALE_MULTIPLIER,
+		TERRAIN_Y_SHIFT,
 		sunPos,
 		sunLightColor
 	);
@@ -240,20 +236,20 @@ int main()
 	containerS1Model = glm::translate(containerS1Model, sandTerrain.getWorldHeightVecFor(150.0f, -150.0f) + glm::vec3(0.0, -0.1f, 0.0f));
 	containerS1Model = glm::rotate(containerS1Model, glm::radians(4.0f), glm::vec3(0.0, 0.0, 1.0));
 	containerS1Model = glm::scale(containerS1Model, glm::vec3(0.01f));
-	containerS1.setModelTransform(containerS1Model);
+	containerSObject1.setModelTransform(containerS1Model);
 
 	glm::mat4 containerS2Model = glm::mat4(1.0f);
 	containerS2Model = glm::translate(containerS2Model, sandTerrain.getWorldHeightVecFor(155.0, -155.0f) + glm::vec3(0.0, -0.1f, 0.0f));
 	containerS2Model = glm::rotate(containerS2Model, glm::radians(-32.0f), glm::vec3(0.0, 0.0, 1.0));
 	containerS2Model = glm::scale(containerS2Model, glm::vec3(0.01f));
-	containerS2.setModelTransform(containerS2Model);
+	containerSObject2.setModelTransform(containerS2Model);
 
 	glm::mat4 containerL1Model = glm::mat4(1.0f);
 	containerL1Model = glm::translate(containerL1Model, sandTerrain.getWorldHeightVecFor(160.0f, -160.0f) + glm::vec3(0.0, -1.8f, 0.0f));
 	containerL1Model = glm::rotate(containerL1Model, glm::radians(35.0f), glm::vec3(1.0, 0.0, 0.0));
 	containerL1Model = glm::rotate(containerL1Model, glm::radians(10.0f), glm::vec3(0.0, 1.0, 0.0));
 	containerL1Model = glm::scale(containerL1Model, glm::vec3(0.02f));
-	containerL1.setModelTransform(containerL1Model);
+	containerLObject1.setModelTransform(containerL1Model);
 
 	glm::mat4 containerL2Model = glm::mat4(1.0f);
 	containerL2Model = glm::translate(containerL2Model, sandTerrain.getWorldHeightVecFor(182.0f, -175.0f) + glm::vec3(0.0, -2.0f, 0.0f));
@@ -261,7 +257,7 @@ int main()
 	containerL2Model = glm::rotate(containerL2Model, glm::radians(112.0f), glm::vec3(0.0, 1.0, 0.0));
 	containerL2Model = glm::rotate(containerL2Model, glm::radians(-12.0f), glm::vec3(0.0, 0.0, 1.0));
 	containerL2Model = glm::scale(containerL2Model, glm::vec3(0.02f));
-	containerL2.setModelTransform(containerL2Model);
+	containerLObject2.setModelTransform(containerL2Model);
 
 	glm::mat4 containerL3Model = glm::mat4(1.0f);
 	containerL3Model = glm::translate(containerL3Model, sandTerrain.getWorldHeightVecFor(182, -227) + glm::vec3(0.0, -1.5f, 0.0f));
@@ -269,15 +265,16 @@ int main()
 	containerL3Model = glm::rotate(containerL3Model, glm::radians(-3.0f), glm::vec3(0.0, 1.0, 0.0));
 	containerL3Model = glm::rotate(containerL3Model, glm::radians(15.0f), glm::vec3(0.0, 0.0, 1.0));
 	containerL3Model = glm::scale(containerL3Model, glm::vec3(0.02f));
-	containerL3.setModelTransform(containerL3Model);
+	containerLObject3.setModelTransform(containerL3Model);
 
 #pragma endregion
 
 	// state
-	PlayerState player;
+	PlayerState player = PlayerState();
 
-	NomadCharacter nomadCharacter(&timeMgr, &sandTerrain, &nomad, &nomadAnimations, 20.0f, -20.0f);
-	SandWormCharacter sandWormCharacter(&timeMgr, &sandTerrain, &sandWorm, &sandWormAnimations, 80.0f, 50.0f);
+	NomadCharacter nomadCharacter(&timeMgr, &sandTerrain, &nomadObject, &nomadAnimations, 20.0f, -20.0f);
+	SandWormCharacter sandWormCharacter(&timeMgr, &sandTerrain, &sandWormObject, &sandWormAnimations, 80.0f, 50.0f);
+	OrnithopterCharacter ornithopterCharacter(&timeMgr, &ornithopterObject);
 
 	Thumper thumper1(&timeMgr, &thumperObj1, &thumperAnimations);
 	thumper1.setModelTransform(thumper1Model);
@@ -286,13 +283,38 @@ int main()
 
 
 	std::set<Thumper*> worldItemsThatPlayerCanPickUp = { &thumper1, &thumper2 };
-	std::vector<RenderableGameObject*> staticGameObjects = { &containerS1, &containerS2, &containerL1, &containerL2, &containerL3 };
-	std::vector<AnimatedEntity*> animatedEntitiesWithFrames = { &nomadCharacter, &sandWormCharacter, &thumper1, &thumper2 };
-	std::vector<AnimatedEntity*> independentAnimatedEntities = { &nomadCharacter, &sandWormCharacter };
+	std::vector<RenderableGameObject*> staticGameObjects = { &containerSObject1, &containerSObject2, &containerLObject1, &containerLObject2, &containerLObject3 };
+	std::vector<AnimatedEntity*> animatedEntitiesWithFrames = { &nomadCharacter, &sandWormCharacter, &thumper1, &thumper2, &ornithopterCharacter };
+	std::vector<AnimatedEntity*> independentAnimatedEntities = { &nomadCharacter, &sandWormCharacter, &ornithopterCharacter };
 
 
 	const float worldInteractionCooldownSecs = 0.2f;
 	float lastInteractionAt = 0.0f;
+
+
+	// particles test
+	ParticleSystem particles1(
+		&timeMgr,
+		TEXTURE_PARTICLE_DUST,
+		sandTerrain.getWorldHeightVecFor(104, -106),
+		glm::vec3(0, -4.0f, 0),
+		20.0f,
+		6000,
+		glm::vec2(5.0f)
+	);
+
+	ParticleSystem particles2(
+		&timeMgr,
+		TEXTURE_PARTICLE_DUST,
+		sandTerrain.getWorldHeightVecFor(55, -106),
+		glm::vec3(0, -4.0f, 0),
+		20.0f,
+		6000,
+		glm::vec2(5.0f)
+	);
+
+	std::vector<ParticleSystem*> particles = { &particles1, &particles2 };
+
 
 	// ============ [ MAIN LOOP ] ============
 	camMgr.beforeLoop();
@@ -300,10 +322,12 @@ int main()
 	{
 		const float t = (float)glfwGetTime();
 		processInput(window);
+
 		timeMgr.onNewFrame();
 		camMgr.processInput(window);
 
 		for (auto animatedEntity : animatedEntitiesWithFrames) animatedEntity->onNewFrame();
+		for (auto particle : particles) particle->onNewFrame();
 
 #pragma region PROJECTING
 		const glm::vec3 cameraPos = camMgr.getPos();
@@ -394,14 +418,6 @@ int main()
 		genericShader.setMat4("view", view);
 		genericShader.setVec3("viewPos", cameraPos);
 
-		//backpack
-		// genericShader.setMat4("model", backpackModel);
-		// genericShader.setMat4("normalMatrix", backpackNormalMatrix);
-		// backpack.draw(genericShader);
-
-		ornithopter.setModelTransform(computeOrnithroperModelTransform(t));
-		ornithopter.draw(genericShader);
-
 		// static models in the world (non-characters/interacteable items)
 		for (auto staticObj: staticGameObjects) staticObj->draw(genericShader);
 
@@ -419,6 +435,12 @@ int main()
 			item->setModelTransform(model);
 			item->draw(genericShader);
 		}
+
+		// particle effects
+		particlesShader.use();
+		particlesShader.setMat4("projection", projection);
+		particlesShader.setMat4("view", view);
+		for (auto particle : particles) particle->draw(particlesShader, view, cameraPos);
 
 #pragma region POST_PROCESSING
 		fontShader.use();
@@ -519,16 +541,6 @@ void processKey(GLFWwindow* window, int key, int scancode, int action, int mods)
 	camMgr.processKey(window, key, scancode, action, mods);
 }
 
-
-glm::mat4 computeOrnithroperModelTransform(const float t)
-{
-	// ornithopter "fly effect" (it's not the best animation but it's interesting as a placeholder)
-	glm::mat4 orniModel = glm::mat4(1.0f);
-	orniModel = glm::translate(orniModel, glm::vec3(sin(t) * -10.f, 400.0f + ((cos(t) - 1) * 25.0f), sin(-t / 3.0f) * 1500.f));
-	orniModel = glm::rotate(orniModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	orniModel = glm::scale(orniModel, glm::vec3(2.0f));
-	return orniModel;
-}
 
 
 void setupAttenuatedLightSpheres(Shader& targetShader, const float c1, const float c2, const float c3)

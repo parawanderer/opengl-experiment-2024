@@ -2,6 +2,9 @@
 #define ANIMATEDENTITY_MINE_H
 #include "Animator.h"
 
+/**
+ * \brief An entity that defines per-frame animation
+ */
 class AnimatedEntity
 {
 public:

@@ -16,12 +16,6 @@
     <Filter Include="Source Files\font">
       <UniqueIdentifier>{b3887131-9563-47c8-baee-06194d51e7e0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\old">
-      <UniqueIdentifier>{953c52c2-a835-42b5-808e-ec89d3e80314}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\old">
-      <UniqueIdentifier>{de164cc7-a357-4d3f-97b8-39093fb08e79}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\util">
       <UniqueIdentifier>{9ea124f5-8a27-400f-9fef-22366a722ce0}</UniqueIdentifier>
     </Filter>
@@ -85,6 +79,12 @@
     <Filter Include="Source Files\UI">
       <UniqueIdentifier>{784b39e3-b233-4abd-9a7d-9c821743577c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\gameobject\particles">
+      <UniqueIdentifier>{8b69b9d5-0fd4-48c4-9790-e5ca5119e13b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gameobject\particles">
+      <UniqueIdentifier>{5b0ba139-a346-44bc-bbcd-6e5ab1dbd0c9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\glad\src\glad.c">
@@ -98,12 +98,6 @@
     </ClCompile>
     <ClCompile Include="Font.cpp">
       <Filter>Source Files\font</Filter>
-    </ClCompile>
-    <ClCompile Include="main_light.cpp">
-      <Filter>Source Files\old</Filter>
-    </ClCompile>
-    <ClCompile Include="main_basic.cpp">
-      <Filter>Source Files\old</Filter>
     </ClCompile>
     <ClCompile Include="Terrain.cpp">
       <Filter>Source Files\world\terrain</Filter>
@@ -168,9 +162,6 @@
     <ClCompile Include="NomadCharacter.cpp">
       <Filter>Source Files\game</Filter>
     </ClCompile>
-    <ClCompile Include="WorldTimeManager.cpp">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="MathConversionUtil.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
@@ -183,7 +174,7 @@
     <ClCompile Include="Animator.cpp">
       <Filter>Source Files\gameobject\models</Filter>
     </ClCompile>
-    <ClCompile Include="AnimationManager.cpp">
+    <ClCompile Include="AnimationSet.cpp">
       <Filter>Source Files\gameobject\models</Filter>
     </ClCompile>
     <ClCompile Include="Thumper.cpp">
@@ -195,6 +186,15 @@
     <ClCompile Include="SandWormCharacter.cpp">
       <Filter>Source Files\game</Filter>
     </ClCompile>
+    <ClCompile Include="ParticleSystem.cpp">
+      <Filter>Source Files\gameobject\particles</Filter>
+    </ClCompile>
+    <ClCompile Include="OrnithopterCharacter.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldTimeManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -203,18 +203,6 @@
     </None>
     <None Include="font.vert">
       <Filter>Source Files\font</Filter>
-    </None>
-    <None Include="shader2.vert">
-      <Filter>Source Files\old</Filter>
-    </None>
-    <None Include="shader2.frag">
-      <Filter>Source Files\old</Filter>
-    </None>
-    <None Include="shader1.vert">
-      <Filter>Source Files\old</Filter>
-    </None>
-    <None Include="shader1.frag">
-      <Filter>Source Files\old</Filter>
     </None>
     <None Include="terrain.vert">
       <Filter>Source Files\world\terrain</Filter>
@@ -270,6 +258,12 @@
     <None Include="distancefield.frag">
       <Filter>Source Files\postprocessing</Filter>
     </None>
+    <None Include="particles.vert">
+      <Filter>Source Files\gameobject\particles</Filter>
+    </None>
+    <None Include="particles.frag">
+      <Filter>Source Files\gameobject\particles</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shader.h">
@@ -283,12 +277,6 @@
     </ClInclude>
     <ClInclude Include="Colors.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="camera_m.h">
-      <Filter>Header Files\old</Filter>
-    </ClInclude>
-    <ClInclude Include="shader_m.h">
-      <Filter>Header Files\old</Filter>
     </ClInclude>
     <ClInclude Include="ResourceUtils.h">
       <Filter>Header Files</Filter>
@@ -383,7 +371,7 @@
     <ClInclude Include="Animator.h">
       <Filter>Header Files\gameobject\models</Filter>
     </ClInclude>
-    <ClInclude Include="AnimationManager.h">
+    <ClInclude Include="AnimationSet.h">
       <Filter>Header Files\gameobject\models</Filter>
     </ClInclude>
     <ClInclude Include="AssimpNode.h">
@@ -399,6 +387,15 @@
       <Filter>Header Files\game</Filter>
     </ClInclude>
     <ClInclude Include="SandWormCharacter.h">
+      <Filter>Header Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="Particle.h">
+      <Filter>Header Files\gameobject\particles</Filter>
+    </ClInclude>
+    <ClInclude Include="ParticleSystem.h">
+      <Filter>Header Files\gameobject\particles</Filter>
+    </ClInclude>
+    <ClInclude Include="OrnithopterCharacter.h">
       <Filter>Header Files\game</Filter>
     </ClInclude>
   </ItemGroup>

@@ -34,7 +34,7 @@ const std::string GETTING_UP_ANIM = "gettingup";
 const std::string LOOK_BEHIND_RIGHT_ANIM = "lookright";
 
 // we can seed the random generator or not. Doesn't really matter for now.
-NomadCharacter::NomadCharacter(WorldTimeManager* time, Terrain* terrain, RenderableGameObject* nomadGameObject, AnimationManager* animations, float initialX, float initialZ) :
+NomadCharacter::NomadCharacter(const WorldTimeManager* time, const Terrain* terrain, RenderableGameObject* nomadGameObject, AnimationSet* animations, float initialX, float initialZ) :
 	_time(time),
 	_terrain(terrain),
 	_model(nomadGameObject),
@@ -76,12 +76,17 @@ void NomadCharacter::onNewFrame()
 		this->_animator.playAnimation(WALKING_ANIM);
 	}
 
-	// TODO: it is possible to do smooth interpolation between the various animations rather than having sharp cut-offs
+	// TODO: it is possible to do smooth interpolation between the various animations rather than having sharp cut-offs.
+	// this would entail interpolating between the two sets of animation matrices.
+	// So you "weigh" how much every matrice for every bone contributes to the final result: if t is in range [0,1]
+	// then we want the matrice: mWeighed = t * animation1Matrices[i] + (1 - t) * animation2Matrices[i]
+	// and we can interpolate t to change over time (e.g. over 1 second we switch from "animation1" to "animation2"
+	// it's the same idea as how I am computing the movement, just a few iterations and a bit more state management
+	// currently I don't feel like it'll add a lot to this barebones project to add this "smooth" transition.
 
 	glm::mat4 model = glm::mat4(1.0f);
 	model = glm::translate(model, this->_currentPos); // place character at current position
 	model = glm::rotate(model, -glm::radians(this->_yaw) + glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // orient character along his movement direction
-	//model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // rotate the model into upward position
 	model = glm::scale(model, glm::vec3(0.01f));
 	this->_model->setModelTransform(model);
 }

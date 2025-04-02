@@ -13,6 +13,7 @@ namespace WorldMathUtils
 	 * \param cameraPos							Position of the camera/player in the world
 	 * \param cameraFront						directional (normalized!!) ray being cast by the camera into the world. This is the direction that we are looking into
 	 * \param maxDistance						distance after which intersections are ignored.
+	 *
 	 * \return									A pointer to the object that is closest within the defined limits, out of the input list. Nullptr if no such object exists.
 	 *
 	 * **Author's note**:
@@ -21,7 +22,11 @@ namespace WorldMathUtils
 	 * and realised the ray vector that we use here is just the same thing as the cameraPos of the camera view, at the very center of the screen.
 	 * so the inverse computation is unnecessary.
 	 */
-	inline SphericalBoundingBoxedEntity* findClosestIntersection(const std::vector<SphericalBoundingBoxedEntity*>& listOfIntersectableObjects, const glm::vec3& cameraPos, const glm::vec3& cameraFront, float maxDistance = FLT_MAX)
+	inline SphericalBoundingBoxedEntity* findClosestIntersection(
+		const std::vector<SphericalBoundingBoxedEntity*>& listOfIntersectableObjects, 
+		const glm::vec3& cameraPos, 
+		const glm::vec3& cameraFront, 
+		float maxDistance = FLT_MAX)
 	{
 		SphericalBoundingBoxedEntity* res = nullptr;
 		float tClosest = FLT_MAX; // <- I'll say it's unlikely that we'd ever actually intersect something at this distance in my program. But the idea is to do tClosest = inf to reduce this by the min checks
@@ -88,7 +93,13 @@ namespace WorldMathUtils
 	 *
 	 * \return a normalised vector representing the ray. (Equivalent to cameraFront with the player/noclip camera!)
 	 */
-	inline glm::vec3 computeRayWorld(float mouseX, float mouseY, glm::mat4 projection, glm::mat4 view, int windowWidth, int windowHeight)
+	inline glm::vec3 computeRayWorld(
+		const float mouseX, 
+		const float mouseY, 
+		const glm::mat4& projection, 
+		const glm::mat4& view, 
+		const int windowWidth, 
+		const int windowHeight)
 	{
 		// ray picking
 		glm::vec3 rayNDC(
@@ -105,6 +116,9 @@ namespace WorldMathUtils
 		return rayWorld;
 	}
 
+	/**
+	 * \brief Compute direction vector given pitch and yaw
+	 */
 	inline glm::vec3 computeDirection(float pitch, float yaw)
 	{
 		glm::vec3 direction;
@@ -112,6 +126,18 @@ namespace WorldMathUtils
 		direction.y = sin(glm::radians(pitch));
 		direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 		return glm::normalize(direction);
+	}
+
+	/**
+	 * \brief Get a basic 2D rotation matrix. See: https://en.wikipedia.org/wiki/Rotation_matrix
+	 * This is probably the only time I use my own math in the project at this point, rather than using the glm functions.
+	 */
+	inline glm::mat2 getRotationMatrix2D(const float angleRadians)
+	{
+		return glm::mat2(
+			cos(angleRadians), -sin(angleRadians),
+			sin(angleRadians), cos(angleRadians)
+		);
 	}
 }
 
