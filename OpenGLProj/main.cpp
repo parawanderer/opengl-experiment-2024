@@ -27,11 +27,11 @@
 #pragma region STATE
 
 Camera camera(
-	glm::vec3(-55, 43, -103),
+	glm::vec3(0.0, 30.0, 6.0),
 	glm::vec3(0.0f, 0.0f, -1.0f), 
 	INITIAL_WIDTH, 
 	INITIAL_HEIGHT, 
-	10.0f
+	40.0f
 );
 
 const float RENDER_DISTANCE = 1500.0f;
@@ -39,7 +39,7 @@ const float RENDER_DISTANCE = 1500.0f;
 // world:
 
 // sun
-glm::vec3 sunPos(0.0f, 2000.0f, 0.0f);
+glm::vec3 sunPos(0.0f, 100.0f, -1000.0f);
 glm::vec3 sunLightColor = Colors::WHITE;
 
 #pragma endregion
@@ -99,6 +99,7 @@ int main()
 
 	glEnable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glFrontFace(GL_CW);
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(window, mouseCallback);
@@ -127,11 +128,73 @@ int main()
 	Skybox skybox(&skyboxShader, skyboxFaces);
 #pragma endregion
 
+#pragma region SUN
+	Shader lightCubeShader = Shader::fromFiles("shader_lightsource.vert", "shader_lightsource.frag");
+	glm::mat4 lightCubeModel = glm::mat4(1.0f);
+	lightCubeModel = glm::translate(lightCubeModel, sunPos);
+	lightCubeModel = glm::scale(lightCubeModel, glm::vec3(10.0f));
+	lightCubeShader.use();
+	lightCubeShader.setMat4("model", lightCubeModel);
+	float lightCubeVerts[] = {
+		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+
+		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		 0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
+
+		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+
+		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+
+		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+		 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+		-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+
+		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+		 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+	};
+	unsigned int VBO;
+	unsigned int lightCubeVAO;
+	glGenBuffers(1, &VBO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(lightCubeVerts), lightCubeVerts, GL_STATIC_DRAW);
+	glGenVertexArrays(1, &lightCubeVAO);
+	glBindVertexArray(lightCubeVAO);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+#pragma endregion
+
 #pragma region TERRAIN
 	const float yScaleMult = 64.0f;
 	const float yShift = 16.0f;
 	Shader terrainShader = Shader::fromFiles("terrain.vert", "terrain.frag");
-	Terrain sandTerrain("resources/perlin-noise-texture.png", yScaleMult, yShift);
+	Terrain sandTerrain("resources/test.png", yScaleMult, yShift);
 	terrainShader.use();
 	const glm::mat4 terrainModel = glm::mat4(1.0f);
 	terrainShader.setMat4("model", terrainModel); // model transform (to world coords)
@@ -141,13 +204,13 @@ int main()
 	// material (terrain)
 	terrainShader.setVec3("material.ambient", Colors::SAND);
 	terrainShader.setVec3("material.diffuse", Colors::SAND);
-	terrainShader.setVec3("material.specular", Colors::WHITE); // no specular
-	terrainShader.setFloat("material.shininess", 32); // no shininess
+	terrainShader.setVec3("material.specular", Colors::SAND);
+	terrainShader.setFloat("material.shininess", 32);
 	// light (sun)
 	terrainShader.setVec3("light.position", sunPos);
-	terrainShader.setVec3("light.ambient", sunLightColor * 0.1f);
-	terrainShader.setVec3("light.diffuse", sunLightColor * 0.5f);
-	terrainShader.setVec3("light.specular", sunLightColor);
+	terrainShader.setVec3("light.ambient", sunLightColor * 0.5f);
+	terrainShader.setVec3("light.diffuse", sunLightColor * 0.7f);
+	terrainShader.setVec3("light.specular", sunLightColor * 0.1f);
 #pragma endregion
 
 # pragma region MAIN_LOOP
@@ -184,6 +247,15 @@ int main()
 		terrainShader.setMat4("projection", projection);
 		terrainShader.setVec3("viewPos", cameraPos);
 		sandTerrain.render();
+
+		// ** light cube **
+		lightCubeShader.use();
+		lightCubeShader.setVec3("lightColor", sunLightColor);
+		lightCubeShader.setMat4("projection", projection);
+		lightCubeShader.setMat4("view", view);
+		glBindVertexArray(lightCubeVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+
 
 		// ** text overlay **
 		font.renderText(

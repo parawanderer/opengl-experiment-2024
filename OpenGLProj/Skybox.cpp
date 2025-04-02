@@ -53,6 +53,7 @@ Skybox::Skybox(Shader* shader, std::vector<std::string>& faces) : _shader(shader
 {
 	glGenTextures(1, &this->_textureId);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, this->_textureId);
+	glCheckError();
 
 	int width, height, nrChannels;
 	for (unsigned int i = 0; i < faces.size(); i++)
