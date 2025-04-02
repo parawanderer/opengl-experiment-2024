@@ -21,7 +21,6 @@ in vec3 FragPos; // interpolated from the 3 world position ectors of the triangl
 
 uniform Material material;
 uniform Light light;
-
 uniform vec3 viewPos;
 
 void main()

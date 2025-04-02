@@ -1,11 +1,57 @@
 #include "Terrain.h"
 
+#include <filesystem>
+#include <map>
 #include <vector>
 #include <glad/glad.h>
 
 #include "ErrorUtils.h"
+#include "ResourceUtils.h"
 #include "stb_image.h"
 
+
+
+
+void _insertNormContribution(std::vector<TerrainVertex>& vertices, unsigned int index0, unsigned int index1, unsigned int index2)
+{
+	glm::vec3 v1 = vertices[index0].pos - vertices[index1].pos;
+	glm::vec3 v2 = vertices[index0].pos - vertices[index2].pos;
+	glm::vec3 contrib = glm::cross(v1, v2);
+
+	vertices[index0].normal += contrib;
+	vertices[index1].normal += contrib;
+	vertices[index2].normal += contrib;
+}
+
+unsigned int _loadTextureJpg(const char* texturePath, GLenum textureUnit)
+{
+	unsigned int texture;
+	glGenTextures(1, &texture);
+	glActiveTexture(textureUnit); // activate the texture unit first before binding texture
+	glBindTexture(GL_TEXTURE_2D, texture);
+	// set the texture wrapping/filtering options (on the currently bound texture object)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	// load and generate the texture
+	int width, height, nrChannels;
+	stbi_set_flip_vertically_on_load(true);
+	unsigned char* data = stbi_load(texturePath, &width, &height, &nrChannels, 0);
+	if (data)
+	{
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+	}
+	else
+	{
+		std::cout << "Failed to load texture" << std::endl;
+		return -1;
+	}
+	stbi_image_free(data);
+
+	return texture;
+}
 
 
 /**
@@ -14,17 +60,20 @@
  * https://www.youtube.com/watch?v=bwq_y0zxpQM&list=PLA0dXqQjCx0S9qG5dWLsheiCJV-_eLUM0&index=6,
  * https://www.youtube.com/watch?v=xoqESu9iOUE&list=PLA0dXqQjCx0S9qG5dWLsheiCJV-_eLUM0&index=3
  */
-Terrain::Terrain(const std::string& sourceHeightMapPath, float yScaleMult, float yShift)
+Terrain::Terrain(Shader& shader, const std::string& sourceHeightMapPath, const std::string& texturePath0, const std::string& texturePath1, float yScaleMult, float yShift)
 {
 	int width, height, nChannels;
-	unsigned char* data = stbi_load(sourceHeightMapPath.c_str(), &width, &height, &nChannels, 0);
-
-	if (width == 1 || height == 1)
-		throw std::exception("Height map must have a width and height dimension of at least 2px");
+	assertFileExists(sourceHeightMapPath);
+	assertFileExists(texturePath0);
+	assertFileExists(texturePath1);
+	//unsigned char* data = stbi_load(sourceHeightMapPath.c_str(), &width, &height, &nChannels, 0);
+	unsigned short* data = stbi_load_16(sourceHeightMapPath.c_str(), &width, &height, &nChannels, 0);
+	if (width == 1 || height == 1) throw std::exception("Height map must have a width and height dimension of at least 2px");
+	this->_textureId0 = _loadTextureJpg(texturePath0.c_str(), GL_TEXTURE0);
+	this->_textureId1 = _loadTextureJpg(texturePath1.c_str(), GL_TEXTURE1);
 
 	// vertex generation
-	const float yScale = yScaleMult / 256.0f;
-
+	const float yScale = yScaleMult / 65536.0f;//256.0f;
 
 	this->_vertices.resize(width * height);
 
@@ -35,14 +84,25 @@ Terrain::Terrain(const std::string& sourceHeightMapPath, float yScaleMult, float
 	{
 		for (unsigned int x = 0; x < width; ++x)
 		{
-			unsigned char* texel = data + (x + width * z) * nChannels; // get the pixel "index"/pointer from the pixel grid in the first colour channel (RED) 
-			unsigned char y = texel[0]; // get the value at that pixel (Red value)
+			//unsigned char* texel = data + (x + width * z) * nChannels; // get the pixel "index"/pointer from the pixel grid in the first colour channel (RED) 
+			//unsigned char y = texel[0]; // get the value at that pixel (Red value)
+			unsigned short* texel = data + (x + width * z) * nChannels;
+			unsigned short y = texel[0];
+
+
+			const float xPos = -width / 2.0f + x;
+			const float zPos = -height / 2.0f + z;
 
 			this->_vertices[index].pos = glm::vec3(
-				-width / 2.0f + x, // x
-				(int)y * yScale - yShift, // y
-				-height / 2.0f + z // z
+				xPos, // x
+				(float)y * yScale - yShift, // y
+				zPos // z
 			);
+			this->_vertices[index].texture = glm::vec2(
+				xPos/10,
+				zPos/10
+			);
+
 			index++;
 		}
 	}
@@ -53,44 +113,57 @@ Terrain::Terrain(const std::string& sourceHeightMapPath, float yScaleMult, float
 	{
 		for (unsigned int j = 0; j < width - 1; j++)
 		{
+			// every set of 4 pixels is considered as the vertices.
+			// These 4 pixels are split into two triangles
+			
 			// first/left triangle:
 			//                  0---2
 			//                  | / |
 			//                  1----
-			this->_indices.push_back(j + (width * i));				// 0
-			this->_indices.push_back(j + (width * (i + 1)));		// 1
-			this->_indices.push_back((j + 1) + (width * i));		// 2
+			const unsigned int index0 = j + (width * i);
+			const unsigned int index1 = j + (width * (i + 1));
+			const unsigned int index2 = (j + 1) + (width * i);
+			this->_indices.push_back(index0); // 0
+			this->_indices.push_back(index1); // 1
+			this->_indices.push_back(index2); // 2
+
+			_insertNormContribution(this->_vertices, index0, index1, index2); // 3.1 calculate normals for smooth surface rendering (https://www.youtube.com/watch?v=bwq_y0zxpQM&list=PLA0dXqQjCx0S9qG5dWLsheiCJV-_eLUM0&index=6)
 
 			// second/right triangle:
 			//                  ----2
 			//                  | / |
 			//                  1---3
-			this->_indices.push_back(j + (width * (i + 1)));		// 1
-			this->_indices.push_back((j + 1) + (width * (i + 1))); // 3
-			this->_indices.push_back((j + 1) + (width * i));		// 2
+			const unsigned int index3 = (j + 1) + (width * (i + 1));
+			this->_indices.push_back(index1); // 1
+			this->_indices.push_back(index3); // 3
+			this->_indices.push_back(index2); // 2
+
+			_insertNormContribution(this->_vertices, index1, index3, index2); // 3.1 calculate normals for smooth surface rendering
 		}
 	}
 
-
 	// 3.1 calculate normals for smooth surface rendering (https://www.youtube.com/watch?v=bwq_y0zxpQM&list=PLA0dXqQjCx0S9qG5dWLsheiCJV-_eLUM0&index=6)
-	for (unsigned int i = 0; i + 2 < this->_indices.size(); i += 3)
-	{
-		unsigned int index0 = this->_indices[i];
-		unsigned int index1 = this->_indices[i + 1];
-		unsigned int index2 = this->_indices[i + 2];
-	
-		glm::vec3 v1 = this->_vertices[index0].pos - this->_vertices[index2].pos;
-		glm::vec3 v2 = this->_vertices[index1].pos - this->_vertices[index2].pos;
-		glm::vec3 norm = glm::normalize(glm::cross(v1, v2));
-	
-		this->_vertices[index0].normal += norm;
-		this->_vertices[index1].normal += norm;
-		this->_vertices[index2].normal += norm;
-	}
+	// [this could likely be moved into the above loop]
+	// for (unsigned int i = 0; i + 2 < this->_indices.size(); i += 3)
+	// {
+	// 	// every triangle (composed of clockwise sides {0, 1, 2})
+	// 	unsigned int index0 = this->_indices[i];
+	// 	unsigned int index1 = this->_indices[i + 1];
+	// 	unsigned int index2 = this->_indices[i + 2];
+	//
+	// 	glm::vec3 v1 = this->_vertices[index0].pos - this->_vertices[index1].pos;
+	// 	glm::vec3 v2 = this->_vertices[index0].pos - this->_vertices[index2].pos;
+	// 	glm::vec3 contrib = glm::cross(v1, v2);
+	//
+	// 	this->_vertices[index0].normal += contrib;
+	// 	this->_vertices[index1].normal += contrib;
+	// 	this->_vertices[index2].normal += contrib;
+	// }
 
 	// 3.2 normalize all the vertex normals (average of all the plane normals that share this vertex. Up to 6 but possibly less!)
 	for (unsigned int i = 0; i < this->_vertices.size(); ++i)
 	{
+		//this->_vertices[i].normal = glm::normalize(this->_vertices[i].normal);
 		this->_vertices[i].normal = glm::normalize(this->_vertices[i].normal);
 	}
 
@@ -102,17 +175,29 @@ Terrain::Terrain(const std::string& sourceHeightMapPath, float yScaleMult, float
 	glBufferData(GL_ARRAY_BUFFER, this->_vertices.size() * sizeof(TerrainVertex), &this->_vertices[0], GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)0);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)(sizeof(glm::vec3)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)(sizeof(glm::vec3)));
 	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)(sizeof(glm::vec3) + sizeof(glm::vec2)));
+	glEnableVertexAttribArray(2);
 
 	glGenBuffers(1, &this->_EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->_indices.size() * sizeof(unsigned int), &this->_indices[0], GL_STATIC_DRAW);
+
+	shader.use();
+	shader.setInt("material.diffuse", 0);
+	shader.setInt("material.ambient", 1);
 }
 
 void Terrain::render()
 {
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glBindVertexArray(this->_VAO);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, this->_textureId0);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, this->_textureId1);
 	glDrawElements(GL_TRIANGLES, this->_indices.size(), GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }

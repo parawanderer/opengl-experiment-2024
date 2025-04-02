@@ -2,6 +2,8 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+#include "ResourceUtils.h"
+
 #define TYPE_VERTEX_STR "VERTEX"
 #define TYPE_FRAGMENT_STR "FRAGMENT"
 #define TYPE_GEOMETRY_STR "GEOMETRY"
@@ -73,9 +75,15 @@ std::string _readFile(const std::string& fileName)
 Shader Shader::fromFiles(const char* vertexPath, const char* fragmentPath, const char* geomShaderPath)
 {
     // 1. retrieve the vertex/fragment source code from filePath
+    assertFileExists(vertexPath);
+	assertFileExists(fragmentPath);
     std::string vertexCode = _readFile(vertexPath);
     std::string fragmentCode = _readFile(fragmentPath);
-    std::string geomShaderCode = geomShaderPath != nullptr ? _readFile(geomShaderPath) : "";
+    std::string geomShaderCode = "";
+    if (geomShaderPath != nullptr) {
+        assertFileExists(geomShaderPath);
+        geomShaderCode = _readFile(geomShaderPath);
+    }
 
 	if (vertexCode.empty() || fragmentCode.empty())
         throw new std::exception("Shader source could not be read");

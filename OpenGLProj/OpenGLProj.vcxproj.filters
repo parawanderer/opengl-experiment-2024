@@ -60,6 +60,9 @@
     <ClCompile Include="Skybox.cpp">
       <Filter>Source Files\skybox</Filter>
     </ClCompile>
+    <ClCompile Include="ResourceUtils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -130,6 +133,9 @@
     </ClInclude>
     <ClInclude Include="shader_m.h">
       <Filter>Header Files\old</Filter>
+    </ClInclude>
+    <ClInclude Include="ResourceUtils.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

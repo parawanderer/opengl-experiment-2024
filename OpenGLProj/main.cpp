@@ -11,6 +11,8 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 
+#include <GL/gl.h>
+
 #include "Colors.h"
 #include "ErrorUtils.h"
 #include "Font.h"
@@ -39,7 +41,7 @@ const float RENDER_DISTANCE = 1500.0f;
 // world:
 
 // sun
-glm::vec3 sunPos(0.0f, 100.0f, -1000.0f);
+glm::vec3 sunPos(0.0f, 500.0f, -1000.0f);
 glm::vec3 sunLightColor = Colors::WHITE;
 
 #pragma endregion
@@ -191,10 +193,17 @@ int main()
 #pragma endregion
 
 #pragma region TERRAIN
-	const float yScaleMult = 64.0f;
+	const float yScaleMult = 32.0f;
 	const float yShift = 16.0f;
 	Shader terrainShader = Shader::fromFiles("terrain.vert", "terrain.frag");
-	Terrain sandTerrain("resources/test.png", yScaleMult, yShift);
+	Terrain sandTerrain(
+		terrainShader, 
+		"resources/16bittest.png", 
+		"resources/sand_texture.jpg",
+		"resources/sand_texture2.jpg",
+		yScaleMult, 
+		yShift
+	);
 	terrainShader.use();
 	const glm::mat4 terrainModel = glm::mat4(1.0f);
 	terrainShader.setMat4("model", terrainModel); // model transform (to world coords)
@@ -202,15 +211,17 @@ int main()
 	// matrix to model the normal if there's non-linear scaling going on in the model matrix
 	terrainShader.setMat3("normalMatrix", terrainNormalMatrix);
 	// material (terrain)
-	terrainShader.setVec3("material.ambient", Colors::SAND);
-	terrainShader.setVec3("material.diffuse", Colors::SAND);
+	// terrainShader.setVec3("material.ambient", Colors::SAND);
+	// terrainShader.setVec3("material.diffuse", Colors::SAND);
+	terrainShader.setInt("material.diffuse", 0);
 	terrainShader.setVec3("material.specular", Colors::SAND);
-	terrainShader.setFloat("material.shininess", 32);
+	terrainShader.setFloat("material.shininess", 16);
 	// light (sun)
 	terrainShader.setVec3("light.position", sunPos);
-	terrainShader.setVec3("light.ambient", sunLightColor * 0.5f);
-	terrainShader.setVec3("light.diffuse", sunLightColor * 0.7f);
+	terrainShader.setVec3("light.ambient", sunLightColor * 0.4f);
+	terrainShader.setVec3("light.diffuse", sunLightColor * 0.9f);
 	terrainShader.setVec3("light.specular", sunLightColor * 0.1f);
+	terrainShader.setInt("texture1", 0);
 #pragma endregion
 
 # pragma region MAIN_LOOP

@@ -141,6 +141,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="main_basic.cpp" />
     <ClCompile Include="main_light.cpp" />
+    <ClCompile Include="ResourceUtils.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Skybox.cpp" />
     <ClCompile Include="Terrain.cpp" />
@@ -166,6 +167,7 @@
     <ClInclude Include="Colors.h" />
     <ClInclude Include="ErrorUtils.h" />
     <ClInclude Include="Font.h" />
+    <ClInclude Include="ResourceUtils.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="shader_m.h" />
     <ClInclude Include="Skybox.h" />

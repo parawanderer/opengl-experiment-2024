@@ -9,6 +9,7 @@
 struct TerrainVertex
 {
 	glm::vec3 pos;
+	glm::vec2 texture;
 	glm::vec3 normal = glm::vec3(0.0f);
 };
 
@@ -16,7 +17,7 @@ struct TerrainVertex
 class Terrain
 {
 public:
-	Terrain(const std::string& sourceHeightMapPath, float yScaleMult, float yShift);
+	Terrain(Shader& shader, const std::string& sourceHeightMapPath, const std::string& texturePath0, const std::string& texturePath1, float yScaleMult, float yShift);
 
 	/**
 	 * \brief render mesh strip by strip
@@ -29,6 +30,8 @@ private:
 	unsigned int _VAO;
 	unsigned int _VBO;
 	unsigned int _EBO;
+	unsigned int _textureId0;
+	unsigned int _textureId1;
 };
 
 #endif
