@@ -88,6 +88,25 @@ TODO/note:
 	the "virtual tiles" that would form seams (so you'd pretend that there's triangles there even
 	though there are not).
 
+The main problem I have is that the heightmap that I am using is basically
+just the best looking SMOOTH "desert" height map I could get. It doesn't really look very good.
+I'd prefer to have a better tiling desert terrain or a generated one that looks closer to real life.
+I think THIS might be closer to it: https://stackoverflow.com/questions/24606406/desert-fractal-opengl
+But I'm also fairly sure that the games that have nice deserts like Assassin's Creed Origins
+(https://assassinscreed.fandom.com/wiki/Desheret_Desert?file=ACO_Desheret_Desert.jpg)
+didn't procedurally generate those maps.
+
+All of these also seem hand-crafted/smoother than what you expect from height-maps: https://www.cgtrader.com/3d-models/desert
+
+
+Sidenote: this right here (3:00) is that exact 8bit "stairs"/minecraft look issue that I had before:
+https://www.gdcvault.com/play/1029222/Machine-Learning-Summit-Advanced-Heightmap
+So I guess making nice-looking sand dunes isn't as simple as making mountainous terrain
+
+So I'm just going to choose not to go in-depth with this right now because the *sand dunes* generation seems like
+its very own problem... I'll just stick with my "plastic" looking map for now.
+
+
 */
 void Terrain::_populateModelMatrices()
 {
