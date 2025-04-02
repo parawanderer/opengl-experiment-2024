@@ -2,7 +2,6 @@
 
 #include <filesystem>
 #include <vector>
-#include <glad/glad.h>
 #include <glm/ext/matrix_transform.hpp>
 
 #include "Colors.h"
@@ -10,8 +9,7 @@
 #include "ResourceUtils.h"
 #include "stb_image.h"
 
-
-
+const float Terrain::_resizeFactor = 2.0f;
 
 void Terrain::_insertNormContribution(unsigned int index0, unsigned int index1, unsigned int index2)
 {
@@ -110,8 +108,6 @@ its very own problem... I'll just stick with my "plastic" looking map for now.
 */
 void Terrain::_populateModelMatrices()
 {
-	
-
 	this->_terrainModelL = this->_terrainModel;
 	this->_terrainModelL = glm::translate(this->_terrainModelL, glm::vec3((this->_width - 2), 0.0f, 0.0f));
 	this->_terrainModelL = glm::scale(this->_terrainModelL, glm::vec3(-1.0f, 1.0f, 1.0f));
@@ -178,13 +174,12 @@ Terrain::Terrain(
 	const std::string& texturePath1, 
 	float yScaleMult, 
 	float yShift,
-	const glm::mat4& terrainModel,
 	const glm::vec3& sunPos,
 	const glm::vec3& sunLightColor)
 :
 _shader(shader),
-_terrainModel(terrainModel),
-_terrainNormalMatrix(glm::mat3(glm::transpose(glm::inverse(terrainModel))))
+_terrainModel(glm::mat4(1.0f)),
+_terrainNormalMatrix(glm::mat3(glm::transpose(glm::inverse(_terrainModel))))
 {
 	int width, height, nChannels;
 	assertFileExists(sourceHeightMapPath);
@@ -197,13 +192,13 @@ _terrainNormalMatrix(glm::mat3(glm::transpose(glm::inverse(terrainModel))))
 	if (width == 1 || height == 1) throw std::exception("Height map must have a width and height dimension of at least 2px");
 	this->_width = width;
 	this->_height = height;
+	this->_heightMap.resize(this->_height * this->_width); // fill out to be referenced later
 
 	this->_populateModelMatrices();
 
 	// load textures
 	this->_textureId0 = _loadTextureJpg(texturePath0.c_str(), GL_TEXTURE0); // texture0
 	this->_textureId1 = _loadTextureJpg(texturePath1.c_str(), GL_TEXTURE1); // texture1
-
 	const float textureDivScaling = 2.0f;
 
 	// vertex generation
@@ -221,18 +216,21 @@ _terrainNormalMatrix(glm::mat3(glm::transpose(glm::inverse(terrainModel))))
 			unsigned short* texel = data + (x + width * z) * nChannels;
 			unsigned short y = texel[0];
 
-			const float xPos = -width / 2.0f + x;
-			const float zPos = -height / 2.0f + z;
+			const float xPos = -width / _resizeFactor + x;
+			const float yPos = (float)y * yScale - yShift;
+			const float zPos = -height / _resizeFactor + z;
 
 			this->_vertices[index].pos = glm::vec3(
 				xPos, // x
-				(float)y * yScale - yShift, // y
+				yPos, // y
 				zPos // z
 			);
 			this->_vertices[index].texture = glm::vec2(
 				xPos / textureDivScaling,
 				zPos / textureDivScaling
 			);
+
+			this->_heightMap[x + width * z] = yPos;
 
 			index++;
 		}
@@ -339,4 +337,104 @@ void Terrain::render(const glm::mat4& view, const glm::mat4& projection, const g
 
 	glBindVertexArray(0);
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+
+float _baryCentricWeightPart1(float x0, float y0, float x1, float y1, float x2, float y2)
+{
+	return (y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2);
+}
+
+float _baryCentricWeightPart2(float x0, float y0, float x1, float y1, float x2, float y2)
+{
+	return (y2 - y1) * (x0 - x2) + (x1 - x2) * (y0 - y2);
+}
+
+float _baryCentricWeightPart3(float x0, float y0, float x1, float y1, float x2, float y2)
+{
+	return (y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2);
+}
+
+
+float Terrain::getWorldHeightAt(float x, float z) const
+{
+	constexpr float allowedError = 0.001f;
+
+	const float xIndex = x + this->_width / _resizeFactor;
+	const float zIndex = z + this->_height / _resizeFactor;
+
+	const float xFloor = std::floor(xIndex);
+	const float zFloor = std::floor(zIndex);
+
+	const int xFloorInt0 = (int)xFloor;
+	const int zFloorInt0 = (int)zFloor;
+
+	if (xFloor < 0 || xFloor >= this->_width || zFloor < 0 || zFloor >= this->_height)
+		throw std::exception("Invalid player position (not on grid)"); // must actually be within the map
+
+	// assume that we are standing exactly on the vertex
+	if (fabs(xIndex - xFloor) < allowedError && fabs(zIndex - zFloor) < allowedError)
+		return this->_getWorldHeight(xFloorInt0, zFloorInt0); // resulting value is already scaled/transformed to world scale
+
+	// otherwise we will interpolate the appropriate height across the triangle.
+	// (Barycentric Coordinates solution)
+
+	// which triangle?
+	//                  0---2   triangle 1
+	//                  | / |
+	//                  1----
+	// or
+	//                  ----2   triangle 2
+	//                  | / |
+	//                  1---3
+	// we compute to what side of the line splitting the 2 triangles our point
+	// (xIndex, zIndex) lies, using the dot products of "1" and "2"
+	const int xFloor1 = xFloorInt0;
+	const int zFloor1 = zFloorInt0 + 1;
+	const int xFloor2 = xFloorInt0 + 1;
+	const int zFloor2 = zFloorInt0;
+
+
+	const float d = (xIndex - xFloor1) * (zFloor2 - zFloor1) - (zIndex - zFloor1) * (xFloor2 - xFloor1);
+	// (d <= 0) -> triangle 1
+	// (d > 0)  -> triangle 2
+
+	// interpolate height (= y coordinate) across the triangle
+	// (mainly referenced this article https://codeplea.com/triangular-interpolation
+	// while implementing but obviously I have read about them separately before)
+
+	// choose triangle 1 (vertex "0") or triangle 2 (vertex "3")
+	const int xFloorOpt = d > 0 ? xFloorInt0 : (xFloorInt0 + 1);
+	const int zFloorOpt = d > 0 ? zFloorInt0 : (zFloorInt0 + 1);
+
+	// get weights (how much every vertex will "contribute" to the final "height" that a point on this triangle should be at)
+	float w1 = _baryCentricWeightPart1(xIndex, zIndex, xFloor1, zFloor1, xFloor2, zFloor2)
+				/ _baryCentricWeightPart1(xFloorOpt, zFloorOpt, xFloor1, zFloor1, xFloor2, zFloor2);
+
+	float w2 = _baryCentricWeightPart2(xIndex, zIndex, xFloorOpt, zFloorOpt, xFloor2, zFloor2)
+				/ _baryCentricWeightPart3(xFloorOpt, zFloorOpt, xFloor1, zFloor1, xFloor2, zFloor2);
+
+	float w3 = 1 - w1 - w2;
+
+	if (w1 < 0 || w2 < 0 || w3 < 0)
+		throw std::exception("Point is not inside triangle!");
+
+	// apply weights to results
+	return (w1 * this->_getWorldHeight(xFloorOpt, zFloorOpt))
+		+ (w2 * this->_getWorldHeight(xFloor1, zFloor1))
+		+ (w3 * this->_getWorldHeight(xFloor2, zFloor2));
+}
+
+float Terrain::_getWorldHeight(int x, int z) const
+{
+	return this->_heightMap[x + this->_width * z];
+}
+
+int Terrain::getWidth() const
+{
+	return this->_width;
+}
+
+int Terrain::getHeight() const
+{
+	return this->_height;
 }

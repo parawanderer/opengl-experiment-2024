@@ -16,6 +16,8 @@ private:
 	Shader* _shader;
 	unsigned int _VBO;
 	unsigned int _VAO;
+
+	static const float _skyboxVertices[];
 };
 
 #endif

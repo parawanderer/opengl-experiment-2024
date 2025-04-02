@@ -23,8 +23,7 @@ public:
 		const std::string& texturePath0, 
 		const std::string& texturePath1, 
 		float yScaleMult, 
-		float yShift, 
-		const glm::mat4& terrainModel,
+		float yShift,
 		const glm::vec3& sunPos,
 		const glm::vec3& sunLightColor);
 
@@ -32,10 +31,18 @@ public:
 	 * \brief render mesh strip by strip
 	 */
 	void render(const glm::mat4&view, const glm::mat4& projection, const glm::vec3& viewPos);
+
+	float getWorldHeightAt(float x, float z) const;
+	int getWidth() const;
+	int getHeight() const;
 private:
+	static const float _resizeFactor;
+
 	Shader* _shader;
 	int _width;
 	int _height;
+	std::vector<float> _heightMap;
+
 	std::vector<TerrainVertex> _vertices;
 	std::vector<unsigned int> _indices;
 	unsigned int _VAO;
@@ -62,13 +69,13 @@ private:
 	glm::mat3 _terrainNormalMatrixLB;
 	glm::mat4 _terrainModelRB;
 	glm::mat3 _terrainNormalMatrixRB;
-
-
 	std::vector<std::pair<glm::mat4, glm::mat3>> _renderMatrices;
 
 	void _insertNormContribution(unsigned int index0, unsigned int index1, unsigned int index2);
 	static unsigned int _loadTextureJpg(const char* texturePath, GLenum textureUnit);
 	void _populateModelMatrices();
+
+	float _getWorldHeight(int x, int z) const;
 };
 
 #endif

@@ -10,16 +10,25 @@ class Camera
 public:
 	Camera(glm::vec3 initialPos, glm::vec3 initialFront, int initialWidth, int initialHeight, float speedMultiplier);
 
-	glm::mat4 getView() const;
-	glm::vec3 getPos() const;
-	float getFov() const;
+	/**
+	 * \return The view transformation matrix
+	 */
+	virtual glm::mat4 getView() const;
+	/**
+	 * \return The position of the camera
+	 */
+	virtual glm::vec3 getPos() const;
+	/**
+	 * \return the FOV of the camera in degrees
+	 */
+	virtual float getFov() const;
 
-	void onNewFrame();
-	void processInput(GLFWwindow* window);
-	void processScroll(GLFWwindow* window, double xoffset, double yoffset);
-	void processMouse(GLFWwindow* window, double xpos, double ypos);
+	virtual void onNewFrame();
+	virtual void processInput(GLFWwindow* window);
+	virtual void processScroll(GLFWwindow* window, double xoffset, double yoffset);
+	virtual void processMouse(GLFWwindow* window, double xpos, double ypos);
 
-private:
+protected:
 	glm::vec3 _cameraPos;
 	glm::vec3 _cameraFront;
 	glm::vec3 _cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);

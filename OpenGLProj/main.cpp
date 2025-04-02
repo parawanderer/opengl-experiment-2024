@@ -20,6 +20,7 @@
 #include "stb_image.h"
 #include "Terrain.h"
 #include "Camera.h"
+#include "PlayerCamera.h"
 #include "Skybox.h"
 
 #define INITIAL_WIDTH 1280
@@ -28,12 +29,13 @@
 
 #pragma region STATE
 
-Camera camera(
+PlayerCamera camera(
 	glm::vec3(0.0f, 118.0f, 0.0f),
 	glm::vec3(0.0f, 0.0f, -1.0f), 
 	INITIAL_WIDTH, 
 	INITIAL_HEIGHT, 
-	40.0f
+	20.0f,
+	2.0f
 );
 
 const float RENDER_DISTANCE = 1500.0f;
@@ -68,6 +70,11 @@ void processInput(GLFWwindow* window)
 		glfwSetWindowShouldClose(window, true);
 
 	camera.processInput(window);
+}
+
+void processKey(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	camera.processKey(window, key, scancode, action, mods);
 }
 
 
@@ -106,6 +113,7 @@ int main()
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(window, mouseCallback);
 	glfwSetScrollCallback(window, scrollCallback);
+	glfwSetKeyCallback(window, processKey);
 
 # pragma endregion
 
@@ -196,7 +204,6 @@ int main()
 	const float yScaleMult = 64.0f;
 	const float yShift = 32.0f;
 	Shader terrainShader = Shader::fromFiles("terrain.vert", "terrain.frag");
-	const glm::mat4 terrainModel = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
 	Terrain sandTerrain(
 		&terrainShader, 
 		"resources/final-dunes-first-try.png", // <- edited version of https://www.florisgroen.com/sandy-desert-3d/ 
@@ -207,14 +214,16 @@ int main()
 		"resources/sand_texture2.jpg",
 		yScaleMult, 
 		yShift,
-		terrainModel,
 		sunPos,
 		sunLightColor
 	);
+
+	camera.setTerrain(&sandTerrain);
 #pragma endregion
 
 # pragma region MAIN_LOOP
 
+	camera.teleportToFloor();
 	while(!glfwWindowShouldClose(window))
 	{
 		camera.onNewFrame();

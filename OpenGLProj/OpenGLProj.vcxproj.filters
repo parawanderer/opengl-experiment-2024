@@ -63,6 +63,9 @@
     <ClCompile Include="ResourceUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PlayerCamera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -135,6 +138,9 @@
       <Filter>Header Files\old</Filter>
     </ClInclude>
     <ClInclude Include="ResourceUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerCamera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

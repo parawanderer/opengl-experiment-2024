@@ -3,7 +3,7 @@
 #include "ErrorUtils.h"
 #include "stb_image.h"
 
-float _skyboxVertices[] = {
+const float Skybox::_skyboxVertices[] = {
 	// positions          
 	-1.0f,  1.0f, -1.0f,
 	-1.0f, -1.0f, -1.0f,

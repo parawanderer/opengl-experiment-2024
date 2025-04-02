@@ -12,7 +12,7 @@
 # define GET_LOCATION glGetUniformLocation(this->ID, name.c_str())
 
 
-unsigned int _compileShader(const char *shaderSourceCode, GLenum type)
+unsigned int Shader::_compileShader(const char *shaderSourceCode, GLenum type)
 {
     int success;
     const unsigned int shaderId = glCreateShader(type);
@@ -33,7 +33,7 @@ unsigned int _compileShader(const char *shaderSourceCode, GLenum type)
     return shaderId;
 }
 
-void _checkLinkSuccess(GLuint shaderProgramId)
+void Shader::_checkLinkSuccess(GLuint shaderProgramId)
 {
     int  success;
     glGetProgramiv(shaderProgramId, GL_LINK_STATUS, &success);
@@ -45,7 +45,7 @@ void _checkLinkSuccess(GLuint shaderProgramId)
     }
 }
 
-std::string _readFile(const std::string& fileName)
+std::string Shader::_readFile(const std::string& fileName)
 {
     std::string content;
     std::ifstream file;
