@@ -41,6 +41,7 @@
 #include "WorldMathUtils.h"
 #include "PlayerState.h"
 #include "CarriedGameObject.h"
+#include "EffectConstants.h"
 #include "FileConstants.h"
 #include "GameObjectConstants.h"
 #include "NomadCharacter.h"
@@ -230,27 +231,26 @@ int main()
 		&timeMgr,
 		TEXTURE_PARTICLE_DUST,
 		sandTerrain.getWorldHeightVecFor(104, -106),
-		glm::vec3(0, -4.0f, 0),
-		20.0f,
-		6000,
-		glm::vec2(5.0f)
+		PARTCILE_SANDWORMDUST_LIFETIME,
+		PARTCILE_SANDWORMDUST_COUNT,
+		PARTCILE_SANDWORMDUST_SPAWN_PER_FRAME,
+		PARTCILE_SANDWORMDUST_SIZE_W_H
 	);
 
 	ParticleSystem particles2(
 		&timeMgr,
 		TEXTURE_PARTICLE_DUST,
 		sandTerrain.getWorldHeightVecFor(55, -106),
-		glm::vec3(0, -4.0f, 0),
-		20.0f,
-		6000,
-		glm::vec2(5.0f)
+		PARTCILE_SANDWORMDUST_LIFETIME,
+		PARTCILE_SANDWORMDUST_COUNT,
+		PARTCILE_SANDWORMDUST_SPAWN_PER_FRAME,
+		PARTCILE_SANDWORMDUST_SIZE_W_H
 	);
 
 	std::vector<ParticleSystem*> particles = { &particles1, &particles2 };
 #pragma endregion
 
 #pragma region MODELTRANSFORMS
-
 	const glm::vec3 smallOffsetY = glm::vec3(0.0, 0.1, 0.0);
 
 	glm::mat4 thumper1Model = glm::mat4(1.0f);
@@ -293,7 +293,6 @@ int main()
 	containerL3Model = glm::rotate(containerL3Model, glm::radians(15.0f), glm::vec3(0.0, 0.0, 1.0));
 	containerL3Model = glm::scale(containerL3Model, glm::vec3(0.02f));
 	containerLObject3.setModelTransform(containerL3Model);
-
 #pragma endregion
 
 	// state

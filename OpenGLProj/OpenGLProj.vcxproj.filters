@@ -401,8 +401,11 @@
     <ClInclude Include="OrnithopterCharacter.h">
       <Filter>Header Files\game</Filter>
     </ClInclude>
+    <ClInclude Include="EffectConstants.h">
+      <Filter>Header Files\game</Filter>
+    </ClInclude>
     <ClInclude Include="PlayerInteractionManger.h">
-      <Filter>Source Files\game</Filter>
+      <Filter>Header Files\game</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
