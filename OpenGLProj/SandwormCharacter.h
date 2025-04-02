@@ -2,6 +2,7 @@
 #include "AnimatedEntity.h"
 #include "Animator.h"
 #include "RenderableGameObject.h"
+#include "SoundManager.h"
 #include "Terrain.h"
 #include "WorldTimeManager.h"
 
@@ -18,8 +19,9 @@ public:
 		ABOVE_GROUND = 1
 	};
 
-	SandWormCharacter(const WorldTimeManager* time, const Terrain* terrain, RenderableGameObject* sandwormGameObject, AnimationSet* animations, float initialX, float initialZ);
+	SandWormCharacter(const WorldTimeManager* time, const Terrain* terrain, SoundManager* sound, RenderableGameObject* sandwormGameObject, AnimationSet* animations, float initialX, float initialZ);
 
+	~SandWormCharacter() override;
 
 	void onNewFrame() override;
 
@@ -28,6 +30,7 @@ public:
 private:
 	const WorldTimeManager* _time;
 	const Terrain* _terrain;
+	SoundManager* _sound;
 
 	RenderableGameObject* _model;
 	Animator _animator;
@@ -44,4 +47,9 @@ private:
 	float _movementStartTime = 0.0f;
 
 	float _nextBehaviourChoiceAt = 0.0f;
+
+	irrklang::ISound* _backgroundNoise;
+	irrklang::ISound* _inFrontNoise;
+
+	void stopAndClearCurrentSounds();
 };

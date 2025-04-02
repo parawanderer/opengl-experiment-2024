@@ -45,7 +45,8 @@ void main()
         }
 
         FragPos = vec3(model * totalPosition);
-        Normal = normalMatrix * aNormal;
+        //Normal = normalMatrix * aNormal;
+        Normal = normalMatrix * totalNormal;
         gl_Position = projection * view * model * totalPosition;
 
     } else { // static model

@@ -25,7 +25,7 @@ public:
 
 
 	Thumper(const WorldTimeManager* time, SoundManager* sound, SphericalBoxedGameObject* thumper, AnimationSet* animations);
-	~Thumper();
+	~Thumper() override;
 
 	void onNewFrame() override;
 	void draw(Shader& shader) override;

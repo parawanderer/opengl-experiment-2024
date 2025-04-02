@@ -298,13 +298,13 @@ int main()
 	camMgr.getPlayerCamera()->addSubscriber(&player);
 
 	NomadCharacter nomadCharacter(&timeMgr, &sandTerrain, &sound, &nomadObject, &nomadAnimations, 20.0f, -20.0f);
-	SandWormCharacter sandWormCharacter(&timeMgr, &sandTerrain, &sandWormObject, &sandWormAnimations, 80.0f, 50.0f);
+	SandWormCharacter sandWormCharacter(&timeMgr, &sandTerrain, &sound, &sandWormObject, &sandWormAnimations, 80.0f, 50.0f);
 	OrnithopterCharacter ornithopterCharacter(&timeMgr, &sound, &ornithopterObject, &ornithopterAnimations);
 
 	Thumper thumper1(&timeMgr, &sound, &thumperObj1, &thumperAnimations);
 	thumper1.setPosition(sandTerrain.getWorldHeightVecFor(5.0f, 6.0f) + smallOffsetY);
 	Thumper thumper2(&timeMgr, &sound, &thumperObj2, &thumperAnimations);
-	thumper2.setPosition(sandTerrain.getWorldHeightVecFor(9.0f, 10.0f) + smallOffsetY);
+	thumper2.setPosition(sandTerrain.getWorldHeightVecFor(153.8f, -165.6f) + smallOffsetY);
 
 	// a bunch of classes that require their onNewFrame() function to be called:
 	const std::vector<FrameRequester*> frameRequesters = { &nomadCharacter, &sandWormCharacter, &thumper1, &thumper2, &ornithopterCharacter, &particles1, &particles2 };
