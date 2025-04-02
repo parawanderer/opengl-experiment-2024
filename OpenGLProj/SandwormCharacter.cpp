@@ -7,10 +7,10 @@
 
 
 constexpr auto UNDERGROUND_OFFSET = -35.0f;
-constexpr auto MOVEMENT_SPEED_M_PER_SEC = 20.0f;
+constexpr auto MOVEMENT_SPEED_M_PER_SEC = 30.0f;
 constexpr auto ANIMATION_TRANSITION_TIME = 0.2f;
 constexpr auto HEAD_RADIUS = 24.0f; // in meters
-constexpr auto PARTICLE_OFFSET_FRONT = 50.0f; // in meters
+constexpr auto PARTICLE_OFFSET_FRONT = 70.0f; // in meters
 constexpr auto PARTICLE_SPAWN_ALONG_LINE_LENGTH = 8.0f; // in meters
 constexpr auto MAX_OFFSET_Y = 0.0f; // in meters
 constexpr auto GO_UP_PER_FRAME = 0.1f;

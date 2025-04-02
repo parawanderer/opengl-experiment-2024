@@ -138,7 +138,7 @@ void renderTerrain(Shader& terrainShader, Terrain& terrain, const glm::mat4& vie
 
 
 float lastButtonChoiceAt = 0.0f;
-const float buttonCooldown = 0.1f;
+const float buttonCooldown = 0.2f;
 // Assignment-only, not particularly great code, but it will make for a nice video :)
 // this will be removed after the assignment demo video, which is why I didn't write a nicer dedicated class for this, unlike other project features.
 void handleAssignmentOnlyPuppetController(const float t, GLFWwindow* window, SandWormCharacter& sandWormCharacter, NomadCharacter& nomadCharacter, const glm::vec3& cameraPos)
