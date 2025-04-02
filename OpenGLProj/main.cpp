@@ -228,17 +228,12 @@ int main()
 #pragma region MODELTRANSFORMS
 
 	const glm::vec3 smallOffsetY = glm::vec3(0.0, 0.1, 0.0);
-	const float thumperScale = 0.7f;
 
 	glm::mat4 thumper1Model = glm::mat4(1.0f);
 	thumper1Model = glm::translate(thumper1Model, sandTerrain.getWorldHeightVecFor(5.0f, 6.0f) + smallOffsetY);
-	thumper1Model = glm::scale(thumper1Model, glm::vec3(thumperScale));
-	thumperObj1.setModelTransform(thumper1Model);
 
 	glm::mat4 thumper2Model = glm::mat4(1.0f);
 	thumper2Model = glm::translate(thumper2Model, sandTerrain.getWorldHeightVecFor(9.0f, 10.0f) + smallOffsetY);
-	thumper2Model = glm::scale(thumper2Model, glm::vec3(thumperScale));
-	thumperObj2.setModelTransform(thumper2Model);
 
 	glm::mat4 nomadModel = glm::mat4(1.0f);
 	nomadModel = glm::translate(nomadModel, sandTerrain.getWorldHeightVecFor(6.0f, 6.0f) + smallOffsetY);
@@ -295,7 +290,9 @@ int main()
 	NomadCharacter nomadCharacter(&timeMgr, &sandTerrain, &nomad, &nomadAnimations, 20.0f, -20.0f);
 
 	Thumper thumper1(&timeMgr, &thumperObj1, &thumperAnimations);
+	thumper1.setModelTransform(thumper1Model);
 	Thumper thumper2(&timeMgr, &thumperObj2, &thumperAnimations);
+	thumper2.setModelTransform(thumper2Model);
 
 
 	std::set<Thumper*> worldItemsThatPlayerCanPickUp = { &thumper1, &thumper2 };
@@ -304,7 +301,7 @@ int main()
 	std::vector<AnimatedEntity*> independentAnimatedEntities = { &nomadCharacter };
 
 
-	const float worldInteractionCooldownSecs = 1.0f;
+	const float worldInteractionCooldownSecs = 0.2f;
 	float lastInteractionAt = 0.0f;
 
 	// ============ [ MAIN LOOP ] ============
@@ -335,8 +332,8 @@ int main()
 #pragma endregion
 
 #pragma region PLAYER_INTERACTIONS
-		const bool interactionCooldownPassed = t - lastInteractionAt > worldInteractionCooldownSecs;
-		if (result != nullptr && interactionCooldownPassed && glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+		bool interactionCooldownPassed = t - lastInteractionAt > worldInteractionCooldownSecs;
+		if (interactionCooldownPassed && result != nullptr && glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
 		{
 			switch(result->getState())
 			{
@@ -348,25 +345,29 @@ int main()
 				break;
 			}
 			lastInteractionAt = t;
+			interactionCooldownPassed = false;
 		}
 
-		if (!player.hasCarriedItem() && glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) // pick up the item
+		if (interactionCooldownPassed && !player.hasCarriedItem() && glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) // pick up the item
 		{
 			result->setState(Thumper::STATE::DISABLED); // disable when picking up
 			worldItemsThatPlayerCanPickUp.erase(result);
 			player.setCarriedItem(CarriedGameObject(result));
+			lastInteractionAt = t;
+			interactionCooldownPassed = false;
 		}
 
-		if (camMgr.isPlayerCamera() && player.hasCarriedItem() && glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) // drop the item
+		if (interactionCooldownPassed && camMgr.isPlayerCamera() && player.hasCarriedItem() && glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) // drop the item
 		{
 			// drop the item
 			Thumper* thump = player.removeCarriedItem().getObject();
 			glm::mat4 newModel = glm::mat4(1.0f);
 			// translate position just comes out to a nice "in front of the player" position
 			newModel = glm::translate(newModel, sandTerrain.getWorldHeightVecFor(cameraPos.x + (cameraFront.x * 2.5f), cameraPos.z + (cameraFront.z * 2.5f)) + smallOffsetY);
-			newModel = glm::scale(newModel, glm::vec3(thumperScale));
-			thump->getObjectModel()->setModelTransform(newModel);
+			thump->setModelTransform(newModel);
 			worldItemsThatPlayerCanPickUp.insert(thump);
+			lastInteractionAt = t;
+			interactionCooldownPassed = false;
 		}
 #pragma endregion
 
@@ -426,9 +427,9 @@ int main()
 		if (player.hasCarriedItem()) // dynamic "in player hand" items
 		{
 			// (the perspective on this thing doesn't really make sense in the world)
-			glm::mat4 model = CameraUtils::getCarriedItemModelTransform(view, t, camMgr.getCurrentCamera()->isMoving(), camMgr.getCurrentCamera()->isSpeeding(), thumperScale);
+			glm::mat4 model = CameraUtils::getCarriedItemModelTransform(view, t, camMgr.getCurrentCamera()->isMoving(), camMgr.getCurrentCamera()->isSpeeding());
 			Thumper* item = player.getCarriedItem().getObject();
-			item->getObjectModel()->setModelTransform(model);
+			item->setModelTransform(model);
 			item->draw(genericShader);
 		}
 

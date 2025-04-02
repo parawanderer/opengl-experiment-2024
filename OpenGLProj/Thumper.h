@@ -31,6 +31,8 @@ public:
 	float getRadiusSphericalBoundingBox() override;
 	glm::vec3 getBoundMidPoint() override;
 
+	void setModelTransform(const glm::mat4& model);
+
 private:
 	WorldTimeManager* _time;
 	SphericalBoxedGameObject* _model;

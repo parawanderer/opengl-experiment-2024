@@ -5,7 +5,7 @@
 
 namespace CameraUtils
 {
-	glm::mat4 getCarriedItemModelTransform(const glm::mat4& view, const float t, bool isMoving, bool isSpeeding, const float objectScale = 1.0f);
+	glm::mat4 getCarriedItemModelTransform(const glm::mat4& view, const float t, bool isMoving, bool isSpeeding);
 }
 
 #endif

@@ -5,11 +5,15 @@ const std::string DISABLED_ANIM = "static";
 const std::string ACTIVE_ANIM = "thump";
 const std::string ROTATING_TOP_ANIM = "activate";
 
+const float THUMPER_MODEL_SCALE = 1.0f;
+
 Thumper::Thumper(WorldTimeManager* time, SphericalBoxedGameObject* thumper, AnimationManager* animations):
 _time(time),
 _model(thumper),
 _animator(animations)
-{}
+{
+	this->_animator.playAnimation(DISABLED_ANIM);
+}
 
 void Thumper::onNewFrame()
 {
@@ -61,4 +65,10 @@ float Thumper::getRadiusSphericalBoundingBox()
 glm::vec3 Thumper::getBoundMidPoint()
 {
 	return this->_model->getWorldMidPoint();
+}
+
+void Thumper::setModelTransform(const glm::mat4& model)
+{
+	glm::mat4 modelFull = model * glm::scale(glm::mat4(1.0), glm::vec3(THUMPER_MODEL_SCALE));
+	this->_model->setModelTransform(modelFull);
 }
