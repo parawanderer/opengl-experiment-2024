@@ -38,7 +38,7 @@ Build it by opening the `OpenGLProj.sln` file in Visual Studio and using the "bu
 
 ## References
 
-As a mainly generalist SWE with a bit of an ancient background in graphics design/digital illustration, I never considered what types of algorithms and optimisations are relevant/useful when it comes to **3D rendering**.
+As a mainly generalist SWE with a bit of an ancient background in graphic design/digital illustration, I never considered what types of algorithms and optimisations are relevant/useful when it comes to **3D rendering**.
 
 So reading and implementing these papers & articles was interesting and insightful:
 
