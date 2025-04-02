@@ -56,15 +56,17 @@ void PlayerCamera::processInput(GLFWwindow* window)
 		this->_yDisplacement = this->_yDisplacement + (this->_currentYVelocity * this->getDeltaTime()) + (0.5 * G * (this->getDeltaTime() * this->getDeltaTime())); // update y pos
 		this->_currentYVelocity = (G * this->getDeltaTime()) + this->_currentYVelocity; // update remaining velocity
 
-		if (this->_yDisplacement <= 0.0f) // reached limit of displacement
+		if (this->_yDisplacement <= 0.0f) // reached limit of displacement -> jump end
 		{
 			this->_yDisplacement = 0.0f;
 			this->_currentYVelocity = 0;
 			this->_isJumping = false;
+
+			for (auto sub : this->_subscribers) sub->onStopJumping();
 		}
 	}
-
-	const float sprintingMultiplier = this->_isShiftPressed ? 2.0f : 1.0f;
+	const bool isSprinting = this->_isShiftPressed;
+	const float sprintingMultiplier = isSprinting ? 2.0f : 1.0f;
 	const float jumpingMultiplier = this->_isJumping ? 0.5 : 1.0f; // decrease amount of (x,z) movement we can do while jumping
 	const float cameraSpeed = this->getDeltaTime() * (this->_speedMultiplier * sprintingMultiplier * jumpingMultiplier);
 	bool hasMoved = false;
@@ -101,6 +103,30 @@ void PlayerCamera::processInput(GLFWwindow* window)
 		// ignore the 'y' we determined above with this "Player" camera,
 		// we have our own "y" that we will get (potentially interpolate) from the height map, using the terrain
 		this->_cameraPos.y = this->_terrain->getWorldHeightAt(this->_cameraPos.x, this->_cameraPos.z) + this->_playerHeight;
+
+		if (!this->_isMoving || (this->_lastShiftPressed != isSprinting)) // if we have just started moving or we switched walk->sprint or sprint->walk
+		{
+			if (isSprinting)
+			{
+				for (auto sub : this->_subscribers) sub->onStartRunning();
+			}
+			else
+			{
+				for (auto sub : this->_subscribers) sub->onStartWalking();
+			}
+		}
+		for (auto sub : this->_subscribers) sub->onNewPos(this->_cameraPos);
+
+		this->_isMoving = true;
+	}
+	else
+	{
+		if (this->_isMoving)
+		{
+			for (auto sub : this->_subscribers) sub->onStopMoving();
+		}
+
+		this->_isMoving = false;
 	}
 
 	if (!this->_isJumping && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
@@ -108,12 +134,10 @@ void PlayerCamera::processInput(GLFWwindow* window)
 		// jump when started jumping
 		this->_isJumping = true;
 		this->_currentYVelocity = this->_jumpStartVelocity;
-		// 1. first we kind of "sit down" (camera moves down for a few frames) -> ~ cos(t) function until pi
-		// 2. then we do the traveling with upwards velocity in the y direction. The x & z direction stay as they are for now
-		// 3. there'll be a max height where the acceleration due to gravity counteracts the velocity
-		// 4. then we fall down (only gravity acts on us)
-
+		for (auto sub : this->_subscribers) sub->onStartJumping();
 	}
+
+	this->_lastShiftPressed = isSprinting;
 }
 
 void PlayerCamera::processScroll(GLFWwindow* window, double xoffset, double yoffset)
@@ -159,6 +183,11 @@ void PlayerCamera::teleportToFloor()
 	}
 }
 
+void PlayerCamera::addSubscriber(PlayerCameraEventSubscriber* subscriber)
+{
+	this->_subscribers.push_back(subscriber);
+}
+
 bool PlayerCamera::isAnyMovementKeyPressed() const
 {
 	return this->_keyStates.W || this->_keyStates.A || this->_keyStates.S || this->_keyStates.D;
@@ -187,4 +216,9 @@ glm::vec3 PlayerCamera::getPosIncludingJump() const
 float PlayerCamera::getFov() const
 {
 	return Camera::getFov();
+}
+
+float PlayerCamera::getPlayerHeight() const
+{
+	return this->_playerHeight;
 }

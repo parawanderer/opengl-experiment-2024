@@ -50,13 +50,13 @@ constexpr auto SHADER_TERRAIN_FRAG = "terrain.frag";
 
 // MODELS
 
-constexpr auto MODEL_ORNITHOPTER = "resources/models/dune-ornithopter/ornithopter_edit.dae";
+constexpr auto MODEL_ORNITHOPTER = "resources/models/dune-ornithopter/OrnithopterDuneAnimated.fbx"; // animation on this by me
 
-constexpr auto MODEL_THUMPER = "resources/models/thumper_dune/Thumper.fbx";
+constexpr auto MODEL_THUMPER = "resources/models/thumper_dune/Thumper.fbx"; // animation on this by me
 
-constexpr auto MODEL_NOMAD = "resources/models/rust-nomad/RustNomad.fbx";
+constexpr auto MODEL_NOMAD = "resources/models/rust-nomad/RustNomad.fbx"; // animations from https://www.mixamo.com/ but I had to combine them and make them work which took a long time
 
-constexpr auto MODEL_SANDWORM = "resources/models/sandworm2/Sandworm.fbx";
+constexpr auto MODEL_SANDWORM = "resources/models/sandworm2/Sandworm.fbx"; // model and animations by me (followed a tutorial)
 
 constexpr auto MODEL_CONTAINER_SMALL = "resources/models/military-container-free/Military_Container.dae";
 

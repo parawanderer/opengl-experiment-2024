@@ -82,6 +82,7 @@ bool PlayerInteractionManger::handlePickUpItemInteraction(Thumper* mouseRayTarge
 	if (mouseRayTarget != nullptr && !this->_player->hasCarriedItem() && glfwGetKey(this->_window, GLFW_KEY_C) == GLFW_PRESS) // pick up the item
 	{
 		mouseRayTarget->setState(Thumper::STATE::DISABLED); // disable when picking up
+		mouseRayTarget->setIsCarried(true);
 		this->_worldItemsThatPlayerCanPickUp->erase(mouseRayTarget);
 		this->_player->setCarriedItem(CarriedGameObject(mouseRayTarget));
 		return true;
@@ -95,12 +96,17 @@ bool PlayerInteractionManger::handleDropItemInteraction(const glm::vec3& cameraP
 	{
 		// drop the item
 		Thumper* thump = this->_player->removeCarriedItem().getObject();
-		glm::mat4 newModel = glm::mat4(1.0f);
-		// translate position just comes out to a nice "in front of the player" position
-		newModel = glm::translate(newModel, 
-			this->_terrain->getWorldHeightVecFor(cameraPos.x + (cameraFront.x * 2.5f), cameraPos.z + (cameraFront.z * 2.5f)) 
-			+ ITEM_PLACEMENT_SMALL_OFFSET_Y);
-		thump->setModelTransform(newModel);
+
+		// glm::mat4 newModel = glm::mat4(1.0f);
+		// // translate position just comes out to a nice "in front of the player" position
+		// newModel = glm::translate(newModel, 
+		// 	this->_terrain->getWorldHeightVecFor(cameraPos.x + (cameraFront.x * 2.5f), cameraPos.z + (cameraFront.z * 2.5f)) 
+		// 	+ ITEM_PLACEMENT_SMALL_OFFSET_Y);
+		//thump->updateModelTransform(newModel);
+
+		thump->setPosition(this->_terrain->getWorldHeightVecFor(cameraPos.x + (cameraFront.x * 2.5f), cameraPos.z + (cameraFront.z * 2.5f)) + ITEM_PLACEMENT_SMALL_OFFSET_Y);
+		thump->setIsCarried(false);
+
 		this->_worldItemsThatPlayerCanPickUp->insert(thump);
 		return true;
 	}

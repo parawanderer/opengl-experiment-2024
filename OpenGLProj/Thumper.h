@@ -3,6 +3,7 @@
 #include "AnimatedEntity.h"
 #include "AnimationSet.h"
 #include "Animator.h"
+#include "SoundManager.h"
 #include "SphericalBoundingBoxedEntity.h"
 #include "SphericalBoxedGameObject.h"
 #include "WorldTimeManager.h"
@@ -23,27 +24,47 @@ public:
 	};
 
 
-	Thumper(WorldTimeManager* time, SphericalBoxedGameObject* thumper, AnimationSet* animations);
+	Thumper(const WorldTimeManager* time, SoundManager* sound, SphericalBoxedGameObject* thumper, AnimationSet* animations);
+	~Thumper();
 
 	void onNewFrame() override;
 	void draw(Shader& shader) override;
 
 	void setState(STATE newState);
 	STATE getState() const;
+	void setIsCarried(bool isCarried);
 
 	SphericalBoxedGameObject* getObjectModel() const;
 
 	float getRadiusSphericalBoundingBox() override;
 	glm::vec3 getBoundMidPoint() override;
 
-	void setModelTransform(const glm::mat4& model);
+	void setPosition(const glm::vec3& newPosition);
+
+	void drawCarried(Shader& shader, const glm::mat4& view, const float t, bool isMoving, bool isSpeeding);
 
 private:
-	WorldTimeManager* _time;
+	const WorldTimeManager* _time;
+	SoundManager* _sound;
+
 	SphericalBoxedGameObject* _model;
 	Animator _animator;
 
+	irrklang::ISound* _currentSound = nullptr;
+
+	glm::vec3 _currentPos = glm::vec3(0.0, 0.0, 0.0);
+	bool _isCarried = false;
 	STATE _state = STATE::DISABLED;
+
+	bool _isActivating = false;
+	float _activatingSwitchToActiveAt = 0.0f;
+
+	void handleActivation();
+	void handleDeactivation();
+
+	void stopAndClearCurrentSound();
+
+	void updateModelTransform();
 };
 
 #endif

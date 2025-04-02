@@ -27,11 +27,16 @@ void Animator::updateAnimation(float deltaTime)
 	}
 }
 
-// void Animator::playAnimation(Animation* animation)
-// {
-// 	this->_currentAnimation = animation;
-// 	this->_currentTime = 0.0f;
-// }
+Animation* Animator::getAnimationByName(const std::string& animationName) const
+{
+	return this->_animationManager->getAnimation(animationName);
+}
+
+void Animator::playAnimation(Animation* animation)
+{
+	this->_currentAnimation = animation;
+	this->_currentTime = 0.0f;
+}
 
 void Animator::playAnimation(const std::string& animationName)
 {

@@ -9,6 +9,7 @@
 #define SMALL_Y_OFFSET  glm::vec3(0.0f, 0.1f, 0.0f)
 #define TIME_BETWEEN_CHOOSING_BEHAVIOURS_SEC 20 
 
+#define NOMAD_HEIGHT 1.9f
 
 // out of the ones available in its .fbx file...
 // the animations are sources from https://www.mixamo.com/#/
@@ -33,15 +34,27 @@ const std::string CRAWLING_ANIM = "crawling";
 const std::string GETTING_UP_ANIM = "gettingup";
 const std::string LOOK_BEHIND_RIGHT_ANIM = "lookright";
 
+// these are reused from player actually
+// the footsteps don't actually match the animation but I am too lazy to fix this at the moment
+// probably fixable by just speeding up the sound for this character specifically
+const std::string NOMAD_SAND_WALKING_TRACK = "006142914-footsteps-walking-sand-01-loop.mp3";
+const std::string NOMAD_SAND_RUNNING_TRACK = "098878381-sand-running-footsteps-loop-01.mp3";
+
 // we can seed the random generator or not. Doesn't really matter for now.
-NomadCharacter::NomadCharacter(const WorldTimeManager* time, const Terrain* terrain, RenderableGameObject* nomadGameObject, AnimationSet* animations, float initialX, float initialZ) :
+NomadCharacter::NomadCharacter(const WorldTimeManager* time, const Terrain* terrain, SoundManager* sound, RenderableGameObject* nomadGameObject, AnimationSet* animations, float initialX, float initialZ) :
 	_time(time),
 	_terrain(terrain),
+	_sound(sound),
 	_model(nomadGameObject),
 	_animator(animations),
 	_currentPos(terrain->getWorldHeightVecFor(initialX, initialZ) + SMALL_Y_OFFSET),
 	_currentFront(glm::vec3(0.0, 0.0, -1.0))
 {}
+
+NomadCharacter::~NomadCharacter()
+{
+	this->stopAndClearCurrentSound();
+}
 
 void NomadCharacter::onNewFrame()
 {
@@ -70,10 +83,14 @@ void NomadCharacter::onNewFrame()
 			this->_nextBehaviourChoiceAt = currentTime + (rand() % TIME_BETWEEN_CHOOSING_BEHAVIOURS_SEC + 1); // <- seconds
 			this->_movementState = MOVEMENT_STATE::IDLE; // just stand still
 			this->_animator.playAnimation(IDLE_ANIMS[rand() % IDLE_ANIMS.size()]);
+			this->stopAndClearCurrentSound();
 			return;
 		}
 		this->defineWalkPlan(currentTime);
 		this->_animator.playAnimation(WALKING_ANIM);
+
+		this->stopAndClearCurrentSound();
+		this->_currentSound = this->_sound->playTracked3D(NOMAD_SAND_WALKING_TRACK, true, this->_currentPos);
 	}
 
 	// TODO: it is possible to do smooth interpolation between the various animations rather than having sharp cut-offs.
@@ -89,6 +106,12 @@ void NomadCharacter::onNewFrame()
 	model = glm::rotate(model, -glm::radians(this->_yaw) + glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // orient character along his movement direction
 	model = glm::scale(model, glm::vec3(0.01f));
 	this->_model->setModelTransform(model);
+
+
+	if (this->_currentSound != nullptr)
+	{
+		this->_currentSound->setPosition(SoundManager::convert(this->_currentPos));
+	}
 }
 
 void NomadCharacter::draw(Shader& shader)
@@ -125,4 +148,14 @@ void NomadCharacter::defineWalkPlan(const float currentTime)
 	this->_movementStartTime = currentTime;
 	this->_nextBehaviourChoiceAt = currentTime + (desiredWalkDistance / WALKING_SPEED_M_PER_SEC); // (seconds) (character will walk desiredWalkDistance in this amount of seconds if he walks at WALKING_SPEED_M_PER_SEC)
 	this->_movementState = MOVEMENT_STATE::WALKING;
+}
+
+void NomadCharacter::stopAndClearCurrentSound()
+{
+	if (this->_currentSound != nullptr)
+	{
+		this->_currentSound->stop();
+		this->_currentSound->drop();
+		this->_currentSound = nullptr;
+	}
 }

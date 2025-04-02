@@ -14,7 +14,6 @@ class Animation
 public:
 	Animation() = default;
 	~Animation() = default;
-	//Animation(const std::string& animationPath, Model* model);
 
 	Animation(aiAnimation* animation, Model* model);
 
@@ -22,20 +21,17 @@ public:
 
 	float getTicksPerSecond() const;
 	float getDuration() const;
-	//const AssimpNodeData& getRootNode() const;
+
 	std::map<std::string, BoneInfo>& getBoneIdMap();
 
 private:
 	float _duration; // animation duration
 	int _ticksPerSecond;
 	std::vector<Bone> _bones;
-	//AssimpNodeData _rootNode;
 	std::map<std::string, BoneInfo> _boneInfoMap;
 
 
 	void readMissingBones(const aiAnimation* animation, Model* model);
-
-	//void readHierarchyData(AssimpNodeData& dest, const aiNode* src);
 };
 
 #endif

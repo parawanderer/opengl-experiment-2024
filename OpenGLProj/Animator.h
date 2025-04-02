@@ -19,6 +19,16 @@ public:
 	void updateAnimation(float deltaTime);
 
 	/**
+	 * \brief Get animation details by animation name
+	 */
+	Animation* getAnimationByName(const std::string& animationName) const;
+
+	/**
+	 * \brief play a specific animation. Animation should have been retreived using getAnimationByName();
+	 */
+	void playAnimation(Animation* animation);
+
+	/**
 	 * \brief Play the animation by name
 	 */
 	void playAnimation(const std::string& animationName);

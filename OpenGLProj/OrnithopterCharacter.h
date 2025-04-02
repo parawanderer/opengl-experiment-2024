@@ -2,6 +2,7 @@
 #define ORNITHOPTERCHARACTER_MINE_H
 #include "AnimatedEntity.h"
 #include "RenderableGameObject.h"
+#include "SoundManager.h"
 #include "WorldTimeManager.h"
 
 /**
@@ -11,7 +12,7 @@ class OrnithopterCharacter : public AnimatedEntity
 {
 public:
 
-	OrnithopterCharacter(const WorldTimeManager* time, RenderableGameObject* ornithropterObject);
+	OrnithopterCharacter(const WorldTimeManager* time, SoundManager* sound, RenderableGameObject* ornithropterObject, AnimationSet* animations);
 
 	void onNewFrame() override;
 	void draw(Shader& shader) override;
@@ -19,11 +20,14 @@ public:
 private:
 	const WorldTimeManager* _time;
 
+	SoundManager* _sound;
+
 	RenderableGameObject* _model;
+	Animator _animator;
+
+	irrklang::ISound* _currentSound = nullptr;
 
 	glm::vec3 _currentPos;
-	glm::vec3 _currentFront;
-	float _yaw = -90.0f;
 };
 
 #endif

@@ -114,7 +114,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;freetyped.lib;assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;freetyped.lib;assimp-vc143-mt.lib;irrKlang.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -153,6 +153,7 @@
     <ClCompile Include="PlayerState.cpp" />
     <ClCompile Include="Quad.cpp" />
     <ClCompile Include="SandWormCharacter.cpp" />
+    <ClCompile Include="SoundManager.cpp" />
     <ClCompile Include="Sphere.cpp" />
     <ClCompile Include="SphericalBoxedGameObject.cpp" />
     <ClCompile Include="ErrorUtils.cpp" />
@@ -219,10 +220,12 @@
     <ClInclude Include="OrnithopterCharacter.h" />
     <ClInclude Include="Particle.h" />
     <ClInclude Include="ParticleSystem.h" />
+    <ClInclude Include="PlayerCameraEventSubscriber.h" />
     <ClInclude Include="PlayerInteractionManger.h" />
     <ClInclude Include="PlayerState.h" />
     <ClInclude Include="Quad.h" />
     <ClInclude Include="SandWormCharacter.h" />
+    <ClInclude Include="SoundManager.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="SphericalBoundingBoxedEntity.h" />
     <ClInclude Include="SphericalBoxedGameObject.h" />

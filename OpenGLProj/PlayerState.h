@@ -2,14 +2,18 @@
 #define PLAYER_MINE_H
 
 #include "CarriedGameObject.h"
+#include "PlayerCamera.h"
+#include "PlayerCameraEventSubscriber.h"
 
 /**
  * \brief Represents the player's game state
  */
-class PlayerState
+class PlayerState : public PlayerCameraEventSubscriber
 {
 public:
-	PlayerState();
+	PlayerState(SoundManager* sound, const PlayerCamera* playerCamera);
+
+	~PlayerState();
 
 	bool hasCarriedItem();
 
@@ -18,9 +22,29 @@ public:
 
 	CarriedGameObject removeCarriedItem();
 
+	void onNewPos(const glm::vec3& newPos) override;
+	void onStartWalking() override;
+	void onStopMoving() override;
+	void onStartJumping() override;
+	void onStopJumping() override;
+	void onStartRunning() override;
+
 private:
+	SoundManager* _sound;
+	const PlayerCamera* _playerCamera;
+	char _movementState = 0;
+	bool _isInAirDueToJump = false;
+
+	irrklang::ISound* _currentWalkSound = nullptr;
+	irrklang::ISound* _currentJumpSound = nullptr;
+
 	bool _hasItem = false;
 	CarriedGameObject _carriedItem;
+
+	void stopAndClearCurrentWalkSound();
+	void stopAndClearCurrentJumpSound();
+
+	glm::vec3 getUnderFeetPos(const glm::vec3& playerPos) const;
 };
 
 

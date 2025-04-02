@@ -50,6 +50,7 @@
 #include "ParticleSystem.h"
 #include "PlayerInteractionManger.h"
 #include "SandWormCharacter.h"
+#include "SoundManager.h"
 #include "Thumper.h"
 #include "WorldTimeManager.h"
 
@@ -96,7 +97,7 @@ CameraManager camMgr(
 	10.0f
 );
 
-constexpr float RENDER_DISTANCE = 1500.0f;
+constexpr float RENDER_DISTANCE = 2000.0f;
 
 glm::vec3 sunPos(1024.0f, 750.0f, -2000.0f);
 glm::vec3 sunLightColor = Colors::WHITE;
@@ -136,6 +137,8 @@ int main()
 	GLFWwindow* window = init();
 	if (window == nullptr) return -1;
 
+	SoundManager sound("./resources/audio");
+
 #pragma region SHADERS_AND_POSTPROCESSING
 	Shader genericShader = Shader::fromFiles(SHADER_MESH_VERT, SHADER_MESH_FRAG);
 	genericShader.use();
@@ -156,6 +159,7 @@ int main()
 
 #pragma region GAME_MODELS
 	RenderableGameObject ornithopterObject(MODEL_ORNITHOPTER);
+	AnimationSet ornithopterAnimations(MODEL_ORNITHOPTER, ornithopterObject.getObjectModel());
 
 	Model thumperModel(MODEL_THUMPER); // reuse the model
 	AnimationSet thumperAnimations(MODEL_THUMPER, &thumperModel);
@@ -253,12 +257,6 @@ int main()
 #pragma region MODELTRANSFORMS
 	const glm::vec3 smallOffsetY = glm::vec3(0.0, 0.1, 0.0);
 
-	glm::mat4 thumper1Model = glm::mat4(1.0f);
-	thumper1Model = glm::translate(thumper1Model, sandTerrain.getWorldHeightVecFor(5.0f, 6.0f) + smallOffsetY);
-
-	glm::mat4 thumper2Model = glm::mat4(1.0f);
-	thumper2Model = glm::translate(thumper2Model, sandTerrain.getWorldHeightVecFor(9.0f, 10.0f) + smallOffsetY);
-
 	glm::mat4 containerS1Model = glm::mat4(1.0f);
 	containerS1Model = glm::translate(containerS1Model, sandTerrain.getWorldHeightVecFor(150.0f, -150.0f) + glm::vec3(0.0, -0.1f, 0.0f));
 	containerS1Model = glm::rotate(containerS1Model, glm::radians(4.0f), glm::vec3(0.0, 0.0, 1.0));
@@ -296,16 +294,17 @@ int main()
 #pragma endregion
 
 	// state
-	PlayerState player = PlayerState();
+	PlayerState player = PlayerState(&sound, camMgr.getPlayerCamera());
+	camMgr.getPlayerCamera()->addSubscriber(&player);
 
-	NomadCharacter nomadCharacter(&timeMgr, &sandTerrain, &nomadObject, &nomadAnimations, 20.0f, -20.0f);
+	NomadCharacter nomadCharacter(&timeMgr, &sandTerrain, &sound, &nomadObject, &nomadAnimations, 20.0f, -20.0f);
 	SandWormCharacter sandWormCharacter(&timeMgr, &sandTerrain, &sandWormObject, &sandWormAnimations, 80.0f, 50.0f);
-	OrnithopterCharacter ornithopterCharacter(&timeMgr, &ornithopterObject);
+	OrnithopterCharacter ornithopterCharacter(&timeMgr, &sound, &ornithopterObject, &ornithopterAnimations);
 
-	Thumper thumper1(&timeMgr, &thumperObj1, &thumperAnimations);
-	thumper1.setModelTransform(thumper1Model);
-	Thumper thumper2(&timeMgr, &thumperObj2, &thumperAnimations);
-	thumper2.setModelTransform(thumper2Model);
+	Thumper thumper1(&timeMgr, &sound, &thumperObj1, &thumperAnimations);
+	thumper1.setPosition(sandTerrain.getWorldHeightVecFor(5.0f, 6.0f) + smallOffsetY);
+	Thumper thumper2(&timeMgr, &sound, &thumperObj2, &thumperAnimations);
+	thumper2.setPosition(sandTerrain.getWorldHeightVecFor(9.0f, 10.0f) + smallOffsetY);
 
 	// a bunch of classes that require their onNewFrame() function to be called:
 	const std::vector<FrameRequester*> frameRequesters = { &nomadCharacter, &sandWormCharacter, &thumper1, &thumper2, &ornithopterCharacter, &particles1, &particles2 };
@@ -335,14 +334,17 @@ int main()
 		timeMgr.onNewFrame();
 		camMgr.processInput(window);
 
-		for (auto frameRequestor: frameRequesters) frameRequestor->onNewFrame();
-
 #pragma region PROJECTING
 		const glm::vec3 cameraPos = camMgr.getPos();
+		const glm::vec3 cameraFront = camMgr.getCurrentCamera()->getFront();
 		const glm::mat4 view = camMgr.getCurrentCamera()->getView();
 		const float fov = camMgr.getCurrentCamera()->getFov();
 		const glm::mat4 projection = glm::perspective(glm::radians(fov),(float)currentWidth / (float)currentHeight,0.1f, RENDER_DISTANCE);
 #pragma endregion
+
+		sound.updateListenerPos(cameraPos, cameraFront);
+
+		for (auto frameRequestor : frameRequesters) frameRequestor->onNewFrame();
 
 #pragma region MOUSE_RAY_PICKING_AND_PLAYER_INTERACTIONS
 		Thumper* result = interactionManger.getMouseTarget();
@@ -399,10 +401,13 @@ int main()
 		if (player.hasCarriedItem()) // dynamic "in player hand" items
 		{
 			// (the perspective on this thing doesn't really make sense in the world)
-			glm::mat4 model = CameraUtils::getCarriedItemModelTransform(view, t, camMgr.getCurrentCamera()->isMoving(), camMgr.getCurrentCamera()->isSpeeding());
-			Thumper* item = player.getCarriedItem().getObject();
-			item->setModelTransform(model);
-			item->draw(genericShader);
+			player.getCarriedItem().getObject()->drawCarried(
+				genericShader,
+				view, 
+				t, 
+				camMgr.getCurrentCamera()->isMoving(), 
+				camMgr.getCurrentCamera()->isSpeeding()
+			);
 		}
 
 

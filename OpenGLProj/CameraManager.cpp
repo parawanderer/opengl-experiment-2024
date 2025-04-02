@@ -52,6 +52,11 @@ Camera* CameraManager::getCurrentCamera() const
 	return this->_currentCam;
 }
 
+PlayerCamera* CameraManager::getPlayerCamera()
+{
+	return &this->_playerCam;
+}
+
 void CameraManager::mouseCallback(GLFWwindow* window, double xpos, double ypos)
 {
 	this->_currentCam->processMouse(window, xpos, ypos);
