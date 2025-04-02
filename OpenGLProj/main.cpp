@@ -47,6 +47,7 @@
 #include "OrnithopterCharacter.h"
 #include "Particle.h"
 #include "ParticleSystem.h"
+#include "PlayerInteractionManger.h"
 #include "SandWormCharacter.h"
 #include "Thumper.h"
 #include "WorldTimeManager.h"
@@ -70,8 +71,10 @@
 #define INITIAL_WIDTH 1280
 #define INITIAL_HEIGHT 800
 
-constexpr auto SCREEN_OUTPUT_BUFFER_ID = 0;
 
+#define RENDER_DEBUG_OBJECTS false
+
+constexpr auto SCREEN_OUTPUT_BUFFER_ID = 0;
 
 
 
@@ -222,6 +225,30 @@ int main()
 	camMgr.setTerrain(&sandTerrain);
 #pragma endregion
 
+#pragma region PARTICLES
+	ParticleSystem particles1(
+		&timeMgr,
+		TEXTURE_PARTICLE_DUST,
+		sandTerrain.getWorldHeightVecFor(104, -106),
+		glm::vec3(0, -4.0f, 0),
+		20.0f,
+		6000,
+		glm::vec2(5.0f)
+	);
+
+	ParticleSystem particles2(
+		&timeMgr,
+		TEXTURE_PARTICLE_DUST,
+		sandTerrain.getWorldHeightVecFor(55, -106),
+		glm::vec3(0, -4.0f, 0),
+		20.0f,
+		6000,
+		glm::vec2(5.0f)
+	);
+
+	std::vector<ParticleSystem*> particles = { &particles1, &particles2 };
+#pragma endregion
+
 #pragma region MODELTRANSFORMS
 
 	const glm::vec3 smallOffsetY = glm::vec3(0.0, 0.1, 0.0);
@@ -288,33 +315,15 @@ int main()
 	std::vector<AnimatedEntity*> independentAnimatedEntities = { &nomadCharacter, &sandWormCharacter, &ornithopterCharacter };
 
 
-	const float worldInteractionCooldownSecs = 0.2f;
-	float lastInteractionAt = 0.0f;
-
-
-	// particles test
-	ParticleSystem particles1(
-		&timeMgr,
-		TEXTURE_PARTICLE_DUST,
-		sandTerrain.getWorldHeightVecFor(104, -106),
-		glm::vec3(0, -4.0f, 0),
-		20.0f,
-		6000,
-		glm::vec2(5.0f)
+	PlayerInteractionManger interactionManger(
+		&timeMgr, 
+		&camMgr, 
+		window, 
+		&sandTerrain, 
+		&player, 
+		0.2f, 
+		&worldItemsThatPlayerCanPickUp
 	);
-
-	ParticleSystem particles2(
-		&timeMgr,
-		TEXTURE_PARTICLE_DUST,
-		sandTerrain.getWorldHeightVecFor(55, -106),
-		glm::vec3(0, -4.0f, 0),
-		20.0f,
-		6000,
-		glm::vec2(5.0f)
-	);
-
-	std::vector<ParticleSystem*> particles = { &particles1, &particles2 };
-
 
 	// ============ [ MAIN LOOP ] ============
 	camMgr.beforeLoop();
@@ -331,58 +340,14 @@ int main()
 
 #pragma region PROJECTING
 		const glm::vec3 cameraPos = camMgr.getPos();
-		const glm::vec3 cameraFront = camMgr.getCurrentCamera()->getFront(); // direction
 		const glm::mat4 view = camMgr.getCurrentCamera()->getView();
 		const float fov = camMgr.getCurrentCamera()->getFov();
 		const glm::mat4 projection = glm::perspective(glm::radians(fov),(float)currentWidth / (float)currentHeight,0.1f, RENDER_DISTANCE);
 #pragma endregion
 
-#pragma region MOUSE_RAY_PICKING
-		Thumper* result = nullptr;
-		if (!player.hasCarriedItem()) {
-			std::vector<SphericalBoundingBoxedEntity*> considered(worldItemsThatPlayerCanPickUp.begin(), worldItemsThatPlayerCanPickUp.end());
-			result = (Thumper*) WorldMathUtils::findClosestIntersection(considered, cameraPos, cameraFront,5.0f); // TODO: if I add more items later, then this type cast is not valid
-		}
-#pragma endregion
-
-#pragma region PLAYER_INTERACTIONS
-		bool interactionCooldownPassed = t - lastInteractionAt > worldInteractionCooldownSecs;
-		if (interactionCooldownPassed && result != nullptr && glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-		{
-			switch(result->getState())
-			{
-			case Thumper::STATE::DISABLED:
-				result->setState(Thumper::STATE::ACTIVATED); // start animating!
-				break;
-			case Thumper::STATE::ACTIVATED:
-				result->setState(Thumper::STATE::DISABLED);
-				break;
-			}
-			lastInteractionAt = t;
-			interactionCooldownPassed = false;
-		}
-
-		if (interactionCooldownPassed && !player.hasCarriedItem() && glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) // pick up the item
-		{
-			result->setState(Thumper::STATE::DISABLED); // disable when picking up
-			worldItemsThatPlayerCanPickUp.erase(result);
-			player.setCarriedItem(CarriedGameObject(result));
-			lastInteractionAt = t;
-			interactionCooldownPassed = false;
-		}
-
-		if (interactionCooldownPassed && camMgr.isPlayerCamera() && player.hasCarriedItem() && glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) // drop the item
-		{
-			// drop the item
-			Thumper* thump = player.removeCarriedItem().getObject();
-			glm::mat4 newModel = glm::mat4(1.0f);
-			// translate position just comes out to a nice "in front of the player" position
-			newModel = glm::translate(newModel, sandTerrain.getWorldHeightVecFor(cameraPos.x + (cameraFront.x * 2.5f), cameraPos.z + (cameraFront.z * 2.5f)) + smallOffsetY);
-			thump->setModelTransform(newModel);
-			worldItemsThatPlayerCanPickUp.insert(thump);
-			lastInteractionAt = t;
-			interactionCooldownPassed = false;
-		}
+#pragma region MOUSE_RAY_PICKING_AND_PLAYER_INTERACTIONS
+		Thumper* result = interactionManger.getMouseTarget();
+		interactionManger.handleInteractionChecks(result);
 #pragma endregion
 
 #pragma region RENDERING
@@ -394,15 +359,19 @@ int main()
 		// WORLD
 		skybox.render(view, projection);
 
+
 		std::vector<glm::vec3> smallLightSpherePositions = computeAttenuatedLightSpheresPos(sandTerrain, t);
 		renderTerrain(terrainShader, sandTerrain, view, projection, cameraPos, smallLightSpherePositions);
 
-		// ------ ** light cube ** ------
+
 		lightCubeShader.use();
-		lightCubeShader.setMat4("model", lightCubeModel);
 		lightCubeShader.setMat4("projection", projection);
 		lightCubeShader.setMat4("view", view);
-		sun.draw();
+		if (RENDER_DEBUG_OBJECTS) // render a "light cube" at the position of the sun (only really useful for debugging)
+		{
+			lightCubeShader.setMat4("model", lightCubeModel);
+			sun.draw();
+		}
 
 		// I'll make this interesting because having a diminishing with distance light source is part of the assignment
 		// and I can't really think of anything super simple to implement that fits into the game world. So I'll just go with this.
@@ -412,7 +381,8 @@ int main()
 			sphere.draw(lightCubeShader);
 		}
 
-		// ------ ** models ** ------
+
+		// MAIN MODELS
 		genericShader.use();
 		genericShader.setMat4("projection", projection);
 		genericShader.setMat4("view", view);
@@ -436,7 +406,8 @@ int main()
 			item->draw(genericShader);
 		}
 
-		// particle effects
+
+		// PARTICLE EFFECTS
 		particlesShader.use();
 		particlesShader.setMat4("projection", projection);
 		particlesShader.setMat4("view", view);
@@ -451,10 +422,7 @@ int main()
 			uiText.renderItemInteractOverlay(THUMPER, currentWidth, currentHeight, result->getState() == Thumper::STATE::ACTIVATED); // highlight selectable item
 		}
 
-		if (player.hasCarriedItem())
-		{
-			uiText.renderCarriedItemInfo(THUMPER, currentWidth, currentHeight);
-		}
+		if (player.hasCarriedItem()) uiText.renderCarriedItemInfo(THUMPER, currentWidth, currentHeight);
 
 		uiText.renderMainUIOverlay(cameraPos, currentWidth, currentHeight);
 		glCheckError();

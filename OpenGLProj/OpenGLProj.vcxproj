@@ -149,6 +149,7 @@
     <ClCompile Include="NomadCharacter.cpp" />
     <ClCompile Include="OrnithopterCharacter.cpp" />
     <ClCompile Include="ParticleSystem.cpp" />
+    <ClCompile Include="PlayerInteractionManger.cpp" />
     <ClCompile Include="PlayerState.cpp" />
     <ClCompile Include="Quad.cpp" />
     <ClCompile Include="SandWormCharacter.cpp" />
@@ -216,6 +217,7 @@
     <ClInclude Include="OrnithopterCharacter.h" />
     <ClInclude Include="Particle.h" />
     <ClInclude Include="ParticleSystem.h" />
+    <ClInclude Include="PlayerInteractionManger.h" />
     <ClInclude Include="PlayerState.h" />
     <ClInclude Include="Quad.h" />
     <ClInclude Include="SandWormCharacter.h" />

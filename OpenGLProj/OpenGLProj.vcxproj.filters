@@ -195,6 +195,9 @@
     <ClCompile Include="WorldTimeManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PlayerInteractionManger.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -397,6 +400,9 @@
     </ClInclude>
     <ClInclude Include="OrnithopterCharacter.h">
       <Filter>Header Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerInteractionManger.h">
+      <Filter>Source Files\game</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

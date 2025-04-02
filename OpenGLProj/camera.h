@@ -27,6 +27,9 @@ public:
 	 */
 	virtual float getFov() const;
 
+	/**
+	 * \brief cameraFront or cameraDirection. This is a normalized vector!
+	 */
 	glm::vec3 getFront() const;
 
 	virtual void processInput(GLFWwindow* window);
