@@ -25,6 +25,13 @@ uniform Material material;
 uniform Light light;
 uniform vec3 viewPos;
 
+// attenuation test
+uniform Light light2;
+uniform float c1;
+uniform float c2;
+uniform float c3;
+
+
 // TODO: provide these as variables (temp hardcoded values)
 uniform float FogEnd = 6000.0;
 uniform float ExpDensityFactor = 1.0;
@@ -41,29 +48,43 @@ float calculateExponentialFog()
     return fogFactor;
 }
 
+// light source attenuation
+float computeAttenuationFactor(float c1, float c2, float c3, float d) {
+    return min(1 / (c1 + c2 * d + c3 * d * d), 1.0);
+}
+
+
 void main() 
 {
-    // ambient
-    //vec3 ambient = light.ambient * material.ambient;
-    vec3 ambient = light.ambient * vec3(texture(material.ambient, TexCoord));
-  	
     vec3 norm = normalize(Normal);
-    //vec3 norm = texture(material.normal, TexCoord).rgb;
-    //norm = normalize(norm * 2.0 - 1.0);
+
+    // ambient
+    vec3 ambient = (light.ambient + light2.ambient) * vec3(texture(material.ambient, TexCoord));
     
     // diffuse 
     vec3 lightDir = normalize(light.position - FragPos);
     float diff = max(dot(norm, lightDir), 0.0);
-    //vec3 diffuse = light.diffuse * (diff * material.diffuse);
-    vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoord));  
+    vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoord));
+
+    // diffuse2 with attenuation
+    vec3 lightDir2 = normalize(light2.position - FragPos);
+    float diff2 = max(dot(norm, lightDir2), 0.0);
+    float fatt = computeAttenuationFactor(c1, c2, c3, length(light2.position - FragPos));
+    vec3 diffuse2 = fatt * light2.diffuse * diff2 * vec3(texture(material.diffuse, TexCoord));
 
     // specular
     vec3 viewDir = normalize(viewPos - FragPos);
+
     vec3 reflectDir = reflect(-lightDir, norm);  
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    vec3 specular = light.specular * (spec * material.specular);  
+    vec3 specular = light.specular * (spec * material.specular); 
+    
+    // specular2 with attenuation
+    vec3 reflectDir2 = reflect(-lightDir2, norm);  
+    float spec2 = pow(max(dot(viewDir, reflectDir2), 0.0), material.shininess);
+    vec3 specular2 = fatt * light2.specular * (spec2 * material.specular); 
         
-    vec3 result = ambient + diffuse + specular;
+    vec3 result = ambient + (diffuse + diffuse2) + (specular + specular2);
     vec4 nearFinalResult = vec4(result, 1.0);
 
     if (FogColor != vec3(0)) {

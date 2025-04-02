@@ -137,6 +137,13 @@ int main()
 	RenderableGameObject nomad("resources/models/rust-nomad/RustNomad.fbx");
 
 	RenderableGameObject sandWorm("resources/models/dune-sandworm/sandworm_edit.dae");
+
+	// I'll use this as my second light source
+	Sphere sphere(20, 20, 1.0f);
+	const float attenuationC1 = 0.5f; // max value is 1.0f
+	const float attenuationC2 = 0.25f; // max value is 1.0f
+	const float attenuationC3 = 0.25f; // max value is 1.0f
+
 #pragma endregion
 
 #pragma region TEXT
@@ -183,6 +190,13 @@ int main()
 		sunPos,
 		sunLightColor
 	);
+	terrainShader.setVec3("light2.ambient", Colors::WHITE * 0.01f);
+	terrainShader.setVec3("light2.diffuse", Colors::WHITE * 1.0f);
+	terrainShader.setVec3("light2.specular", Colors::WHITE * 1.0f);
+	terrainShader.setFloat("c1", attenuationC1);
+	terrainShader.setFloat("c2", attenuationC2);
+	terrainShader.setFloat("c3", attenuationC3);
+
 	camMgr.setTerrain(&sandTerrain);
 #pragma endregion
 
@@ -252,15 +266,26 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glCheckError();
 
+
+		const glm::vec3 spherePos = sandTerrain.getWorldHeightVecFor(-160, 50) + glm::vec3(sin(t) * 10.0f, 7.0 + cos(t / 2) * 3.0f, cos(t) * 10.0f);
+
 		// WORLD
 		skybox.render(view, projection);
+		terrainShader.use();
+		terrainShader.setVec3("light2.position", spherePos);
 		sandTerrain.render(view, projection, cameraPos);
 
 		// ------ ** light cube ** ------
 		lightCubeShader.use();
+		lightCubeShader.setMat4("model", lightCubeModel);
 		lightCubeShader.setMat4("projection", projection);
 		lightCubeShader.setMat4("view", view);
 		sun.draw();
+
+		// I'll make this interesting because having a diminishing with distance light source is part of the assignment
+		// and I can't really think of anything super simple to implement that fits into the game world. So I'll just go with this.
+		lightCubeShader.setMat4("model", glm::translate(glm::mat4(1.0f), spherePos));
+		sphere.draw(lightCubeShader);
 
 		// ------ ** models ** ------
 		genericShader.use();
