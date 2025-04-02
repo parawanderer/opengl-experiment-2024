@@ -38,6 +38,12 @@ public:
 	glm::vec3 getCurrentCenterPosition() const;
 	glm::vec2 getParticleSize() const;
 
+	void setNewParticlesEnabled(bool doEnable);
+	bool isNewParticlesEnabled() const;
+
+	// TODO: temporary: move this to its own specific particle system implementation class
+	void setSpawnAlongVector(const glm::vec3& spawnAlongVector);
+
 protected: // allow these to be overwritten in any future particle systems that try to achieve alternate effects
 
 	/**
@@ -71,6 +77,7 @@ protected: // allow these to be overwritten in any future particle systems that 
 	void drawQuadWithTexture();
 
 private:
+	bool _newParticlesEnabled = false;
 	WorldTimeManager* _time;
 	unsigned int _nrParticles;
 	unsigned int _particlesToSpawnEachFrame;
@@ -84,6 +91,8 @@ private:
 
 	unsigned int _lastUsedParticle = 0;
 	unsigned int _textureId;
+
+	glm::vec3 _spawnAlongVector = glm::vec3(0.0f); // TODO: temp, remove
 
 	/**
 	 * \return Find first particle that is dead and return its index

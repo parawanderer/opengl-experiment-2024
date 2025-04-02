@@ -45,6 +45,7 @@
 #include "EffectConstants.h"
 #include "FileConstants.h"
 #include "GameObjectConstants.h"
+#include "MilitaryContainer.h"
 #include "NomadCharacter.h"
 #include "OrnithopterCharacter.h"
 #include "Particle.h"
@@ -75,7 +76,7 @@
 #define INITIAL_HEIGHT 800
 
 
-#define RENDER_DEBUG_OBJECTS true
+#define RENDER_DEBUG_OBJECTS false
 
 constexpr auto SCREEN_OUTPUT_BUFFER_ID = 0;
 
@@ -91,7 +92,7 @@ WorldTimeManager timeMgr;
 CameraManager camMgr(
 	&timeMgr,
 	true,
-	glm::vec3(0.0f, 410.0f, 0.0f),
+	glm::vec3(0.0f, 410.0f, 0.0f), // glm::vec3(690.0f, 62.0f, -399.0f), //
 	glm::vec3(0.0f, 0.0f, -1.0f),
 	INITIAL_WIDTH,
 	INITIAL_HEIGHT,
@@ -105,6 +106,10 @@ glm::vec3 sunLightColor = Colors::WHITE;
 
 #pragma endregion
 
+
+const float attenuationC1 = 0.5f; // max value is 1.0f
+const float attenuationC2 = 0.25f; // max value is 1.0f
+const float attenuationC3 = 0.25f; // max value is 1.0f
 
 
 GLFWwindow* init();
@@ -132,6 +137,69 @@ void renderTerrain(Shader& terrainShader, Terrain& terrain, const glm::mat4& vie
 
 
 
+float lastButtonChoiceAt = 0.0f;
+const float buttonCooldown = 0.1f;
+// Assignment-only, not particularly great code, but it will make for a nice video :)
+// this will be removed after the assignment demo video, which is why I didn't write a nicer dedicated class for this, unlike other project features.
+void handleAssignmentOnlyPuppetController(const float t, GLFWwindow* window, SandWormCharacter& sandWormCharacter, NomadCharacter& nomadCharacter, const glm::vec3& cameraPos)
+{
+	
+	if (lastButtonChoiceAt + buttonCooldown < t) // TODO: remove, all of this is temporary stuff for the assignment only
+	{
+		if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS)
+		{
+			// trigger earthquake noise
+			sandWormCharacter.startQuakingEarth();
+			std::cout << "[PUPPETING] PRESS 0: QUAKE EARTH" << std::endl;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS)
+		{
+			// make nomad run over and say his voice line
+			nomadCharacter.runOverAndWhatIsThat(cameraPos, 2.5f);
+			std::cout << "[PUPPETING] PRESS 9: Nomad 'what is that?!'" << std::endl;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_8) == GLFW_PRESS)
+		{
+			// trigger apparance worm -> move towards us
+			glm::vec3 directionalVectorTowardsNomad = nomadCharacter.getCurrentPosition() - sandWormCharacter.getCurrentPosition();
+			directionalVectorTowardsNomad.y = 0; // notably this will get ignored anyways
+			directionalVectorTowardsNomad = glm::normalize(directionalVectorTowardsNomad);
+			// travel 1500.0f meters in the direction of the nomad.
+			sandWormCharacter.appearAndMoveTowards(1500.0f * directionalVectorTowardsNomad + sandWormCharacter.getCurrentPosition());
+			std::cout << "[PUPPETING] PRESS 8: WORM APPEARS!" << std::endl;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_7) == GLFW_PRESS)
+		{
+			// nomad voice line
+			nomadCharacter.reactToSandworm();
+			std::cout << "[PUPPETING] PRESS 7: Nomad: 'holy mother of!'" << std::endl;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_6) == GLFW_PRESS)
+		{
+			// nomad run away (from sandworm!)
+			glm::vec3 directionalVectorTowardsNomad = nomadCharacter.getCurrentPosition() - sandWormCharacter.getCurrentPosition();
+			directionalVectorTowardsNomad.y = 0; // notably this will get ignored anyways
+			directionalVectorTowardsNomad = glm::normalize(directionalVectorTowardsNomad);
+			// travel 1500.0f meters away from the direction of the sandworm
+			nomadCharacter.runOverTo(1500.0f* directionalVectorTowardsNomad + nomadCharacter.getCurrentPosition(), 0.0f, true);
+			std::cout << "[PUPPETING] PRESS 6: Nomad run away" << std::endl;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
+		{
+			// nomad lookbehind while running
+			nomadCharacter.playLookBackAnimWhileRunning();
+			std::cout << "[PUPPETING] PRESS 5: Nomad look back" << std::endl;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
+		{
+			// nomad fall, worm eats him, then worm disappear
+			nomadCharacter.runStopByFallingAndStayDown();
+			std::cout << "[PUPPETING] PRESS 4: Nomad fall over and get eaten" << std::endl;
+		}
+
+		lastButtonChoiceAt = t;
+	}
+}
 
 int main()
 {
@@ -174,8 +242,8 @@ int main()
 	AnimationSet sandWormAnimations(MODEL_SANDWORM, sandWormObject.getObjectModel());
 
 	Model containerSmallModel(MODEL_CONTAINER_SMALL);
-	RenderableGameObject containerSObject1(&containerSmallModel);
-	RenderableGameObject containerSObject2(&containerSmallModel);
+	SphericalBoxedGameObject containerSObject1(&containerSmallModel, 0.6f, glm::vec3(0.0), 60.0f);
+	SphericalBoxedGameObject containerSObject2(&containerSmallModel, 0.6f, glm::vec3(0.0), 60.0f);
 
 	Model containerLargeModel(MODEL_CONTAINER_LARGE);
 	RenderableGameObject containerLObject1(&containerLargeModel);
@@ -185,9 +253,6 @@ int main()
 
 	// I'll use this as my second light source
 	Sphere sphere(20, 20, 1.0f);
-	const float attenuationC1 = 0.5f; // max value is 1.0f
-	const float attenuationC2 = 0.25f; // max value is 1.0f
-	const float attenuationC3 = 0.25f; // max value is 1.0f
 
 #pragma endregion
 
@@ -266,19 +331,18 @@ int main()
 	containerS1Model = glm::translate(containerS1Model, sandTerrain.getWorldHeightVecFor(150.0f, -150.0f) + glm::vec3(0.0, -0.1f, 0.0f));
 	containerS1Model = glm::rotate(containerS1Model, glm::radians(4.0f), glm::vec3(0.0, 0.0, 1.0));
 	containerS1Model = glm::scale(containerS1Model, glm::vec3(0.005f));
-	containerSObject1.setModelTransform(containerS1Model);
 
 	glm::mat4 containerS2Model = glm::mat4(1.0f);
-	containerS2Model = glm::translate(containerS2Model, sandTerrain.getWorldHeightVecFor(155.0, -155.0f) + glm::vec3(0.0, -0.1f, 0.0f));
-	containerS2Model = glm::rotate(containerS2Model, glm::radians(-32.0f), glm::vec3(0.0, 0.0, 1.0));
+	containerS2Model = glm::translate(containerS2Model, sandTerrain.getWorldHeightVecFor(167.8, -163.0f) + glm::vec3(0.0, -0.1f, 0.0f));
+	containerS2Model = glm::rotate(containerS2Model, glm::radians(-12.0f), glm::vec3(0.0, 1.0, 1.0));
+	containerS2Model = glm::rotate(containerS2Model, glm::radians(-39.0f), glm::vec3(0.0, 0.0, 1.0));
 	containerS2Model = glm::scale(containerS2Model, glm::vec3(0.005f));
-	containerSObject2.setModelTransform(containerS2Model);
 
 	glm::mat4 containerL1Model = glm::mat4(1.0f);
 	containerL1Model = glm::translate(containerL1Model, sandTerrain.getWorldHeightVecFor(160.0f, -160.0f) + glm::vec3(0.0, -1.8f, 0.0f));
 	containerL1Model = glm::rotate(containerL1Model, glm::radians(35.0f), glm::vec3(1.0, 0.0, 0.0));
 	containerL1Model = glm::rotate(containerL1Model, glm::radians(10.0f), glm::vec3(0.0, 1.0, 0.0));
-	containerL1Model = glm::scale(containerL1Model, glm::vec3(0.025f));
+	containerL1Model = glm::scale(containerL1Model, glm::vec3(0.02f));
 	containerLObject1.setModelTransform(containerL1Model);
 
 	glm::mat4 containerL2Model = glm::mat4(1.0f);
@@ -286,7 +350,7 @@ int main()
 	containerL2Model = glm::rotate(containerL2Model, glm::radians(74.0f), glm::vec3(1.0, 0.0, 0.0));
 	containerL2Model = glm::rotate(containerL2Model, glm::radians(112.0f), glm::vec3(0.0, 1.0, 0.0));
 	containerL2Model = glm::rotate(containerL2Model, glm::radians(-12.0f), glm::vec3(0.0, 0.0, 1.0));
-	containerL2Model = glm::scale(containerL2Model, glm::vec3(0.025f));
+	containerL2Model = glm::scale(containerL2Model, glm::vec3(0.02f));
 	containerLObject2.setModelTransform(containerL2Model);
 
 	glm::mat4 containerL3Model = glm::mat4(1.0f);
@@ -294,7 +358,7 @@ int main()
 	containerL3Model = glm::rotate(containerL3Model, glm::radians(-21.0f), glm::vec3(1.0, 0.0, 0.0));
 	containerL3Model = glm::rotate(containerL3Model, glm::radians(-3.0f), glm::vec3(0.0, 1.0, 0.0));
 	containerL3Model = glm::rotate(containerL3Model, glm::radians(15.0f), glm::vec3(0.0, 0.0, 1.0));
-	containerL3Model = glm::scale(containerL3Model, glm::vec3(0.025f));
+	containerL3Model = glm::scale(containerL3Model, glm::vec3(0.02f));
 	containerLObject3.setModelTransform(containerL3Model);
 #pragma endregion
 
@@ -305,21 +369,28 @@ int main()
 	camMgr.getPlayerCamera()->addSubscriber(&player);
 
 
-	NomadCharacter nomadCharacter(&timeMgr, &sandTerrain, &sound, &uiText, &nomadObject, &nomadAnimations, 152.0f, -210.0f);
-	SandWormCharacter sandWormCharacter(&timeMgr, &sandTerrain, &sound, &sandWormObject, &sandWormAnimations, 80.0f, 50.0f);
+	NomadCharacter nomadCharacter(&timeMgr, &sandTerrain, &sound, &uiText, &nomadObject, &nomadAnimations, 146.12f, -171.42f);
+	SandWormCharacter sandWormCharacter(&timeMgr, &sandTerrain, &sound, &sandWormObject, &sandWormAnimations, &particles1, &particles2, 944.37f, -793.97f); //726.44f, -610.75f
 	OrnithopterCharacter ornithopterCharacter(&timeMgr, &sound, &ornithopterObject, &ornithopterAnimations);
 
 	Thumper thumper1(&timeMgr, &sound, &thumperObj1, &thumperAnimations);
 	thumper1.setPosition(sandTerrain.getWorldHeightVecFor(5.0f, 6.0f) + smallOffsetY);
 	Thumper thumper2(&timeMgr, &sound, &thumperObj2, &thumperAnimations);
-	thumper2.setPosition(sandTerrain.getWorldHeightVecFor(153.8f, -165.6f) + smallOffsetY);
+	thumper2.setPosition(sandTerrain.getWorldHeightVecFor(161.61f, -157.85f) + smallOffsetY);
+
+	MilitaryContainer container1(&containerSObject1);
+	container1.setModelTransform(containerS1Model);
+	MilitaryContainer container2(&containerSObject2);
+	container2.setModelTransform(containerS2Model);
+
 
 	// a bunch of classes that require their onNewFrame() function to be called:
 	const std::vector<FrameRequester*> frameRequesters = { &nomadCharacter, &sandWormCharacter, &thumper1, &thumper2, &ornithopterCharacter, &particles1, &particles2 };
 
 	std::set<Thumper*> worldItemsThatPlayerCanPickUp = { &thumper1, &thumper2 };
 	std::set<NomadCharacter*> charactersThatPlayerCanTalkTo = { &nomadCharacter };
-	std::vector<RenderableGameObject*> staticGameObjects = { &containerSObject1, &containerSObject2, &containerLObject1, &containerLObject2, &containerLObject3 };
+	std::set<MilitaryContainer*> chestsThatPlayerCanOpen = { &container1, &container2 };
+	std::vector<RenderableGameObject*> staticGameObjects = { container1.getObjectModel(), container2.getObjectModel(), &containerLObject1, &containerLObject2, &containerLObject3 };
 	std::vector<AnimatedEntity*> independentAnimatedEntities = { &nomadCharacter, &sandWormCharacter, &ornithopterCharacter };
 
 	PlayerInteractionManger interactionManger(
@@ -330,9 +401,9 @@ int main()
 		&player, 
 		0.2f, 
 		&worldItemsThatPlayerCanPickUp,
-		&charactersThatPlayerCanTalkTo
+		&charactersThatPlayerCanTalkTo,
+		&chestsThatPlayerCanOpen
 	);
-
 
 	// ============ [ MAIN LOOP ] ============
 	camMgr.beforeLoop();
@@ -355,11 +426,14 @@ int main()
 
 		sound.updateListenerPos(cameraPos, cameraFront);
 
-		for (auto frameRequestor : frameRequesters) frameRequestor->onNewFrame();
+		for (auto frameRequester : frameRequesters) frameRequester->onNewFrame();
 
 #pragma region MOUSE_RAY_PICKING_AND_PLAYER_INTERACTIONS
 		SphericalBoundingBoxedEntity* result = interactionManger.getMouseTarget();
 		interactionManger.handleInteractionChecks(result);
+
+		handleAssignmentOnlyPuppetController(t, window, sandWormCharacter, nomadCharacter, cameraPos);
+
 #pragma endregion
 
 #pragma region RENDERING
@@ -372,10 +446,8 @@ int main()
 		// WORLD
 		skybox.render(view, projection);
 
-
 		std::vector<glm::vec3> smallLightSpherePositions = computeAttenuatedLightSpheresPos(sandTerrain, t);
 		renderTerrain(terrainShader, sandTerrain, view, projection, cameraPos, smallLightSpherePositions);
-
 
 		lightCubeShader.use();
 		lightCubeShader.setMat4("projection", projection);
@@ -386,14 +458,13 @@ int main()
 			sun.draw();
 		}
 
-		// I'll make this interesting because having a diminishing with distance light source is part of the assignment
-		// and I can't really think of anything super simple to implement that fits into the game world. So I'll just go with this.
 		for (auto pos: smallLightSpherePositions)
 		{
+			// I'll make this interesting because having a diminishing with distance light source is part of the assignment
+			// and I can't really think of anything super simple to implement that fits into the game world. So I'll just go with this.
 			lightCubeShader.setMat4("model", glm::translate(glm::mat4(1.0f), pos));
 			sphere.draw(lightCubeShader);
 		}
-
 
 		// MAIN MODELS
 		genericShader.use();
@@ -422,7 +493,6 @@ int main()
 			);
 		}
 
-
 		// PARTICLE EFFECTS
 		particlesShader.use();
 		particlesShader.setMat4("projection", projection);
@@ -432,23 +502,13 @@ int main()
 #pragma region POST_PROCESSING
 		fontShader.use();
 		fontShader.setMat4("projection", textProjection);
-
 		if (result != nullptr) {
-
-			if (AnimatedEntity* animatedEntity = dynamic_cast<AnimatedEntity*>(result)) // render outline (generic for all objects)
+			if (DrawableEntity* drawableEntity = dynamic_cast<DrawableEntity*>(result)) // render outline (generic for all objects)
 			{
-				distanceFieldPostProcessor.computeAndRenderOverlay(projection, view, { animatedEntity }, SCREEN_OUTPUT_BUFFER_ID);
+				distanceFieldPostProcessor.computeAndRenderOverlay(projection, view, { drawableEntity }, SCREEN_OUTPUT_BUFFER_ID);
 			}
 
-			if (Thumper* thumperResult = dynamic_cast<Thumper*>(result)) // render interaction text for item
-			{
-				uiText.renderItemInteractOverlay(THUMPER, thumperResult->getState() == Thumper::STATE::ACTIVATED); // highlight selectable item
-			}
-
-			if (NomadCharacter* character = dynamic_cast<NomadCharacter*>(result)) // render interaction text for a character
-			{
-				uiText.renderSpeakToCharacterOverlay(NOMAD);
-			}
+			uiText.renderOverlayForTargetItem(result);
 		}
 
 		if (player.hasCarriedItem()) uiText.renderCarriedItemInfo(THUMPER);

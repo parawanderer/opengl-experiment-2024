@@ -11,6 +11,7 @@
 class UICharacterDialogueDisplayManager
 {
 public:
+	virtual ~UICharacterDialogueDisplayManager() = default;
 	/**
 	 * \brief Abstract means of requesting dialogue to be shown on the screen
 	 * \param speaker					Speaker of the dialogue. e.g. "Bob"

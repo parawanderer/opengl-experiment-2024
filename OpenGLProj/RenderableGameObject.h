@@ -29,7 +29,7 @@ public:
 	/**
 	 * \brief Sets the World/Model transform matrix for rendering purposes.
 	 */
-	void setModelTransform(glm::mat4 model);
+	void setModelTransform(const glm::mat4& model);
 
 	Model* getObjectModel() const;
 	glm::mat4 getModelTransform() const;

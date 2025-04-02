@@ -7,7 +7,7 @@ void AnimatedEntity::setupEntityShaderForAnim(Shader& shader, const std::vector<
 	for (int i = 0; i < transforms.size(); ++i)
 	{
 		shader.setMat4("finalBoneMatrices[" + std::to_string(i) + "]", transforms[i]);
-		glGetError();
+		//glGetError();
 	}
 }
 

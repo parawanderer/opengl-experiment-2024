@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 
 #include "CameraManager.h"
+#include "MilitaryContainer.h"
 #include "NomadCharacter.h"
 #include "PlayerState.h"
 #include "Thumper.h"
@@ -20,8 +21,10 @@ public:
 		const Terrain* terrain,
 		PlayerState* player, 
 		const float worldInteractionCooldownSecs,
+		//  TODO: make these more generic:
 		std::set<Thumper*>* worldItemsThatPlayerCanPickUp,
-		std::set<NomadCharacter*>* charactersThatPlayerCanTalkTo
+		std::set<NomadCharacter*>* charactersThatPlayerCanTalkTo,
+		std::set<MilitaryContainer*>* chestsPlayerCanOpen
 	);
 
 	SphericalBoundingBoxedEntity* getMouseTarget();
@@ -37,6 +40,7 @@ private:
 	PlayerState* _player;
 	std::set<Thumper*>* _worldItemsThatPlayerCanPickUp;
 	std::set<NomadCharacter*>* _charactersThatPlayerCanTalkTo;
+	std::set<MilitaryContainer*>* _chestsPlayerCanOpen;
 
 	const float _worldInteractionCooldownSecs;
 

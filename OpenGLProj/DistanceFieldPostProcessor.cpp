@@ -152,7 +152,7 @@ void DistanceFieldPostProcessor::setOutlinePulsate(bool doPulsate)
  *
  *	I'll choose to not split this method off unto submethods per step due to potential performance benefits for now
  */
-void DistanceFieldPostProcessor::computeAndRenderOverlay(const glm::mat4& projection, const glm::mat4& view, const std::vector<AnimatedEntity*>& objects, unsigned int overlayOutputToBufferId)
+void DistanceFieldPostProcessor::computeAndRenderOverlay(const glm::mat4& projection, const glm::mat4& view, const std::vector<DrawableEntity*>& objects, unsigned int overlayOutputToBufferId)
 {
 #pragma region STEP_1_MASKING
 

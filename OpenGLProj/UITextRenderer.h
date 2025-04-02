@@ -4,6 +4,7 @@
 
 #include "Font.h"
 #include "PlayerCamera.h"
+#include "SphericalBoundingBoxedEntity.h"
 #include "UICharacterDialogueDisplayManager.h"
 #include "WorldTimeManager.h"
 
@@ -25,10 +26,6 @@ public:
 
 	void setCurrentWidthHeight(int currentWidth, int currentHeight);
 
-	void renderItemInteractOverlay(const char* itemName, bool isActive);
-
-	void renderSpeakToCharacterOverlay(const char* characterName);
-
 	void renderCarriedItemInfo(const char* itemName);
 
 	void renderMainUIOverlay(const glm::vec3 cameraPos);
@@ -48,6 +45,9 @@ public:
 	void processDialogueRequests();
 
 	void renderCurrentDialogue();
+
+	void renderOverlayForTargetItem(SphericalBoundingBoxedEntity* target);
+
 private:
 	const WorldTimeManager* _time;
 	const PlayerCamera* _camera;
@@ -61,6 +61,12 @@ private:
 	DialogueRequest _currentDialogue;
 
 	std::vector<DialogueRequest> _requestsForFrame;
+
+	void renderItemInteractOverlay(const char* itemName, bool isActive);
+
+	void renderSpeakToCharacterOverlay(const char* characterName);
+
+	void renderContainerOverlay(const char* containerName, int containerItemCount);
 };
 
 #endif

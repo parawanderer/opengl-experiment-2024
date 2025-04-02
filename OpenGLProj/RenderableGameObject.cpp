@@ -23,7 +23,7 @@ RenderableGameObject::~RenderableGameObject()
 	if (!this->_isModelExternal) delete this->_model;
 }
 
-void RenderableGameObject::setModelTransform(glm::mat4 model)
+void RenderableGameObject::setModelTransform(const glm::mat4& model)
 {
 	this->_modelTransform = model;
 	this->_normalMatrix = glm::mat3(glm::transpose(glm::inverse(this->_modelTransform)));

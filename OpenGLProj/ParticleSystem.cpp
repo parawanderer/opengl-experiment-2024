@@ -11,6 +11,9 @@
 #include "WorldMathUtils.h"
 
 
+constexpr auto SHOW_WARNINGS = false;
+
+
 // https://www.opengl-tutorial.org/intermediate-tutorials/billboards-particles/billboards/
 // sidenote that the particles honestly look bad. I looked around for how better looks are accomplished and found this:
 // https://www.youtube.com/watch?v=Qj_tK_mdRcA, https://www.youtube.com/watch?v=4QOcCGI6xOU
@@ -47,12 +50,16 @@ void ParticleSystem::onNewFrame()
 {
 	const float deltaTime = this->_time->getDeltaTime();
 
-	// add new particles
-	for (unsigned int i = 0; i < this->_particlesToSpawnEachFrame; ++i)
+	if (this->isNewParticlesEnabled())
 	{
-		const int unusedParticleIndex = this->findUnusedParticle();
-		this->respawnParticle(this->_particles[unusedParticleIndex], this->_centerPosition);
+		// add new particles
+		for (unsigned int i = 0; i < this->_particlesToSpawnEachFrame; ++i)
+		{
+			const int unusedParticleIndex = this->findUnusedParticle();
+			this->respawnParticle(this->_particles[unusedParticleIndex], this->_centerPosition);
+		}
 	}
+	
 	// update all particles
 	for (unsigned int i = 0; i < this->_nrParticles; ++i)
 	{
@@ -137,19 +144,20 @@ unsigned ParticleSystem::findUnusedParticle()
 	// if this case is reached it means our particles are alive for too long,
 	// and we should consider either spawning less particles per frame and/or reserving a larger number of particles!
 	this->_lastUsedParticle = 0;
-	std::cout << "Particle being replaced too often detected!" << std::endl;
+	if (SHOW_WARNINGS) std::cout << "Particle being replaced too often detected!" << std::endl;
 	return 0;
 }
 
 void ParticleSystem::respawnParticle(Particle& particle, const glm::vec3& particleCenterPosition)
 {
-	float X = (((rand() % 3001) - 1500) / 1000.0f); // width of spawning area
-	float Y = 0;
-	float Z = (((rand() % 1001) / 100.0f) - 30.0f); // along a line
-
-
 	// "spawning position" of the particle
-	particle.position = particleCenterPosition + glm::vec3(X, Y, Z); // +offset;
+	// float X = (((rand() % 3001) - 1500) / 1000.0f); // width of spawning area
+	// float Y = 0;
+	// float Z = (((rand() % 1001) / 100.0f) - 30.0f); // along a line
+
+	// particle.position = particleCenterPosition + glm::vec3(X, Y, Z); // +offset;
+	const float t = (rand() % 1001) / 1000.0f; // "interpolate" random point along the line :)
+	particle.position = (1 - t) * particleCenterPosition + t * (this->_spawnAlongVector + particleCenterPosition); // along a line between these two points
 
 	// color of the particle
 
@@ -160,9 +168,9 @@ void ParticleSystem::respawnParticle(Particle& particle, const glm::vec3& partic
 	particle.life = this->_particleLifetime;
 
 	// particle velocity (constant here)
-	float velocityX = 3.0f * (((rand() % 2001) - 1000) / 1000.0f);
-	float velocityY = -4.0f * ((rand() % 1001) / 1000.0f);
-	float velocityZ = -(8.0f + 8.0f * ((rand() % 1001) / 1000.0f));
+	float velocityX = -this->_spawnAlongVector.x + 3.0f * (((rand() % 2001) - 1000) / 1000.0f);
+	float velocityY =  -4.0f * ((rand() % 1001) / 1000.0f);
+	float velocityZ = -this->_spawnAlongVector.z + 3.0f * (((rand() % 2001) - 1000) / 1000.0f);
 	particle.velocity = glm::vec3(velocityX, velocityY, velocityZ);
 
 	particle.flag = false;
@@ -254,4 +262,19 @@ glm::vec3 ParticleSystem::getCurrentCenterPosition() const
 glm::vec2 ParticleSystem::getParticleSize() const
 {
 	return this->_particleSize;
+}
+
+void ParticleSystem::setNewParticlesEnabled(bool doEnable)
+{
+	this->_newParticlesEnabled = doEnable;
+}
+
+bool ParticleSystem::isNewParticlesEnabled() const
+{
+	return this->_newParticlesEnabled;
+}
+
+void ParticleSystem::setSpawnAlongVector(const glm::vec3& spawnAlongVector)
+{
+	this->_spawnAlongVector = spawnAlongVector;
 }

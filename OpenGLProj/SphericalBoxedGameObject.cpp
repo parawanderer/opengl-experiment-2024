@@ -19,10 +19,11 @@ _sphere(Sphere(16, 8, radius))
 {
 }
 
-SphericalBoxedGameObject::SphericalBoxedGameObject(Model* model, float radius, glm::vec3 localSpaceMidPoint)
+SphericalBoxedGameObject::SphericalBoxedGameObject(Model* model, float radius, glm::vec3 localSpaceMidPoint, float boundingSphereScale)
 	: RenderableGameObject(model),
 	_boundingSphereRadius(radius), // TODO: allow changing this? Scaling this would mean we're no longer working with a bounding sphere but a "bounding capsule" afaik?
 	_boundingSphereMidPoint(localSpaceMidPoint),
+	_localBoundingSphereScale(boundingSphereScale),
 	_sphere(Sphere(16, 8, radius))
 {
 }

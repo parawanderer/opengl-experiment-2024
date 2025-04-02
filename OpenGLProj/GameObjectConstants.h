@@ -5,4 +5,6 @@ constexpr auto THUMPER = "Thumper";
 
 constexpr auto NOMAD = "Nomad";
 
+constexpr auto CONTAINER = "Container";
+
 #endif

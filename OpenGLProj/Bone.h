@@ -40,6 +40,17 @@ struct KeyScale : public KeyItemBase
 };
 
 
+struct InterpolatedTransform
+{
+	// is the same as (translation * rotation * scale) after converting these to matrices
+	glm::mat4 combined;
+
+	glm::vec3 translation;
+	glm::quat rotation;
+	glm::vec3 scale;
+};
+
+
 /**
  * Single bone which reads all keyframes data from aiNodeAnim.
  * It interpolates between its keys i.e Translation,Scale & Rotation based on the current animation time.
@@ -59,6 +70,7 @@ public:
 	void update(float animationTime);
 
 	glm::mat4 getLocalTransform() const;
+	const InterpolatedTransform& getLocalInterpolatedTransforms() const;
 	const std::string& getBoneName() const;
 	int getBoneId() const;
 
@@ -86,6 +98,8 @@ public:
 	 */
 	int getScaleIndex(float animationTime) const;
 
+	static glm::mat4 interpolateBetweenTwo(const InterpolatedTransform& first, const InterpolatedTransform& second, float interpolationFactorFirst);
+
 private:
 	std::vector<KeyPosition> _positions;
 	std::vector<KeyRotation> _rotations;
@@ -95,7 +109,7 @@ private:
 	int _numRotations;
 	int _numScalings;
 
-	glm::mat4 _localTransform;
+	InterpolatedTransform _localTransforms;
 	std::string _name;
 	int _id; // bone id
 
@@ -109,21 +123,21 @@ private:
 	 * \param animationTime			Time at which the animation is being computed
 	 * \return						The translation matrix for this animation time
 	 */
-	glm::mat4 interpolatePosition(float animationTime) const;
+	std::tuple<glm::mat4, glm::vec3> interpolatePosition(float animationTime) const;
 
 	/**
 	 * \brief figures out which position keys to interpolate between and performs the interpolation. Returns the rotation matrix.
 	 * \param animationTime			Time at which the animation is being computed
 	 * \return						The rotation matrix for this animation time
 	 */
-	glm::mat4 interpolateRotation(float animationTime) const;
+	std::tuple<glm::mat4, glm::quat> interpolateRotation(float animationTime) const;
 
 	/**
 	 * \brief figures out which position keys to interpolate between and performs the interpolation. Returns the scale matrix.
 	 * \param animationTime			Time at which the animation is being computed
 	 * \return						The scale matrix for this animation time
 	 */
-	glm::mat4 interpolateScaling(float animationTime) const;
+	std::tuple<glm::mat4, glm::vec3> interpolateScaling(float animationTime) const;
 };
 
 #endif

@@ -31,7 +31,7 @@ public:
 	 *								This is from where the bounding sphere will be extended, and is transformed
 	 *								along with the object when the object is moved using a model transform.
 	 */
-	SphericalBoxedGameObject(Model* model, float radius, glm::vec3 localSpaceMidPoint = glm::vec3(0.0f));
+	SphericalBoxedGameObject(Model* model, float radius, glm::vec3 localSpaceMidPoint = glm::vec3(0.0f), float boundingSphereScale = 1.0f);
 
 	float getBoundRadius() const;
 

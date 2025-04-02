@@ -2,6 +2,10 @@
 
 #include "CameraManager.h"
 #include "Colors.h"
+#include "GameObjectConstants.h"
+#include "MilitaryContainer.h"
+#include "NomadCharacter.h"
+#include "Thumper.h"
 #include "WorldMathUtils.h"
 
 UITextRenderer::UITextRenderer(const WorldTimeManager* time, const PlayerCamera* camera, Font* uiFont)
@@ -29,7 +33,7 @@ void UITextRenderer::renderItemInteractOverlay(const char* itemName, bool isActi
 	);
 
 	this->_font->renderText(
-		"C) TAKE",
+		"E) TAKE",
 		(this->_currentWidth * (5.0f / 8.0f)),
 		(this->_currentHeight / 2.0f) - 40.0f,
 		0.5f,
@@ -37,7 +41,7 @@ void UITextRenderer::renderItemInteractOverlay(const char* itemName, bool isActi
 	);
 
 	this->_font->renderText(
-		isActive ? "E) DEACTIVATE" : "E) ACTIVATE",
+		isActive ? "C) DEACTIVATE" : "C) ACTIVATE",
 		(this->_currentWidth * (5.0f / 8.0f)),
 		(this->_currentHeight / 2.0f) - 80.0f,
 		0.5f,
@@ -56,12 +60,40 @@ void UITextRenderer::renderSpeakToCharacterOverlay(const char* characterName)
 	);
 
 	this->_font->renderText(
-		"C) SPEAK",
+		"E) SPEAK",
 		(this->_currentWidth * (5.0f / 8.0f)),
 		(this->_currentHeight / 2.0f) - 40.0f,
 		0.5f,
 		Colors::WHITE
 	);
+}
+
+void UITextRenderer::renderContainerOverlay(const char* containerName, int containerItemCount)
+{
+	// TODO: expand
+	if (containerItemCount == 0)
+	{
+		this->_font->renderText(
+			containerName,
+			(this->_currentWidth * (5.0f / 8.0f)),
+			(this->_currentHeight / 2.0f),
+			0.6f,
+			Colors::WHITE
+		);
+
+		this->_font->renderText(
+			"E) OPEN (Empty)",
+			(this->_currentWidth * (5.0f / 8.0f)),
+			(this->_currentHeight / 2.0f) - 40.0f,
+			0.5f,
+			glm::vec3(0.7) // grey
+		);
+	}
+	else
+	{
+		// TODO: implement
+		throw std::exception("Not implemented!");
+	}
 }
 
 void UITextRenderer::renderCarriedItemInfo(const char* itemName)
@@ -75,7 +107,7 @@ void UITextRenderer::renderCarriedItemInfo(const char* itemName)
 	);
 
 	this->_font->renderText(
-		"E) DROP",
+		"C) DROP",
 		(this->_currentWidth - 150.0f),
 		30.0f,
 		0.35f,
@@ -172,4 +204,23 @@ void UITextRenderer::renderCurrentDialogue()
 		0.5f,
 		Colors::WHITE
 	);
+}
+
+void UITextRenderer::renderOverlayForTargetItem(SphericalBoundingBoxedEntity* target)
+{
+	// TODO: update this to make it more generic
+	if (Thumper* thumperResult = dynamic_cast<Thumper*>(target)) // render interaction text for item
+	{
+		this->renderItemInteractOverlay(THUMPER, thumperResult->getState() == Thumper::STATE::ACTIVATED); // highlight selectable item
+	}
+
+	if (NomadCharacter* character = dynamic_cast<NomadCharacter*>(target)) // render interaction text for a character
+	{
+		this->renderSpeakToCharacterOverlay(NOMAD);
+	}
+
+	if (MilitaryContainer* container = dynamic_cast<MilitaryContainer*>(target)) // render interaction text for a container
+	{
+		this->renderContainerOverlay(CONTAINER, 0);
+	}
 }
