@@ -78,3 +78,8 @@ void Camera::processMouse(GLFWwindow* window, double xpos, double ypos)
 	direction.z = sin(glm::radians(this->_yaw)) * cos(glm::radians(this->_pitch));
 	this->_cameraFront = glm::normalize(direction);
 }
+
+void Camera::processKey(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	// nothing
+}

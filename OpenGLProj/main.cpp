@@ -20,8 +20,8 @@
 #include "stb_image.h"
 #include "Terrain.h"
 #include "Camera.h"
+#include "CameraManager.h"
 #include "Model.h"
-#include "PlayerCamera.h"
 #include "Skybox.h"
 
 #define INITIAL_WIDTH 1280
@@ -30,21 +30,13 @@
 
 #pragma region STATE
 
-Camera camera(glm::vec3(0.0f, 118.0f, 0.0f),
+CameraManager camMgr(
+	true,
+	glm::vec3(0.0f, 118.0f, 0.0f),
 	glm::vec3(0.0f, 0.0f, -1.0f),
 	INITIAL_WIDTH,
 	INITIAL_HEIGHT,
-	40.0f
-);
-
-PlayerCamera playerCamera(
-	glm::vec3(0.0f, 118.0f, 0.0f),
-	glm::vec3(0.0f, 0.0f, -1.0f), 
-	INITIAL_WIDTH, 
-	INITIAL_HEIGHT, 
-	10.0f,
-	2.0f,
-	5.0f
+	10.0f
 );
 
 const float RENDER_DISTANCE = 1500.0f;
@@ -53,7 +45,6 @@ const float RENDER_DISTANCE = 1500.0f;
 
 // sun
 glm::vec3 sunPos(1024.0f, 750.0f, -2000.0f);
-//glm::vec3 sunPos(50.0f, 750.0f, 0.0f);
 glm::vec3 sunLightColor = Colors::WHITE;
 
 #pragma endregion
@@ -66,28 +57,23 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height)
 
 void mouseCallback(GLFWwindow* window, double xpos, double ypos)
 {
-	playerCamera.processMouse(window, xpos, ypos);
-	//camera.processMouse(window, xpos, ypos);
+	camMgr.mouseCallback(window, xpos, ypos);
 }
 
 void scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	playerCamera.processScroll(window, xoffset, yoffset);
-	//camera.processScroll(window, xoffset, yoffset);
+	camMgr.scrollCallback(window, xoffset, yoffset);
 }
 
 void processInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
-
-	playerCamera.processInput(window);
-	//camera.processInput(window);
 }
 
 void processKey(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	playerCamera.processKey(window, key, scancode, action, mods);
+	camMgr.processKey(window, key, scancode, action, mods);
 }
 
 
@@ -255,9 +241,7 @@ int main()
 		sunPos,
 		sunLightColor
 	);
-
-	playerCamera.setTerrain(&sandTerrain);
-
+	camMgr.setTerrain(&sandTerrain);
 	
 	thumperModel = glm::translate(thumperModel, glm::vec3(5.0f, sandTerrain.getWorldHeightAt(5.0f, 6.0f) + 0.1f, 6.0f));
 
@@ -277,23 +261,19 @@ int main()
 
 # pragma region MAIN_LOOP
 
-	playerCamera.teleportToFloor();
+	camMgr.beforeLoop();
 	while(!glfwWindowShouldClose(window))
 	{
 		// ** view/projection transformations **
-		// camera.onNewFrame();
-		// const glm::vec3 cameraPos = camera.getPos();
-		// const glm::mat4 view = camera.getView(); 
-		// const float fov = camera.getFov();
-		// const glm::vec3 cameraPosForDisplay = cameraPos;
-		playerCamera.onNewFrame();
+		camMgr.onNewFrame();
+
 		// ** input **
 		processInput(window);
+		camMgr.processInput(window);
 
-		const glm::vec3 cameraPos = playerCamera.getPos();
-		const glm::vec3 cameraPosForDisplay = playerCamera.getPosIncludingJump();
-		const glm::mat4 view = playerCamera.getView();
-		const float fov = playerCamera.getFov();
+		const glm::vec3 cameraPos = camMgr.getPos();
+		const glm::mat4 view = camMgr.getCurrentCamera()->getView();
+		const float fov = camMgr.getCurrentCamera()->getFov();
 
 		// ** rendering **
 		glClearColor(0.45f, 0.49f, 0.61f, 1.0f);
@@ -367,7 +347,7 @@ int main()
 
 		// ** text overlay **
 		font.renderText(
-			std::format("X:{:.2f} Y:{:.2f}, Z:{:.2f}", cameraPosForDisplay.x, cameraPosForDisplay.y, cameraPosForDisplay.z),
+			std::format("X:{:.2f} Y:{:.2f}, Z:{:.2f}", cameraPos.x, cameraPos.y, cameraPos.z),
 			25.0f,
 			INITIAL_HEIGHT - 25.0f,
 			0.5f,

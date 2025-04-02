@@ -8,6 +8,7 @@
 class Camera
 {
 public:
+	virtual ~Camera() = default;
 	Camera(glm::vec3 initialPos, glm::vec3 initialFront, int initialWidth, int initialHeight, float speedMultiplier);
 
 	/**
@@ -27,6 +28,7 @@ public:
 	virtual void processInput(GLFWwindow* window);
 	virtual void processScroll(GLFWwindow* window, double xoffset, double yoffset);
 	virtual void processMouse(GLFWwindow* window, double xpos, double ypos);
+	virtual void processKey(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 protected:
 	glm::vec3 _cameraPos;

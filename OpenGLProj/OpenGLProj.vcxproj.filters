@@ -19,20 +19,38 @@
     <Filter Include="Source Files\old">
       <UniqueIdentifier>{953c52c2-a835-42b5-808e-ec89d3e80314}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\terrain">
-      <UniqueIdentifier>{0c59a444-28cc-4888-a926-4f0ecd450785}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\old">
       <UniqueIdentifier>{de164cc7-a357-4d3f-97b8-39093fb08e79}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\skybox">
-      <UniqueIdentifier>{c2ab6cda-8611-4472-b183-a12b7a6e8ee2}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\models">
       <UniqueIdentifier>{61cd2a3f-a990-4aed-a609-bc298095cf83}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\models">
       <UniqueIdentifier>{36ca2889-c119-4616-b919-f853fff716f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\user">
+      <UniqueIdentifier>{5247ade8-031f-4007-9e07-f3f91790c1bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\user">
+      <UniqueIdentifier>{892ed730-c4fe-4b62-bc13-c70422c4338c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\util">
+      <UniqueIdentifier>{9ea124f5-8a27-400f-9fef-22366a722ce0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\util">
+      <UniqueIdentifier>{5afbed9b-3f29-4aee-bd1e-3710ccb2700c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\world">
+      <UniqueIdentifier>{0de2b43f-271c-4749-914c-331acf078574}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\world">
+      <UniqueIdentifier>{7eef8de3-b96c-453d-90e1-f26d01998ec1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\world\skybox">
+      <UniqueIdentifier>{c2ab6cda-8611-4472-b183-a12b7a6e8ee2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\world\terrain">
+      <UniqueIdentifier>{0c59a444-28cc-4888-a926-4f0ecd450785}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -45,12 +63,6 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ErrorUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Camera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Font.cpp">
       <Filter>Source Files\font</Filter>
     </ClCompile>
@@ -61,15 +73,12 @@
       <Filter>Source Files\old</Filter>
     </ClCompile>
     <ClCompile Include="Terrain.cpp">
-      <Filter>Source Files\terrain</Filter>
+      <Filter>Source Files\world\terrain</Filter>
     </ClCompile>
     <ClCompile Include="Skybox.cpp">
-      <Filter>Source Files\skybox</Filter>
+      <Filter>Source Files\world\skybox</Filter>
     </ClCompile>
     <ClCompile Include="ResourceUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="PlayerCamera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Mesh.cpp">
@@ -78,8 +87,20 @@
     <ClCompile Include="Model.cpp">
       <Filter>Source Files\models</Filter>
     </ClCompile>
+    <ClCompile Include="PlayerCamera.cpp">
+      <Filter>Source Files\user</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Source Files\user</Filter>
+    </ClCompile>
+    <ClCompile Include="ErrorUtils.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
     <ClCompile Include="FileUtils.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="CameraManager.cpp">
+      <Filter>Source Files\user</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -109,16 +130,16 @@
       <Filter>Source Files\old</Filter>
     </None>
     <None Include="terrain.vert">
-      <Filter>Source Files\terrain</Filter>
+      <Filter>Source Files\world\terrain</Filter>
     </None>
     <None Include="terrain.frag">
-      <Filter>Source Files\terrain</Filter>
+      <Filter>Source Files\world\terrain</Filter>
     </None>
     <None Include="skybox.frag">
-      <Filter>Source Files\skybox</Filter>
+      <Filter>Source Files\world\skybox</Filter>
     </None>
     <None Include="skybox.vert">
-      <Filter>Source Files\skybox</Filter>
+      <Filter>Source Files\world\skybox</Filter>
     </None>
     <None Include="basic.frag">
       <Filter>Source Files</Filter>
@@ -137,19 +158,7 @@
     <ClInclude Include="Font.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ErrorUtils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Colors.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Terrain.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Skybox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="camera_m.h">
@@ -161,17 +170,32 @@
     <ClInclude Include="ResourceUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PlayerCamera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Model.h">
       <Filter>Header Files\models</Filter>
     </ClInclude>
     <ClInclude Include="Mesh.h">
       <Filter>Header Files\models</Filter>
     </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Header Files\user</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerCamera.h">
+      <Filter>Header Files\user</Filter>
+    </ClInclude>
+    <ClInclude Include="ErrorUtils.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
     <ClInclude Include="FileUtils.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="Skybox.h">
+      <Filter>Header Files\world</Filter>
+    </ClInclude>
+    <ClInclude Include="Terrain.h">
+      <Filter>Header Files\world</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraManager.h">
+      <Filter>Header Files\user</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

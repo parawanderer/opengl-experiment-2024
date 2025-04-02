@@ -12,7 +12,7 @@ struct PlayerMovementKeyStates {
 };
 
 
-class PlayerCamera : Camera
+class PlayerCamera : public Camera
 {
 public:
 	PlayerCamera(glm::vec3 initialPos, glm::vec3 initialFront, int initialWidth, int initialHeight, float speedMultiplier, float playerHeightWorldSpace, float startingVelocityOfJump);
@@ -28,7 +28,7 @@ public:
 	void processInput(GLFWwindow* window) override;
 	void processScroll(GLFWwindow* window, double xoffset, double yoffset) override;
 	void processMouse(GLFWwindow* window, double xpos, double ypos) override;
-	void processKey(GLFWwindow* window, int key, int scancode, int action, int mods);
+	void processKey(GLFWwindow* window, int key, int scancode, int action, int mods) override;
 
 	void teleportToFloor();
 private:
