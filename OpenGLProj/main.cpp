@@ -29,7 +29,7 @@
 #pragma region STATE
 
 Camera camera(
-	glm::vec3(0.0, 30.0f, 6.0),
+	glm::vec3(0.0f, 118.0f, 0.0f),
 	glm::vec3(0.0f, 0.0f, -1.0f), 
 	INITIAL_WIDTH, 
 	INITIAL_HEIGHT, 
@@ -41,7 +41,7 @@ const float RENDER_DISTANCE = 1500.0f;
 // world:
 
 // sun
-glm::vec3 sunPos(0.0f, 750.0f, -2000.0f);
+glm::vec3 sunPos(1024.0f, 750.0f, -2000.0f);
 glm::vec3 sunLightColor = Colors::WHITE;
 
 #pragma endregion
@@ -196,7 +196,7 @@ int main()
 	const float yScaleMult = 64.0f;
 	const float yShift = 32.0f;
 	Shader terrainShader = Shader::fromFiles("terrain.vert", "terrain.frag");
-	const glm::mat4 terrainModel = glm::scale(glm::mat4(1.0f), glm::vec3(2.0f));
+	const glm::mat4 terrainModel = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
 	Terrain sandTerrain(
 		&terrainShader, 
 		"resources/final-dunes-first-try.png", // <- edited version of https://www.florisgroen.com/sandy-desert-3d/ 
@@ -211,22 +211,6 @@ int main()
 		sunPos,
 		sunLightColor
 	);
-	//terrainShader.use();
-	//const glm::mat4 terrainModel = glm::mat4(1.0f);
-	//terrainShader.setMat4("model", terrainModel); // model transform (to world coords)
-	//const glm::mat3 terrainNormalMatrix = glm::mat3(glm::transpose(glm::inverse(terrainModel)));
-	// matrix to model the normal if there's non-linear scaling going on in the model matrix
-	// terrainShader.setMat3("normalMatrix", terrainNormalMatrix);
-	// // material (terrain)
-	// terrainShader.setInt("material.diffuse", 0);
-	// terrainShader.setVec3("material.specular", Colors::SAND);
-	// terrainShader.setFloat("material.shininess", 16);
-	// // light (sun)
-	// terrainShader.setVec3("light.position", sunPos);
-	// terrainShader.setVec3("light.ambient", sunLightColor * 0.4f);
-	// terrainShader.setVec3("light.diffuse", sunLightColor * 0.9f);
-	// terrainShader.setVec3("light.specular", sunLightColor * 0.1f);
-	// terrainShader.setInt("texture1", 0);
 #pragma endregion
 
 # pragma region MAIN_LOOP
@@ -258,10 +242,6 @@ int main()
 		skybox.render(view, projection);
 
 		// ** terrain **
-		// terrainShader.use();
-		// terrainShader.setMat4("view", view);
-		// terrainShader.setMat4("projection", projection);
-		// terrainShader.setVec3("viewPos", cameraPos);
 		sandTerrain.render(view, projection, cameraPos);
 
 		// ** light cube **
