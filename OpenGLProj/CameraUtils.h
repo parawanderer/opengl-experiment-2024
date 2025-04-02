@@ -3,6 +3,9 @@
 
 #include <glm/fwd.hpp>
 
-glm::mat4 getCarriedItemModelTransform(const glm::mat4& view, const float t, bool isMoving, bool isSpeeding, const float objectScale = 1.0f);
+namespace CameraUtils
+{
+	glm::mat4 getCarriedItemModelTransform(const glm::mat4& view, const float t, bool isMoving, bool isSpeeding, const float objectScale = 1.0f);
+}
 
 #endif

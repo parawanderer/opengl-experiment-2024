@@ -5,7 +5,7 @@
 
 #include "math.h"
 
-glm::mat4 getCarriedItemModelTransform(const glm::mat4& view, const float t, bool isMoving, bool isSpeeding, const float objectScale)
+glm::mat4 CameraUtils::getCarriedItemModelTransform(const glm::mat4& view, const float t, bool isMoving, bool isSpeeding, const float objectScale)
 {
 	glm::mat4 model = view;
 	model = glm::inverse(model); // cancel view transformation (makes object stick to the camera)

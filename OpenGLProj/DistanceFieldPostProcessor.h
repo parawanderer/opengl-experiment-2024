@@ -1,7 +1,7 @@
 ﻿#ifndef POSTPROCESSOR_MINE_H
 #define POSTPROCESSOR_MINE_H
+#include "AnimatedEntity.h"
 #include "Quad.h"
-#include "RenderableGameObject.h"
 #include "Shader.h"
 
 /**
@@ -18,7 +18,7 @@ public:
 	void setOutlineSize(float outlineSize);
 	void setOutlinePulsate(bool doPulsate);
 
-	void computeAndRenderOverlay(const glm::mat4& projection, const glm::mat4& view, const std::vector<RenderableGameObject*>& objects, unsigned int overlayOutputToBufferId);
+	void computeAndRenderOverlay(const glm::mat4& projection, const glm::mat4& view, const std::vector<AnimatedEntity*>& objects, unsigned int overlayOutputToBufferId);
 
 private:
 	/**

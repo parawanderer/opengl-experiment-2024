@@ -34,17 +34,19 @@ const std::string GETTING_UP_ANIM = "gettingup";
 const std::string LOOK_BEHIND_RIGHT_ANIM = "lookright";
 
 // we can seed the random generator or not. Doesn't really matter for now.
-NomadCharacter::NomadCharacter(WorldTimeManager* time, Terrain* terrain, RenderableGameObject* nomadGameObject, Animator* animator, float initialX, float initialZ) :
+NomadCharacter::NomadCharacter(WorldTimeManager* time, Terrain* terrain, RenderableGameObject* nomadGameObject, AnimationManager* animations, float initialX, float initialZ) :
 	_time(time),
 	_terrain(terrain),
 	_nomadModel(nomadGameObject),
-	_animator(animator),
+	_animator(animations),
 	_currentPos(terrain->getWorldHeightVecFor(initialX, initialZ) + SMALL_Y_OFFSET),
 	_currentFront(glm::vec3(0.0, 0.0, -1.0))
 {}
 
 void NomadCharacter::onNewFrame()
 {
+	this->_animator.updateAnimation(this->_time->getDeltaTime());
+
 	// decide if want to stand around or walk for the next x 
 	const float currentTime = this->_time->getCurrentTime();
 	if (currentTime <= this->_nextBehaviourChoiceAt)
@@ -67,11 +69,11 @@ void NomadCharacter::onNewFrame()
 		{
 			this->_nextBehaviourChoiceAt = currentTime + (rand() % TIME_BETWEEN_CHOOSING_BEHAVIOURS_SEC + 1); // <- seconds
 			this->_movementState = MOVEMENT_STATE::IDLE; // just stand still
-			this->_animator->playAnimation(IDLE_ANIMS[rand() % IDLE_ANIMS.size()]);
+			this->_animator.playAnimation(IDLE_ANIMS[rand() % IDLE_ANIMS.size()]);
 			return;
 		}
 		this->defineWalkPlan(currentTime);
-		this->_animator->playAnimation("walking");
+		this->_animator.playAnimation(WALKING_ANIM);
 	}
 
 	// TODO: it is possible to do smooth interpolation between the various animations rather than having sharp cut-offs
@@ -86,21 +88,11 @@ void NomadCharacter::onNewFrame()
 
 void NomadCharacter::draw(Shader& shader)
 {
-	glGetError();
-	shader.setBool("doAnimate", true);
-	glGetError();
-	const std::vector<glm::mat4> transforms = this->_animator->getFinalBoneMatrices();
-	glGetError();
-	for (int i = 0; i < transforms.size(); ++i)
-	{
-		shader.setMat4("finalBoneMatrices[" + std::to_string(i) + "]", transforms[i]);
-		glGetError();
-	}
+	const std::vector<glm::mat4> transforms = this->_animator.getFinalBoneMatrices();
+	this->setupEntityShaderForAnim(shader, transforms);
 
 	this->_nomadModel->draw(shader);
-	glGetError();
-	shader.setBool("doAnimate", false);
-	glGetError();
+	this->clearEntityShaderForAnim(shader);
 }
 
 void NomadCharacter::interpolateWalkState(const float currentTime)

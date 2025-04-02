@@ -2,7 +2,7 @@
 #define WORLDMATHUTILS_MINE_H
 #include <vector>
 
-#include "SphericalBoxedGameObject.h"
+#include "SphericalBoundingBoxedEntity.h"
 
 namespace WorldMathUtils
 {
@@ -21,9 +21,9 @@ namespace WorldMathUtils
 	 * and realised the ray vector that we use here is just the same thing as the cameraPos of the camera view, at the very center of the screen.
 	 * so the inverse computation is unnecessary.
 	 */
-	inline SphericalBoxedGameObject* findClosestIntersection(const std::vector<SphericalBoxedGameObject*>& listOfIntersectableObjects, const glm::vec3& cameraPos, const glm::vec3& cameraFront, float maxDistance = FLT_MAX)
+	inline SphericalBoundingBoxedEntity* findClosestIntersection(const std::vector<SphericalBoundingBoxedEntity*>& listOfIntersectableObjects, const glm::vec3& cameraPos, const glm::vec3& cameraFront, float maxDistance = FLT_MAX)
 	{
-		SphericalBoxedGameObject* res = nullptr;
+		SphericalBoundingBoxedEntity* res = nullptr;
 		float tClosest = FLT_MAX; // <- I'll say it's unlikely that we'd ever actually intersect something at this distance in my program. But the idea is to do tClosest = inf to reduce this by the min checks
 
 		for (unsigned int i = 0; i < listOfIntersectableObjects.size(); ++i)
@@ -31,8 +31,8 @@ namespace WorldMathUtils
 			// https://antongerdelan.net/opengl/raycasting.html + https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection.html
 			// referenced for sphere intersection logic
 
-			const float radiusSphere = listOfIntersectableObjects[i]->getBoundRadius();
-			const glm::vec3 worldCenterSphere = listOfIntersectableObjects[i]->getWorldMidPoint();
+			const float radiusSphere = listOfIntersectableObjects[i]->getRadiusSphericalBoundingBox();
+			const glm::vec3 worldCenterSphere = listOfIntersectableObjects[i]->getBoundMidPoint();
 
 			const glm::vec3 tmp = cameraPos - worldCenterSphere;
 			const float b = glm::dot(cameraFront, tmp);

@@ -135,6 +135,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\glad\src\glad.c" />
+    <ClCompile Include="AnimatedEntity.cpp" />
     <ClCompile Include="Animation.cpp" />
     <ClCompile Include="AnimationManager.cpp" />
     <ClCompile Include="Animator.cpp" />
@@ -165,6 +166,7 @@
     <ClCompile Include="Skybox.cpp" />
     <ClCompile Include="Sun.cpp" />
     <ClCompile Include="Terrain.cpp" />
+    <ClCompile Include="Thumper.cpp" />
     <ClCompile Include="UITextRenderer.cpp" />
     <ClCompile Include="WorldTimeManager.cpp" />
   </ItemGroup>
@@ -196,6 +198,7 @@
     <None Include="terrain.frag" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AnimatedEntity.h" />
     <ClInclude Include="Animation.h" />
     <ClInclude Include="AnimationManager.h" />
     <ClInclude Include="Animator.h" />
@@ -215,6 +218,7 @@
     <ClInclude Include="PlayerState.h" />
     <ClInclude Include="Quad.h" />
     <ClInclude Include="Sphere.h" />
+    <ClInclude Include="SphericalBoundingBoxedEntity.h" />
     <ClInclude Include="SphericalBoxedGameObject.h" />
     <ClInclude Include="Colors.h" />
     <ClInclude Include="ErrorUtils.h" />
@@ -231,6 +235,7 @@
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="Sun.h" />
     <ClInclude Include="Terrain.h" />
+    <ClInclude Include="Thumper.h" />
     <ClInclude Include="UITextRenderer.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="WorldMathUtils.h" />

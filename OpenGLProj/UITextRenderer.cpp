@@ -5,7 +5,7 @@
 UITextRenderer::UITextRenderer(Font* uiFont) : _font(uiFont)
 {}
 
-void UITextRenderer::renderItemInteractOverlay(const char* itemName, int currentWidth, int currentHeight)
+void UITextRenderer::renderItemInteractOverlay(const char* itemName, int currentWidth, int currentHeight, bool isActive)
 {
 	// text overlay (inspired by bethesda games because it is simple to do)
 	// obviously the font isn't really all that nice looking.
@@ -26,13 +26,13 @@ void UITextRenderer::renderItemInteractOverlay(const char* itemName, int current
 		0.5f,
 		Colors::WHITE
 	);
-	// TODO: this should toggle an animation with sound effects, I'd say
+
 	this->_font->renderText(
-		"E) ACTIVATE",
+		isActive ? "E) DEACTIVATE" : "E) ACTIVATE",
 		(currentWidth * (5.0f / 8.0f)),
 		(currentHeight / 2.0f) - 80.0f,
 		0.5f,
-		Colors::WHITE * 0.8f
+		Colors::WHITE
 	);
 }
 

@@ -1,11 +1,12 @@
 ﻿#ifndef NOMADCHARACTER_MINE_H
 #define NOMADCHARACTER_MINE_H
+#include "AnimatedEntity.h"
 #include "Animator.h"
 #include "RenderableGameObject.h"
 #include "Terrain.h"
 #include "WorldTimeManager.h"
 
-class NomadCharacter
+class NomadCharacter : public AnimatedEntity
 {
 public:
 	enum class MOVEMENT_STATE
@@ -14,17 +15,17 @@ public:
 		WALKING = 1
 	};
 
-	NomadCharacter(WorldTimeManager* time, Terrain* terrain, RenderableGameObject* nomadGameObject, Animator* animator, float initialX, float initialZ);
+	//NomadCharacter(WorldTimeManager* time, Terrain* terrain, RenderableGameObject* nomadGameObject, Animator* animator, float initialX, float initialZ);
+	NomadCharacter(WorldTimeManager* time, Terrain* terrain, RenderableGameObject* nomadGameObject, AnimationManager* animations, float initialX, float initialZ);
 
-	void onNewFrame();
-
-	void draw(Shader& shader);
+	void onNewFrame() override;
+	void draw(Shader& shader) override;
 private:
 	WorldTimeManager* _time;
 	Terrain* _terrain;
 
 	RenderableGameObject* _nomadModel;
-	Animator* _animator;
+	Animator _animator;
 
 	glm::vec3 _currentPos;
 	glm::vec3 _currentFront;

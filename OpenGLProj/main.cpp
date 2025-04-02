@@ -43,6 +43,7 @@
 #include "CarriedGameObject.h"
 #include "GameObjectConstants.h"
 #include "NomadCharacter.h"
+#include "Thumper.h"
 #include "WorldTimeManager.h"
 
 // keeping this at a power of two to support the outline-rendering JFA algorithm.
@@ -108,6 +109,15 @@ void processKey(GLFWwindow* window, int key, int scancode, int action, int mods)
 glm::mat4 computeOrnithroperModelTransform(const float t);
 
 
+// temporary things for the course assignment specifically
+
+void setupAttenuatedLightSpheres(Shader& targetShader, const float c1, const float c2, const float c3);
+
+std::vector<glm::vec3> computeAttenuatedLightSpheresPos(Terrain& terrain, const float t);
+
+void renderTerrain(Shader& terrainShader, Terrain& terrain, const glm::mat4& view, const glm::mat4& projection, const glm::vec3& cameraPos, const std::vector<glm::vec3>& smallLightSpherePositions);
+
+
 int main()
 {
 	GLFWwindow* window = init();
@@ -138,14 +148,13 @@ int main()
 
 	RenderableGameObject ornithopter("resources/models/dune-ornithopter/ornithopter_edit.dae");
 
-	Model thumperModel("resources/models/thumper_dune/thumper_dune.dae"); // reuse the model
-	SphericalBoxedGameObject thumper(&thumperModel, 0.4f);
-	SphericalBoxedGameObject thumper2(&thumperModel, 0.4f);
+	Model thumperModel("resources/models/thumper_dune/Thumper.fbx"); // reuse the model
+	AnimationManager thumperAnimations("resources/models/thumper_dune/Thumper.fbx", &thumperModel);
+	SphericalBoxedGameObject thumperObj1(&thumperModel, 0.4f);
+	SphericalBoxedGameObject thumperObj2(&thumperModel, 0.4f);
 
 	RenderableGameObject nomad("resources/models/rust-nomad/RustNomad.fbx");
-	glGetError();
 	AnimationManager nomadAnimations("resources/models/rust-nomad/RustNomad.fbx", nomad.getObjectModel());
-	glGetError();
 
 	RenderableGameObject sandWorm("resources/models/dune-sandworm/sandworm_edit.dae");
 
@@ -212,17 +221,7 @@ int main()
 		sunPos,
 		sunLightColor
 	);
-	for (int i = 0; i < 3; ++i)
-	{
-		terrainShader.setVec3("attLights[" + std::to_string(i) + "].ambient", Colors::WHITE * 0.00f);
-		terrainShader.setVec3("attLights[" + std::to_string(i) + "].diffuse", Colors::WHITE * 1.0f);
-		terrainShader.setVec3("attLights[" + std::to_string(i) + "].specular", Colors::WHITE * 1.0f);
-		terrainShader.setFloat("attConsts[" + std::to_string(i) + "].c1", attenuationC1);
-		terrainShader.setFloat("attConsts[" + std::to_string(i) + "].c2", attenuationC2);
-		terrainShader.setFloat("attConsts[" + std::to_string(i) + "].c3", attenuationC3);
-	}
-	terrainShader.setInt("numAttLights", 3);
-
+	setupAttenuatedLightSpheres(terrainShader, attenuationC1, attenuationC2, attenuationC3);
 	camMgr.setTerrain(&sandTerrain);
 #pragma endregion
 
@@ -234,12 +233,12 @@ int main()
 	glm::mat4 thumper1Model = glm::mat4(1.0f);
 	thumper1Model = glm::translate(thumper1Model, sandTerrain.getWorldHeightVecFor(5.0f, 6.0f) + smallOffsetY);
 	thumper1Model = glm::scale(thumper1Model, glm::vec3(thumperScale));
-	thumper.setModelTransform(thumper1Model);
+	thumperObj1.setModelTransform(thumper1Model);
 
 	glm::mat4 thumper2Model = glm::mat4(1.0f);
 	thumper2Model = glm::translate(thumper2Model, sandTerrain.getWorldHeightVecFor(9.0f, 10.0f) + smallOffsetY);
 	thumper2Model = glm::scale(thumper2Model, glm::vec3(thumperScale));
-	thumper2.setModelTransform(thumper2Model);
+	thumperObj2.setModelTransform(thumper2Model);
 
 	glm::mat4 nomadModel = glm::mat4(1.0f);
 	nomadModel = glm::translate(nomadModel, sandTerrain.getWorldHeightVecFor(6.0f, 6.0f) + smallOffsetY);
@@ -289,28 +288,35 @@ int main()
 
 #pragma endregion
 
-	std::vector staticGameObjects = { &containerS1, &containerS2, &containerL1, &containerL2, &containerL3 };
 
 	// state
 	PlayerState player;
-	std::set dynamicItems = { &thumper, &thumper2 };
+
+	NomadCharacter nomadCharacter(&timeMgr, &sandTerrain, &nomad, &nomadAnimations, 20.0f, -20.0f);
+
+	Thumper thumper1(&timeMgr, &thumperObj1, &thumperAnimations);
+	Thumper thumper2(&timeMgr, &thumperObj2, &thumperAnimations);
 
 
-	Animator animator(&nomadAnimations);
-	glGetError();
-	NomadCharacter nomadCharacter(&timeMgr, &sandTerrain, &nomad, &animator, 20.0f, -20.0f);
-	glGetError();
+	std::set<Thumper*> worldItemsThatPlayerCanPickUp = { &thumper1, &thumper2 };
+	std::vector<RenderableGameObject*> staticGameObjects = { &containerS1, &containerS2, &containerL1, &containerL2, &containerL3 };
+	std::vector<AnimatedEntity*> animatedEntitiesWithFrames = { &nomadCharacter, &thumper1, &thumper2 };
+	std::vector<AnimatedEntity*> independentAnimatedEntities = { &nomadCharacter };
+
+
+	const float worldInteractionCooldownSecs = 1.0f;
+	float lastInteractionAt = 0.0f;
 
 	// ============ [ MAIN LOOP ] ============
 	camMgr.beforeLoop();
 	while (!glfwWindowShouldClose(window))
 	{
+		const float t = (float)glfwGetTime();
 		processInput(window);
 		timeMgr.onNewFrame();
 		camMgr.processInput(window);
-		animator.updateAnimation(timeMgr.getDeltaTime());
 
-		nomadCharacter.onNewFrame();
+		for (auto animatedEntity : animatedEntitiesWithFrames) animatedEntity->onNewFrame();
 
 #pragma region PROJECTING
 		const glm::vec3 cameraPos = camMgr.getPos();
@@ -320,40 +326,61 @@ int main()
 		const glm::mat4 projection = glm::perspective(glm::radians(fov),(float)currentWidth / (float)currentHeight,0.1f, RENDER_DISTANCE);
 #pragma endregion
 
-
 #pragma region MOUSE_RAY_PICKING
-		SphericalBoxedGameObject* result = nullptr;
+		Thumper* result = nullptr;
 		if (!player.hasCarriedItem()) {
-			std::vector considered(dynamicItems.begin(), dynamicItems.end());
-			result = WorldMathUtils::findClosestIntersection(considered,cameraPos,cameraFront,5.0f);
+			std::vector<SphericalBoundingBoxedEntity*> considered(worldItemsThatPlayerCanPickUp.begin(), worldItemsThatPlayerCanPickUp.end());
+			result = (Thumper*) WorldMathUtils::findClosestIntersection(considered, cameraPos, cameraFront,5.0f); // TODO: if I add more items later, then this type cast is not valid
+		}
+#pragma endregion
+
+#pragma region PLAYER_INTERACTIONS
+		const bool interactionCooldownPassed = t - lastInteractionAt > worldInteractionCooldownSecs;
+		if (result != nullptr && interactionCooldownPassed && glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+		{
+			switch(result->getState())
+			{
+			case Thumper::STATE::DISABLED:
+				result->setState(Thumper::STATE::ACTIVATED); // start animating!
+				break;
+			case Thumper::STATE::ACTIVATED:
+				result->setState(Thumper::STATE::DISABLED);
+				break;
+			}
+			lastInteractionAt = t;
+		}
+
+		if (!player.hasCarriedItem() && glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) // pick up the item
+		{
+			result->setState(Thumper::STATE::DISABLED); // disable when picking up
+			worldItemsThatPlayerCanPickUp.erase(result);
+			player.setCarriedItem(CarriedGameObject(result));
+		}
+
+		if (camMgr.isPlayerCamera() && player.hasCarriedItem() && glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) // drop the item
+		{
+			// drop the item
+			Thumper* thump = player.removeCarriedItem().getObject();
+			glm::mat4 newModel = glm::mat4(1.0f);
+			// translate position just comes out to a nice "in front of the player" position
+			newModel = glm::translate(newModel, sandTerrain.getWorldHeightVecFor(cameraPos.x + (cameraFront.x * 2.5f), cameraPos.z + (cameraFront.z * 2.5f)) + smallOffsetY);
+			newModel = glm::scale(newModel, glm::vec3(thumperScale));
+			thump->getObjectModel()->setModelTransform(newModel);
+			worldItemsThatPlayerCanPickUp.insert(thump);
 		}
 #pragma endregion
 
 #pragma region RENDERING
-		const float t = (float)glfwGetTime();
-
-		glBindFramebuffer(GL_FRAMEBUFFER, SCREEN_OUTPUT_BUFFER_ID); // back to default (output to screen)
+		glBindFramebuffer(GL_FRAMEBUFFER, SCREEN_OUTPUT_BUFFER_ID);
 		glEnable(GL_DEPTH_TEST);
-		// ------ ** clear previous image ** ------
 		glClearColor(Colors::CUSTOM_BLUE.r, Colors::CUSTOM_BLUE.g, Colors::CUSTOM_BLUE.b, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glCheckError();
-
-		std::vector<glm::vec3> smallLightSpherePositions = { // MAX size = 4 (as per terrain.frag)
-			sandTerrain.getWorldHeightVecFor(-160, 50) + glm::vec3(sin(t) * 10.0f, 7.0 + cos(t / 2) * 3.0f, cos(t) * 10.0f),
-			sandTerrain.getWorldHeightVecFor(-170, 60) + glm::vec3(sin(t) * 80.0f, 6.0 + sin(t) * 3.0f, cos(t) * 3.0f),
-			sandTerrain.getWorldHeightVecFor(-170, 40) + glm::vec3(sin(t) * 2.0f, 6.0 + sin(t) * 10.0f, cos(t) * 2.0f),
-		};
 
 		// WORLD
 		skybox.render(view, projection);
-		terrainShader.use();
 
-		for (int i = 0; i < smallLightSpherePositions.size(); ++i)
-		{
-			terrainShader.setVec3("attLights[" + std::to_string(i) + "].position", smallLightSpherePositions[i]);
-		}
-		sandTerrain.render(view, projection, cameraPos);
+		std::vector<glm::vec3> smallLightSpherePositions = computeAttenuatedLightSpheresPos(sandTerrain, t);
+		renderTerrain(terrainShader, sandTerrain, view, projection, cameraPos, smallLightSpherePositions);
 
 		// ------ ** light cube ** ------
 		lightCubeShader.use();
@@ -384,79 +411,44 @@ int main()
 		ornithopter.setModelTransform(computeOrnithroperModelTransform(t));
 		ornithopter.draw(genericShader);
 
-		// nomad
-		//nomad.draw(genericShader);
-		nomadCharacter.draw(genericShader);
-
 		// sand worm
 		sandWorm.draw(genericShader);
 
+		// static models in the world (non-characters/interacteable items)
+		for (auto staticObj: staticGameObjects) staticObj->draw(genericShader);
 
-		// containers
-		for (auto staticObj: staticGameObjects)
-		{
-			staticObj->draw(genericShader);
-		}
+		// animated entities (not dynamic)
+		for (auto entity : independentAnimatedEntities) entity->draw(genericShader);
 
-		// *dynamic items*
-		for (auto thump : dynamicItems) // dynamic world items
-		{
-			thump->draw(genericShader);
-		}
+		// dynamic world items (player can pick these up)
+		for (auto thump : worldItemsThatPlayerCanPickUp) thump->draw(genericShader);
 
 		if (player.hasCarriedItem()) // dynamic "in player hand" items
 		{
 			// (the perspective on this thing doesn't really make sense in the world)
-			SphericalBoxedGameObject* item = player.getCarriedItem().getModel();
-			glm::mat4 model = getCarriedItemModelTransform(view, t, camMgr.getCurrentCamera()->isMoving(), camMgr.getCurrentCamera()->isSpeeding(), thumperScale);
-			item->setModelTransform(model);
+			glm::mat4 model = CameraUtils::getCarriedItemModelTransform(view, t, camMgr.getCurrentCamera()->isMoving(), camMgr.getCurrentCamera()->isSpeeding(), thumperScale);
+			Thumper* item = player.getCarriedItem().getObject();
+			item->getObjectModel()->setModelTransform(model);
 			item->draw(genericShader);
 		}
 
-		glCheckError();
-
-		// ------ ** post-processing ** ------
+#pragma region POST_PROCESSING
 		fontShader.use();
 		fontShader.setMat4("projection", textProjection);
 
-		// highlight selectable item
 		if (result != nullptr) {
 			distanceFieldPostProcessor.computeAndRenderOverlay(projection, view, { result }, SCREEN_OUTPUT_BUFFER_ID);
-			uiText.renderItemInteractOverlay(THUMPER, currentWidth, currentHeight);
-
-			if (!player.hasCarriedItem() && glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) // only pick up if "hands are free"
-			{
-				// player is picking this specific one up
-				dynamicItems.erase(result);
-				player.setCarriedItem(CarriedGameObject(result));
-			}
+			uiText.renderItemInteractOverlay(THUMPER, currentWidth, currentHeight, result->getState() == Thumper::STATE::ACTIVATED); // highlight selectable item
 		}
 
 		if (player.hasCarriedItem())
 		{
 			uiText.renderCarriedItemInfo(THUMPER, currentWidth, currentHeight);
-
-			if (camMgr.isPlayerCamera() && glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-			{
-				// drop the item
-				SphericalBoxedGameObject* model = player.removeCarriedItem().getModel();
-
-				// update its position
-				glm::mat4 newModel = glm::mat4(1.0f);
-				// translate position just comes out to a nice "in front of the player" position
-				newModel = glm::translate(newModel, sandTerrain.getWorldHeightVecFor(cameraPos.x + (cameraFront.x * 2.5f), cameraPos.z + (cameraFront.z * 2.5f)) + smallOffsetY);
-				newModel = glm::scale(newModel, glm::vec3(thumperScale));
-				model->setModelTransform(newModel);
-
-				// add it back to the dynamic items (for next loop)
-				dynamicItems.insert(model);
-			}
 		}
 
-
-		// ------ ** text overlay ** ------
 		uiText.renderMainUIOverlay(cameraPos, currentWidth, currentHeight);
 		glCheckError();
+#pragma endregion
 
 #pragma endregion
 
@@ -548,4 +540,40 @@ glm::mat4 computeOrnithroperModelTransform(const float t)
 	orniModel = glm::rotate(orniModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	orniModel = glm::scale(orniModel, glm::vec3(2.0f));
 	return orniModel;
+}
+
+
+void setupAttenuatedLightSpheres(Shader& targetShader, const float c1, const float c2, const float c3)
+{
+	for (int i = 0; i < 3; ++i)
+	{
+		targetShader.setVec3("attLights[" + std::to_string(i) + "].ambient", Colors::WHITE * 0.00f);
+		targetShader.setVec3("attLights[" + std::to_string(i) + "].diffuse", Colors::WHITE * 1.0f);
+		targetShader.setVec3("attLights[" + std::to_string(i) + "].specular", Colors::WHITE * 1.0f);
+		targetShader.setFloat("attConsts[" + std::to_string(i) + "].c1", c1);
+		targetShader.setFloat("attConsts[" + std::to_string(i) + "].c2", c2);
+		targetShader.setFloat("attConsts[" + std::to_string(i) + "].c3", c3);
+	}
+	targetShader.setInt("numAttLights", 3);
+}
+
+std::vector<glm::vec3> computeAttenuatedLightSpheresPos(Terrain& terrain, const float t)
+{
+	std::vector<glm::vec3> smallLightSpherePositions = { // MAX size = 4 (as per terrain.frag)
+			terrain.getWorldHeightVecFor(-160, 50) + glm::vec3(sin(t) * 10.0f, 7.0 + cos(t / 2) * 3.0f, cos(t) * 10.0f),
+			terrain.getWorldHeightVecFor(-170, 60) + glm::vec3(sin(t) * 80.0f, 6.0 + sin(t) * 3.0f, cos(t) * 3.0f),
+			terrain.getWorldHeightVecFor(-170, 40) + glm::vec3(sin(t) * 2.0f, 6.0 + sin(t) * 10.0f, cos(t) * 2.0f),
+	};
+
+	return smallLightSpherePositions;
+}
+
+void renderTerrain(Shader& terrainShader, Terrain& terrain, const glm::mat4& view, const glm::mat4& projection, const glm::vec3& cameraPos, const std::vector<glm::vec3>& smallLightSpherePositions)
+{
+	terrainShader.use();
+	for (int i = 0; i < smallLightSpherePositions.size(); ++i)
+	{
+		terrainShader.setVec3("attLights[" + std::to_string(i) + "].position", smallLightSpherePositions[i]);
+	}
+	terrain.render(view, projection, cameraPos);
 }

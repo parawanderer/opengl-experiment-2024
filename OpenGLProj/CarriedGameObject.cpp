@@ -1,9 +1,9 @@
 ﻿#include "CarriedGameObject.h"
 
-CarriedGameObject::CarriedGameObject(SphericalBoxedGameObject* objectModel): _objectModel(objectModel)
+CarriedGameObject::CarriedGameObject(Thumper* object): _object(object)
 {}
 
-SphericalBoxedGameObject* CarriedGameObject::getModel() const
+Thumper* CarriedGameObject::getObject() const
 {
-	return this->_objectModel;
+	return this->_object;
 }

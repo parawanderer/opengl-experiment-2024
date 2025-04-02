@@ -186,6 +186,12 @@
     <ClCompile Include="AnimationManager.cpp">
       <Filter>Source Files\gameobject\models</Filter>
     </ClCompile>
+    <ClCompile Include="Thumper.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimatedEntity.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -379,6 +385,15 @@
     </ClInclude>
     <ClInclude Include="AssimpNode.h">
       <Filter>Header Files\gameobject\models</Filter>
+    </ClInclude>
+    <ClInclude Include="Thumper.h">
+      <Filter>Header Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimatedEntity.h">
+      <Filter>Header Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="SphericalBoundingBoxedEntity.h">
+      <Filter>Header Files\game</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

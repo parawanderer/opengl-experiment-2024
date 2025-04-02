@@ -18,7 +18,6 @@ out vec2 TexCoord;
 const int MAX_BONES = 100;
 const int MAX_BONE_INFLUENCE = 4;
 uniform mat4 finalBoneMatrices[MAX_BONES];
-
 uniform bool doAnimate;
 
 void main()

@@ -7,7 +7,7 @@ class UITextRenderer
 public:
 	UITextRenderer(Font* uiFont);
 
-	void renderItemInteractOverlay(const char* itemName, int currentWidth, int currentHeight);
+	void renderItemInteractOverlay(const char* itemName, int currentWidth, int currentHeight, bool isActive);
 
 	void renderCarriedItemInfo(const char* itemName, int currentWidth, int currentHeight);
 
