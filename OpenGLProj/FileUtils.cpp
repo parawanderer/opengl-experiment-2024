@@ -1,11 +1,13 @@
 #include "FileUtils.h"
 
 #include <iostream>
-#include <glad/glad.h>
 
 #include "stb_image.h"
 
-unsigned loadTextureFromFile(const char* path, const std::string& directory)
+
+
+
+unsigned loadTextureFromFile(const char* path, const std::string& directory, std::optional<GLenum> activeTextureUnit)
 {
 	std::string fileName(path);
 	fileName = directory + '/' + fileName;
@@ -36,6 +38,8 @@ unsigned loadTextureFromFile(const char* path, const std::string& directory)
 			return -1;
 		}
 
+		if (activeTextureUnit.has_value()) glActiveTexture(activeTextureUnit.value());
+
 		glBindTexture(GL_TEXTURE_2D, textureId);
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
 
@@ -48,7 +52,7 @@ unsigned loadTextureFromFile(const char* path, const std::string& directory)
 	}
 	else
 	{
-		std::cout << "Failed to load texture" << std::endl;
+		std::cout << "Failed to load texture (at '" << fileName << "')" << std::endl;
 	}
 
 	stbi_image_free(data);

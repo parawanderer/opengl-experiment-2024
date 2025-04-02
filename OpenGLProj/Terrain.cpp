@@ -6,6 +6,7 @@
 
 #include "Colors.h"
 #include "ErrorUtils.h"
+#include "FileUtils.h"
 #include "ResourceUtils.h"
 #include "stb_image.h"
 
@@ -31,35 +32,6 @@ void Terrain::insertNormContribution(unsigned int index0, unsigned int index1, u
 	this->_vertices[index0].normal += contrib;
 	this->_vertices[index1].normal += contrib;
 	this->_vertices[index2].normal += contrib;
-}
-
-unsigned int Terrain::loadTextureJpg(const char* texturePath, GLenum textureUnit)
-{
-	unsigned int texture;
-	glGenTextures(1, &texture);
-	glActiveTexture(textureUnit); // activate the texture unit first before binding texture
-	glBindTexture(GL_TEXTURE_2D, texture);
-	// set the texture wrapping/filtering options (on the currently bound texture object)
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	// load and generate the texture
-	int width, height, nrChannels;
-	unsigned char* data = stbi_load(texturePath, &width, &height, &nrChannels, 0);
-	if (data)
-	{
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	else
-	{
-		std::cout << "Failed to load texture" << std::endl;
-		return -1;
-	}
-	stbi_image_free(data);
-
-	return texture;
 }
 
 /*
@@ -280,9 +252,10 @@ _terrainNormalMatrix(glm::mat3(glm::transpose(glm::inverse(_terrainModel))))
 	this->populateModelMatrices(); // for terrain "tiling"
 
 	// load textures
-	this->_textureId0 = loadTextureJpg(texturePath0.c_str(), GL_TEXTURE0); // texture0
-	this->_textureId1 = loadTextureJpg(texturePath1.c_str(), GL_TEXTURE1); // texture1
-	this->_textureNormalId = loadTextureJpg(textureNormalMap.c_str(), GL_TEXTURE2); // texture2 (normal map)
+	this->_textureId0 = loadTextureFromFile(texturePath0.c_str(), PROJ_CURRENT_DIR, GL_TEXTURE0); //loadTextureJpg(texturePath0.c_str(), GL_TEXTURE0); // texture0
+	this->_textureId1 = loadTextureFromFile(texturePath1.c_str(), PROJ_CURRENT_DIR, GL_TEXTURE1);  //loadTextureJpg(texturePath1.c_str(), GL_TEXTURE1); // texture1
+	this->_textureNormalId = loadTextureFromFile(textureNormalMap.c_str(), PROJ_CURRENT_DIR, GL_TEXTURE2); //loadTextureJpg(textureNormalMap.c_str(), GL_TEXTURE2); // texture2 (normal map)
+	glCheckError();
 
 	// vertex generation
 	const float yScale = yScaleMult / 65536.0f; // 16-bit image gives more possible levels...
@@ -303,11 +276,14 @@ _terrainNormalMatrix(glm::mat3(glm::transpose(glm::inverse(_terrainModel))))
 
 	// 4. OpenGL initialization of triangle data
 	this->setupMesh();
+	glCheckError();
 
 	// 5. Shader configuration
 	this->setupShader(sunPos, sunLightColor);
 
+	glCheckError();
 	glBindVertexArray(0);
+	glCheckError();
 }
 
 void Terrain::setupMesh()
@@ -332,6 +308,7 @@ void Terrain::setupMesh()
 
 void Terrain::setupShader(const glm::vec3& sunPos, const glm::vec3& sunLightColor)
 {
+	glCheckError();
 	this->_shader->use();
 	this->_shader->setMat4("model", this->_terrainModel); // model transform (to world coords)
 	// matrix to model the normal if there's non-linear scaling going on in the model matrix
@@ -347,6 +324,7 @@ void Terrain::setupShader(const glm::vec3& sunPos, const glm::vec3& sunLightColo
 	this->_shader->setVec3("light.ambient", sunLightColor * 0.4f);
 	this->_shader->setVec3("light.diffuse", sunLightColor * 0.9f);
 	this->_shader->setVec3("light.specular", sunLightColor * 0.0f);
+	glCheckError();
 }
 
 void Terrain::render(const glm::mat4& view, const glm::mat4& projection, const glm::vec3& viewPos)
