@@ -137,6 +137,8 @@
     <ClCompile Include="..\..\glad\src\glad.c" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CameraManager.cpp" />
+    <ClCompile Include="DistanceFieldPostProcessor.cpp" />
+    <ClCompile Include="Quad.cpp" />
     <ClCompile Include="Sphere.cpp" />
     <ClCompile Include="SphericalBoxedGameObject.cpp" />
     <ClCompile Include="ErrorUtils.cpp" />
@@ -186,7 +188,10 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CameraManager.h" />
     <ClInclude Include="camera_m.h" />
+    <ClInclude Include="FileConstants.h" />
     <ClInclude Include="jfa_algo_old.frag" />
+    <ClInclude Include="DistanceFieldPostProcessor.h" />
+    <ClInclude Include="Quad.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="SphericalBoxedGameObject.h" />
     <ClInclude Include="Colors.h" />

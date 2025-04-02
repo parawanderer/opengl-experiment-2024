@@ -27,10 +27,12 @@ void main()
         // I got the idea from this video that discusses the usage for text rendering using distance fields: https://www.youtube.com/watch?v=d8cfgcJR9Tk
         // because I was looking for a smoothing effect like in this blogpost: https://bgolus.medium.com/the-quest-for-very-wide-outlines-ba82ed442cd9
         float opacity = 1.0 - smoothstep(outlinePlacementOffset, outlinePlacementOffset + smoothenedEdgeTransition, dist);
-        //FragColor = vec4(opacity, opacity, opacity, 1.0);
+        
         FragColor = vec4(1.0, 1.0, 1.0, opacity);
+        //FragColor = vec4(opacity, opacity, opacity, 1.0);
     } else {
         FragColor = vec4(0.0);
+        //FragColor = vec4(0.0, 0.0, 0.0, 1.0);
     }
 
     // not smoothened:

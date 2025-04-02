@@ -67,6 +67,12 @@
     <Filter Include="Source Files\world\sun">
       <UniqueIdentifier>{776261a4-4faf-4fe5-9991-14a96e853a6d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\postprocessing">
+      <UniqueIdentifier>{8dc817fa-cbf2-4f5f-a072-4c2429eb0b10}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\postprocessing">
+      <UniqueIdentifier>{c99863bc-99fe-4e76-8664-b3237c2a86b9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\glad\src\glad.c">
@@ -128,6 +134,12 @@
     </ClCompile>
     <ClCompile Include="Sun.cpp">
       <Filter>Source Files\world\sun</Filter>
+    </ClCompile>
+    <ClCompile Include="DistanceFieldPostProcessor.cpp">
+      <Filter>Source Files\postprocessing</Filter>
+    </ClCompile>
+    <ClCompile Include="Quad.cpp">
+      <Filter>Source Files\postprocessing</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -274,6 +286,15 @@
     </ClInclude>
     <ClInclude Include="jfa_algo_old.frag">
       <Filter>Source Files\gameobject\models</Filter>
+    </ClInclude>
+    <ClInclude Include="DistanceFieldPostProcessor.h">
+      <Filter>Header Files\postprocessing</Filter>
+    </ClInclude>
+    <ClInclude Include="FileConstants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Quad.h">
+      <Filter>Header Files\postprocessing</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

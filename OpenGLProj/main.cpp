@@ -23,6 +23,8 @@
 #include "Terrain.h"
 #include "Camera.h"
 #include "CameraManager.h"
+#include "DistanceFieldPostProcessor.h"
+#include "Quad.h"
 #include "RenderableGameObject.h"
 #include "Skybox.h"
 #include "SphericalBoxedGameObject.h"
@@ -48,6 +50,7 @@
 #define INITIAL_WIDTH 1280
 #define INITIAL_HEIGHT 800
 
+constexpr auto SCREEN_OUTPUT_BUFFER_ID = 0;
 
 
 #pragma region STATE
@@ -193,8 +196,8 @@ int main()
 	Model thumperModel("resources/models/thumper_dune/thumper_dune.dae"); // reuse the model
 	SphericalBoxedGameObject thumper(&thumperModel, 0.4f);
 	SphericalBoxedGameObject thumper2(&thumperModel, 0.4f);
-	thumper.setShowBoundingSphere(true);
-	thumper2.setShowBoundingSphere(true);
+	//thumper.setShowBoundingSphere(true);
+	//thumper2.setShowBoundingSphere(true);
 
 	RenderableGameObject nomad("resources/models/rust-nomad/RustNomad.fbx");
 
@@ -281,97 +284,74 @@ int main()
 
 	// ============ [ MAIN LOOP ] ============
 
+	Quad quad;
+	DistanceFieldPostProcessor distanceFieldPostProcessor(
+		&quad,
+		currentWidth,
+		currentHeight
+	);
+
 
 	// personal notes RE: value clamping/blending as it is relevant for the JFA algo: https://stackoverflow.com/questions/54873828/blend-negative-value-into-framebuffer-0-opengl
-
-	unsigned int framebuffer1; // https://learnopengl.com/Advanced-OpenGL/Framebuffers
-	glGenFramebuffers(1, &framebuffer1); // for "off-screen rendering"
-	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer1);
-
-
-	// generate texture
-	unsigned int textureColorbuffer1;
-	glGenTextures(1, &textureColorbuffer1);
-	glBindTexture(GL_TEXTURE_2D, textureColorbuffer1);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, currentWidth, currentHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); // must be GL_NEAREST to do point-sampling (i.e. don't interpolate between colours). Not doing point-sampling (=interpolating) messes up the Distance Field
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer1, 0);
-	glCheckError();
-
-
-	unsigned int rbo1;
-	glGenRenderbuffers(1, &rbo1);
-	glBindRenderbuffer(GL_RENDERBUFFER, rbo1);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, currentWidth, currentHeight); // use a single renderbuffer object for both a depth AND stencil buffer.
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo1); // now actually attach it
-	// now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "ERROR::FRAMEBUFFER:: Framebuffer 1 is not complete!" << std::endl;
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-
-	// second one for multiple pass switching
-	unsigned int framebuffer2;
-	glGenFramebuffers(1, &framebuffer2);
-	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer2);
-
-	// generate texture
-	unsigned int textureColorbuffer2;
-	glGenTextures(1, &textureColorbuffer2);
-	glBindTexture(GL_TEXTURE_2D, textureColorbuffer2);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, currentWidth, currentHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer2, 0);
-	glCheckError();
-
-
-	unsigned int rbo2;
-	glGenRenderbuffers(1, &rbo2);
-	glBindRenderbuffer(GL_RENDERBUFFER, rbo2);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, currentWidth, currentHeight);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo2);
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "ERROR::FRAMEBUFFER:: Framebuffer 2 is not complete!" << std::endl;
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-
-
-
-
-
-	// unsigned int frameBufferMain; 
-	// glGenFramebuffers(1, &frameBufferMain); // for "off-screen rendering"
-	// glBindFramebuffer(GL_FRAMEBUFFER, frameBufferMain);
+	//
+	// unsigned int framebuffer1; // https://learnopengl.com/Advanced-OpenGL/Framebuffers
+	// glGenFramebuffers(1, &framebuffer1); // for "off-screen rendering"
+	// glBindFramebuffer(GL_FRAMEBUFFER, framebuffer1);
 	//
 	//
 	// // generate texture
-	// unsigned int textureColorBufferMain;
-	// glGenTextures(1, &textureColorBufferMain);
-	// glBindTexture(GL_TEXTURE_2D, textureColorBufferMain);
-	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, currentWidth, currentHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	// glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorBufferMain, 0);
+	// unsigned int textureColorbuffer1;
+	// glGenTextures(1, &textureColorbuffer1);
+	// glBindTexture(GL_TEXTURE_2D, textureColorbuffer1);
+	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, currentWidth, currentHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); // must be GL_NEAREST to do point-sampling (i.e. don't interpolate between colours). Not doing point-sampling (=interpolating) messes up the Distance Field
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	// glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer1, 0);
 	// glCheckError();
 	//
 	//
-	// unsigned int rboMain;
-	// glGenRenderbuffers(1, &rboMain);
-	// glBindRenderbuffer(GL_RENDERBUFFER, rboMain);
+	// unsigned int rbo1;
+	// glGenRenderbuffers(1, &rbo1);
+	// glBindRenderbuffer(GL_RENDERBUFFER, rbo1);
 	// glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, currentWidth, currentHeight); // use a single renderbuffer object for both a depth AND stencil buffer.
-	// glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rboMain); // now actually attach it
+	// glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo1); // now actually attach it
 	// // now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
 	// if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-	// 	std::cout << "ERROR::FRAMEBUFFER:: Framebuffermain is not complete!" << std::endl;
+	// 	std::cout << "ERROR::FRAMEBUFFER:: Framebuffer 1 is not complete!" << std::endl;
+	// glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	//
+	//
+	// // second one for multiple pass switching
+	// unsigned int framebuffer2;
+	// glGenFramebuffers(1, &framebuffer2);
+	// glBindFramebuffer(GL_FRAMEBUFFER, framebuffer2);
+	//
+	// // generate texture
+	// unsigned int textureColorbuffer2;
+	// glGenTextures(1, &textureColorbuffer2);
+	// glBindTexture(GL_TEXTURE_2D, textureColorbuffer2);
+	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, currentWidth, currentHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	// glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer2, 0);
+	// glCheckError();
+	//
+	//
+	// unsigned int rbo2;
+	// glGenRenderbuffers(1, &rbo2);
+	// glBindRenderbuffer(GL_RENDERBUFFER, rbo2);
+	// glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, currentWidth, currentHeight);
+	// glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo2);
+	// if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	// 	std::cout << "ERROR::FRAMEBUFFER:: Framebuffer 2 is not complete!" << std::endl;
 	// glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 
-	float outlineSize = 0.004f;
+	const float outlineSize = 0.004f;
+	distanceFieldPostProcessor.setOutlineSize(outlineSize);
 
 	camMgr.beforeLoop();
-	while(!glfwWindowShouldClose(window))
+	while (!glfwWindowShouldClose(window))
 	{
 		camMgr.onNewFrame();
 
@@ -388,200 +368,55 @@ int main()
 
 		const glm::mat4 projection = glm::perspective(
 			glm::radians(fov),
-			(float)currentWidth / (float)currentHeight, 
-			0.1f, 
+			(float)currentWidth / (float)currentHeight,
+			0.1f,
 			RENDER_DISTANCE
 		);
 #pragma endregion
 
 		// ------ ** mouse ray picking ** ------
 #pragma region MOUSE_RAY_PICKING
-		const SphericalBoxedGameObject* result = WorldMathUtils::findClosestIntersection(
-			{ &thumper, &thumper2 }, 
-			cameraPos, 
-			cameraFront
+		SphericalBoxedGameObject* result = WorldMathUtils::findClosestIntersection(
+			{ &thumper, &thumper2 },
+			cameraPos,
+			cameraFront,
+			5.0f
 		);
 
-		bool isBeingHighlighted = result == &thumper;
-
-		if (result != nullptr)
-		{
-			//std::cout << "now pointing at: " << (result == &thumper ? "thumper 1" : "tumper 2") << "\n";
-		}
 #pragma endregion
 
 #pragma region RENDERING
 
-		// **** RENDER *TO* FRAME BUFFER1 *****
-		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer1);
-		glEnable(GL_DEPTH_TEST);
-		glClearColor(Colors::BLACK.r, Colors::BLACK.g, Colors::BLACK.b, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		// trying to create an outline following https://bgolus.medium.com/the-quest-for-very-wide-outlines-ba82ed442cd9
-		// https://www.youtube.com/watch?v=nKJgUsAU2d0
-		// I chose to not follow this one: https://learnopengl.com/Advanced-OpenGL/Stencil-testing
-		// because I want a fixed-width outline like you can make in photoshop (same thing the author of that blog post wants)
-		// I also chose not to do anything using a vertex shader with displacement along the normal based on distance because
-		// I read in the same blog post that it is not a generic enough solution, and that that solution breaks with certain models
-		// The final rendering solution is going to be based on https://cdn.cloudflare.steamstatic.com/apps/valve/2007/SIGGRAPH2007_AlphaTestedMagnification.pdf
-		// I suppose, which was linked in https://learnopengl.com/In-Practice/Text-Rendering too, which would look like this:
-		// https://www.youtube.com/watch?v=1b5hIMqz_wM
-		//
-		// this "Jump Flood Algorithm" also seemed pretty interesting with it's O(log n) time complexity
-		// https://en.wikipedia.org/wiki/Jump_flooding_algorithm
-		// I also looked up what "compute shaders" were here
-
-
-		// 1. generate a photoshop like "mask" for the object we want to create
-		maskingShader.use();
-		maskingShader.setMat4("projection", projection);
-		maskingShader.setMat4("view", view);
-		glCheckError();
-
-		thumper.setShowBoundingSphere(false);
-		thumper.draw(maskingShader);
-		thumper.setShowBoundingSphere(true);
-		glCheckError();
-
-
-		// **** RENDER *TO* 2D QUAD  *****
-		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer2);
-		glDisable(GL_DEPTH_TEST);
-		glClearColor(Colors::BLACK.r, Colors::BLACK.g, Colors::BLACK.b, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		
-		orthogonalUV2DShader.use();
-
-		glBindVertexArray(quadVAO);
-		glBindTexture(GL_TEXTURE_2D, textureColorbuffer1);
-		glDrawArrays(GL_TRIANGLES, 0, 6);  
-		glBindVertexArray(0);
-
-		glCheckError();
-
-
-		// **** RENDER LOOP TO CREATE OUTLINE EFFECT (ALTERNATE BETWEEN OFF-SCREEN RENDER FBO'S) ****
-		// https://www.youtube.com/watch?v=nKJgUsAU2d0
-		jfaAlgorithmShader.use();
-		
-		glCheckError();
-
-		unsigned int currentFrameBuffer = framebuffer1;
-		unsigned int currentTexture = textureColorbuffer1;
-		unsigned int lastFrameBuffer = framebuffer2;
-		unsigned int lastTexture = textureColorbuffer2;
-
-		// JFA algo to create "outline" effect
-		// main reference here: https://computergraphics.stackexchange.com/questions/2102/is-jump-flood-algorithm-separable
-		const int nrOfJFAPasses = (int) ceil( log2(std::max(currentWidth, currentHeight)));
-		//glBindVertexArray(quadVAO);
-		for (int i = 1; i <= nrOfJFAPasses; ++i)
-		{
-			const float stepSize = 1 / pow(2, i); // for jfa_algo.frag
-			jfaAlgorithmShader.setFloat("stepSize", stepSize);
-
-			glBindFramebuffer(GL_FRAMEBUFFER, currentFrameBuffer); // bind to the next buffer/texture
-			glDisable(GL_DEPTH_TEST);
-			glClearColor(Colors::BLACK.r, Colors::BLACK.g, Colors::BLACK.b, 1.0f); // clear out buffer
-			glClear(GL_COLOR_BUFFER_BIT);
-			glCheckError();
-
-			// draw
-			glBindVertexArray(quadVAO);
-			glBindTexture(GL_TEXTURE_2D, lastTexture); // bind to the texture that was written to in the last run
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-			glCheckError();
-
-			// switch them back up
-			unsigned int tmpBuff = currentFrameBuffer;
-			currentFrameBuffer = lastFrameBuffer;
-			lastFrameBuffer = tmpBuff;
-
-			unsigned int tmpTex = currentTexture;
-			currentTexture = lastTexture;
-			lastTexture = tmpTex;
-		}
-		//glBindVertexArray(0); // unbind
-		glCheckError();
-
-
-		// *** perform the final conversion to a distance field after the above loops  ***
-
-		glBindFramebuffer(GL_FRAMEBUFFER, currentFrameBuffer); // back to default (output to screen)
-		glDisable(GL_DEPTH_TEST);
-		glClearColor(Colors::BLACK.r, Colors::BLACK.g, Colors::BLACK.b, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
-		glCheckError();
-
-
-		distanceFieldConvertor.use();
-		distanceFieldConvertor.setFloat("outlinePlacementOffset", outlineSize);
-
-		glBindVertexArray(quadVAO);
-		glBindTexture(GL_TEXTURE_2D, lastTexture);
-		glDrawArrays(GL_TRIANGLES, 0, 6);
-		//glBindVertexArray(0); // unbind
-		glCheckError();
-
-
-		// *** draw it out  to the actual screen ***
-
-
-		// glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default (output to screen)
-		// glDisable(GL_DEPTH_TEST);
-		// glClearColor(Colors::BLACK.r, Colors::BLACK.g, Colors::BLACK.b, 1.0f);
-		// glClear(GL_COLOR_BUFFER_BIT);
-		// glCheckError();
-		//
-		// justRenderThe2DTextureShader.use();
-		//
-		//
-		// glBindVertexArray(quadVAO);
-		// glBindTexture(GL_TEXTURE_2D, currentTexture);
-		// glDrawArrays(GL_TRIANGLES, 0, 6);
-		// glBindVertexArray(0); // unbind
-		// glCheckError();
-
-
-
-
-
-
-
-
-
-
-		glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default (output to screen)
+		glBindFramebuffer(GL_FRAMEBUFFER, SCREEN_OUTPUT_BUFFER_ID); // back to default (output to screen)
 		glEnable(GL_DEPTH_TEST);
 		// ------ ** clear previous image ** ------
 		glClearColor(Colors::CUSTOM_BLUE.r, Colors::CUSTOM_BLUE.g, Colors::CUSTOM_BLUE.b, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glCheckError();
-		
+
 		// ------ ** skybox ** ------
 		skybox.render(view, projection);
-		
+
 		// ------ ** terrain ** ------
 		sandTerrain.render(view, projection, cameraPos);
-		
+
 		// ------ ** light cube ** ------
 		lightCubeShader.use();
 		lightCubeShader.setMat4("projection", projection);
 		lightCubeShader.setMat4("view", view);
 		sun.draw();
-		
+
 		// ------ ** models ** ------
 		genericShader.use();
 		genericShader.setMat4("projection", projection);
 		genericShader.setMat4("view", view);
 		genericShader.setVec3("viewPos", cameraPos);
-		
+
 		//backpack
 		// genericShader.setMat4("model", backpackModel);
 		// genericShader.setMat4("normalMatrix", backpackNormalMatrix);
 		// backpack.draw(genericShader);
-		
+
 		// ornithopter
 		float orniZDisplacement = sin(-glfwGetTime() / 3.0f) * 1500.f;
 		float orniYDisplacement = (cos(glfwGetTime()) - 1) * 25.0f;
@@ -592,43 +427,50 @@ int main()
 		orniModel = glm::scale(orniModel, glm::vec3(2.0f));
 		ornithopter.setModelTransform(orniModel);
 		ornithopter.draw(genericShader);
-		
+
 		// thumper
 		thumper.draw(genericShader);
 		thumper2.draw(genericShader);
-		
+
 		// nomad
 		nomad.draw(genericShader);
-		
+
 		// sand worm
 		sandWorm.draw(genericShader);
 
-
-
 		glCheckError();
 
+		// ------ ** post-processing ** ------
 
-		if (isBeingHighlighted) {
+		// highlight selectable item
+		if (result != nullptr) {
+			distanceFieldPostProcessor.computeAndRenderOverlay(
+				projection, 
+				view, 
+				{ result }, 
+				SCREEN_OUTPUT_BUFFER_ID
+			);
 
-			glDisable(GL_DEPTH_TEST);
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glCheckError();
+			// text overlay (inspired by bethesda games because it is simple to do)
+			// obviously the font isn't really all that nice looking.
+			// but I don't feel like fiddling with fonts/implementing distance-fields *again*,
+			// but this time for fonts.
+			font.renderText(
+				"Thumper",
+				(currentWidth * (5.0f / 8.0f)), 
+				(currentHeight / 2.0f), 
+				0.6f, 
+				Colors::WHITE
+			);
 
-			justRenderThe2DTextureShader.use();
-
-
-			glBindVertexArray(quadVAO);
-			glBindTexture(GL_TEXTURE_2D, currentTexture);
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-			glBindVertexArray(0); // unbind
-
-
-			glCheckError();
-			glDisable(GL_BLEND);
-			glEnable(GL_DEPTH_TEST);
+			font.renderText(
+				"C) TAKE",
+				(currentWidth * (5.0f / 8.0f)),
+				(currentHeight / 2.0f) - 40.0f,
+				0.5f,
+				Colors::WHITE
+			);
 		}
-
 
 		// ------ ** text overlay ** ------
 		fontShader.use();
@@ -640,25 +482,19 @@ int main()
 			0.5f,
 			Colors::WHITE
 		);
-		
+
 		// actually going to do a trick to get a center-of-the-screen "." indicator like in this game: https://youtu.be/6QZAhsxwNU0?si=J7eN6p2nRvc4Z_tW
 		// mostly because I think it is useful/helpful for object-picking purposes
 		font.renderText(".", currentWidth / 2.0f, currentHeight / 2.0f, 0.5f, Colors::WHITE);
 
-
 		glCheckError();
 
-		
-		
-
 #pragma endregion
-		
+
 		// check and call events and swap the buffers
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
-
-	glDeleteFramebuffers(1, &framebuffer1);
 
 # pragma region CLEANUP
 	glfwTerminate();

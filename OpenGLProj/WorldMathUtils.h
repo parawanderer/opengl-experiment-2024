@@ -12,15 +12,18 @@ namespace WorldMathUtils
 	 * \param listOfIntersectableObjects		List of objects to check against
 	 * \param cameraPos							Position of the camera/player in the world
 	 * \param cameraFront						directional (normalized!!) ray being cast by the camera into the world. This is the direction that we are looking into
-	 * \return
+	 * \param maxDistance						distance after which intersections are ignored.
+	 * \return									A pointer to the object that is closest within the defined limits, out of the input list. Nullptr if no such object exists.
 	 *
-	 * **Author's note**: I mainly referenced this article when writing this: https://antongerdelan.net/opengl/raycasting.html
+	 * **Author's note**:
+	 *
+	 * I mainly referenced this article when writing this: https://antongerdelan.net/opengl/raycasting.html
 	 * and realised the ray vector that we use here is just the same thing as the cameraPos of the camera view, at the very center of the screen.
 	 * so the inverse computation is unnecessary.
 	 */
-	inline const SphericalBoxedGameObject* findClosestIntersection(const std::vector<SphericalBoxedGameObject*>& listOfIntersectableObjects, const glm::vec3& cameraPos, const glm::vec3& cameraFront)
+	inline SphericalBoxedGameObject* findClosestIntersection(const std::vector<SphericalBoxedGameObject*>& listOfIntersectableObjects, const glm::vec3& cameraPos, const glm::vec3& cameraFront, float maxDistance = FLT_MAX)
 	{
-		const SphericalBoxedGameObject* res = nullptr;
+		SphericalBoxedGameObject* res = nullptr;
 		float tClosest = FLT_MAX; // <- I'll say it's unlikely that we'd ever actually intersect something at this distance in my program. But the idea is to do tClosest = inf to reduce this by the min checks
 
 		for (unsigned int i = 0; i < listOfIntersectableObjects.size(); ++i)
@@ -71,7 +74,7 @@ namespace WorldMathUtils
 			}
 		}
 
-		return res;
+		return tClosest <= maxDistance ? res : nullptr;
 	}
 
 	/**

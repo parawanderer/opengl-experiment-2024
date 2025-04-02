@@ -1,0 +1,6 @@
+#ifndef POSTPROCESSORCONSTANTS_MINE_H
+#define POSTPROCESSORCONSTANTS_MINE_H
+
+constexpr float QUAD_VERTICES[] = 
+
+#endif
