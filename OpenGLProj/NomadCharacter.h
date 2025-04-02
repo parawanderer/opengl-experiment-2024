@@ -45,8 +45,6 @@ public:
 		float initialX, 
 		float initialZ);
 
-	~NomadCharacter() override;
-
 	void onNewFrame() override;
 	void draw(Shader& shader) override;
 
@@ -127,8 +125,9 @@ private:
 	float _yaw = -90.0f;
 
 	MOVEMENT_STATE _movementState = MOVEMENT_STATE::IDLE;
-	irrklang::ISound* _currentSound = nullptr;
-	irrklang::ISound* _currentVoiceLine = nullptr;
+
+	AudioPlayer _currentSound;
+	AudioPlayer _currentVoiceLine;
 
 	glm::vec3 _movementStartPos = glm::vec3(0.0f);
 	glm::vec3 _movementTarget = glm::vec3(0.0f);
@@ -145,8 +144,6 @@ private:
 	void performQueuedDialogue();
 	void updateModelTransform();
 
-	void stopAndClearCurrentSound();
-	void stopAndClearCurrentVoiceline();
 	void sayVoiceLine(const std::string& voicelineFileName);
 
 	/**

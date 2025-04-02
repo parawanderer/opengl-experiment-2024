@@ -21,8 +21,8 @@ _animator(animations)
 {
 	this->_animator.playAnimation(FLYING_ANIM);
 
-	this->_currentSound = this->_sound->playTracked3D(ORNITHOPTER_TRACK, true, glm::vec3(1000, 300, 1000));
-	this->_currentSound->setMinDistance(ORNITHOPTER_SOUND_MIN_DISTANCE);
+	this->_currentSound = AudioPlayer(this->_sound->playTracked3D(ORNITHOPTER_TRACK, true, glm::vec3(1000, 300, 1000)));
+	this->_currentSound.setMinimumDistance(ORNITHOPTER_SOUND_MIN_DISTANCE);
 }
 
 void OrnithopterCharacter::onNewFrame()
@@ -41,7 +41,7 @@ void OrnithopterCharacter::onNewFrame()
 
 	this->_currentPos = newPosition;
 	this->_animator.updateAnimation(this->_time->getDeltaTime());
-	this->_currentSound->setPosition(SoundManager::convert(newPosition));
+	this->_currentSound.setPosition(newPosition);
 }
 
 void OrnithopterCharacter::draw(Shader& shader)

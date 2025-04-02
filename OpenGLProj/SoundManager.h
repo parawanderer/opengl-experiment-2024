@@ -5,6 +5,12 @@
 #include <glm/vec3.hpp>
 #include <irrKlang/irrKlang.h>
 
+#include "AudioPlayer.h"
+
+/**
+ * \brief Sound manager allowing to play 2D/3D tracks.
+ * Abstracted wrapper for the underlying library used.
+ */
 class SoundManager
 {
 public:
@@ -14,11 +20,9 @@ public:
 
 	void updateListenerPos(const glm::vec3& listenerPosition, const glm::vec3& lookDirection);
 
-	irrklang::ISound* playTracked(const std::string& trackName, bool loop);
+	AudioPlayer playTracked3D(const std::string& trackName, bool loop, const glm::vec3& soundPos);
+	AudioPlayer playTracked2D(const std::string& trackName, bool loop);
 
-	irrklang::ISound* playTracked3D(const std::string& trackName, bool loop, const glm::vec3& soundPos);
-
-	static irrklang::vec3df convert(const glm::vec3& position);
 private:
 	const std::string _basePath;
 	irrklang::ISoundEngine* _soundEngine;

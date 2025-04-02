@@ -13,8 +13,6 @@ class PlayerState : public PlayerCameraEventSubscriber
 public:
 	PlayerState(SoundManager* sound, const PlayerCamera* playerCamera);
 
-	~PlayerState();
-
 	bool hasCarriedItem();
 
 	void setCarriedItem(const CarriedGameObject& item);
@@ -35,14 +33,11 @@ private:
 	char _movementState = 0;
 	bool _isInAirDueToJump = false;
 
-	irrklang::ISound* _currentWalkSound = nullptr;
-	irrklang::ISound* _currentJumpSound = nullptr;
+	AudioPlayer _currentWalkSound;
+	AudioPlayer _currentJumpSound;
 
 	bool _hasItem = false;
 	CarriedGameObject _carriedItem;
-
-	void stopAndClearCurrentWalkSound();
-	void stopAndClearCurrentJumpSound();
 
 	glm::vec3 getUnderFeetPos(const glm::vec3& playerPos) const;
 };

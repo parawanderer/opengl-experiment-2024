@@ -139,6 +139,8 @@
     <ClCompile Include="Animation.cpp" />
     <ClCompile Include="AnimationSet.cpp" />
     <ClCompile Include="Animator.cpp" />
+    <ClCompile Include="AudioPlayer.cpp" />
+    <ClCompile Include="AudioUtilities.cpp" />
     <ClCompile Include="Bone.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CameraManager.cpp" />
@@ -206,6 +208,8 @@
     <ClInclude Include="AnimationSet.h" />
     <ClInclude Include="Animator.h" />
     <ClInclude Include="AssimpNode.h" />
+    <ClInclude Include="AudioPlayer.h" />
+    <ClInclude Include="AudioUtilities.h" />
     <ClInclude Include="Bone.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CameraManager.h" />

@@ -38,8 +38,6 @@ public:
 		float initialZ
 	);
 
-	~SandWormCharacter() override;
-
 	void onNewFrame() override;
 
 	void draw(Shader& shader) override;
@@ -87,9 +85,9 @@ private:
 	const BehaviourStage* _nextBehaviourStage = nullptr;
 	float _nextBehaviourStageAt = -1.0f;
 
+	AudioPlayer _backgroundNoise;
+	AudioPlayer _inFrontNoise;
 
-	irrklang::ISound* _backgroundNoise;
-	irrklang::ISound* _inFrontNoise;
 	float _earthquakeInterpolationStart = 0.0f;
 	float _inFrontNoiseInterpolationStart = 0.0f;
 

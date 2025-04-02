@@ -25,7 +25,6 @@ public:
 
 
 	Thumper(const WorldTimeManager* time, SoundManager* sound, SphericalBoxedGameObject* thumper, AnimationSet* animations);
-	~Thumper() override;
 
 	void onNewFrame() override;
 	void draw(Shader& shader) override;
@@ -50,7 +49,7 @@ private:
 	SphericalBoxedGameObject* _model;
 	Animator _animator;
 
-	irrklang::ISound* _currentSound = nullptr;
+	AudioPlayer _currentSound;
 
 	glm::vec3 _currentPos = glm::vec3(0.0, 0.0, 0.0);
 	bool _isCarried = false;
@@ -61,8 +60,6 @@ private:
 
 	void handleActivation();
 	void handleDeactivation();
-
-	void stopAndClearCurrentSound();
 
 	void updateModelTransform();
 };

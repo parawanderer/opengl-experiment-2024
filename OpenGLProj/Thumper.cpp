@@ -29,11 +29,6 @@ _animator(animations)
 	this->_animator.playAnimation(DISABLED_ANIM);
 }
 
-Thumper::~Thumper()
-{
-	this->stopAndClearCurrentSound();
-}
-
 void Thumper::onNewFrame()
 {
 	if (this->_state == STATE::ACTIVATED && this->_isActivating && this->_time->getCurrentTime() >= this->_activatingSwitchToActiveAt)
@@ -42,13 +37,12 @@ void Thumper::onNewFrame()
 		this->_isActivating = false;
 		this->_animator.playAnimation(ACTIVE_ANIM);
 
-		this->stopAndClearCurrentSound();
 		// this particular track and the animation diverge over time even though they seem pretty close initially.
 		// floating point error accumulation? Or is it just a matter of the actual difference in lengths?
 		// Or is it that one of these things runs faster than expected for some reason? It doesn't _really matter for a demo of my project
 		// but I might want to fix this at some point
 		this->_currentSound = this->_sound->playTracked3D(THUMPING_TRACK, true, this->_currentPos);
-		this->_currentSound->setMinDistance(THUMPER_SOUND_MIN_DISTANCE);
+		this->_currentSound.setMinimumDistance(THUMPER_SOUND_MIN_DISTANCE);
 	}
 
 	this->_animator.updateAnimation(this->_time->getDeltaTime());
@@ -90,7 +84,6 @@ void Thumper::setIsCarried(bool isCarried)
 {
 	if (this->_isCarried != isCarried)
 	{
-		this->stopAndClearCurrentSound();
 		if (isCarried)
 		{
 			this->_currentSound = this->_sound->playTracked3D(THUMPER_PULL_OUT_OF_SAND_TRACK, false, this->_currentPos);
@@ -149,22 +142,11 @@ void Thumper::handleActivation()
 	this->_state = STATE::ACTIVATED;
 
 	this->_animator.playAnimation(activatingAnimation);
-
 	this->_currentSound = this->_sound->playTracked3D(WINDUP_TRACK, false, this->_currentPos);
 }
 
 void Thumper::handleDeactivation()
 {
 	this->_animator.playAnimation(DISABLED_ANIM);
-	this->stopAndClearCurrentSound();
-}
-
-void Thumper::stopAndClearCurrentSound()
-{
-	if (this->_currentSound != nullptr)
-	{
-		this->_currentSound->stop();
-		this->_currentSound->drop();
-		this->_currentSound = nullptr;
-	}
+	this->_currentSound.stopAndRelease();
 }

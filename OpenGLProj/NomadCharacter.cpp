@@ -157,12 +157,6 @@ NomadCharacter::NomadCharacter(
 	_currentFront(glm::vec3(0.0, 0.0, -1.0))
 {}
 
-NomadCharacter::~NomadCharacter()
-{
-	this->stopAndClearCurrentSound();
-	this->stopAndClearCurrentVoiceline();
-}
-
 void NomadCharacter::onNewFrame()
 {
 	this->updateAnimationInterpolation();
@@ -174,7 +168,6 @@ void NomadCharacter::onNewFrame()
 	{
 		// TODO: temporary. remove. Not sure if we even need anything like this later down the line...
 		this->playAnimationWithTransition(RUNNING_ANIM_2);
-		this->stopAndClearCurrentSound();
 		this->_currentSound = this->_sound->playTracked3D(NOMAD_SAND_RUNNING_TRACK, true, this->_currentPos);
 		tmpNextBehaviourChoiceOverride = -1.0f;
 	}
@@ -198,8 +191,8 @@ void NomadCharacter::onNewFrame()
 
 	this->updateModelTransform();
 
-	if (this->_currentSound != nullptr) this->_currentSound->setPosition(SoundManager::convert(this->_currentPos));
-	if (this->_currentVoiceLine != nullptr) this->_currentVoiceLine->setPosition(SoundManager::convert(this->_currentPos + NOMAD_HEIGHT_OFFSET));
+	this->_currentSound.setPosition(this->_currentPos);
+	this->_currentSound.setPosition(this->_currentPos + NOMAD_HEIGHT_OFFSET);
 }
 
 void NomadCharacter::draw(Shader& shader)
@@ -274,7 +267,6 @@ void NomadCharacter::reactToSandworm()
 void NomadCharacter::playLookBackAnimWhileRunning()
 {
 	this->playAnimationWithTransition(RUNNING_LOOK_BEHIND_ANIM);
-	this->stopAndClearCurrentSound();
 	this->_currentSound = this->_sound->playTracked3D(NOMAD_SAND_WALKING_TRACK, true, this->_currentPos);
 	tmpNextBehaviourChoiceOverride = this->_time->getCurrentTime() + 2.0f;
 }
@@ -309,7 +301,6 @@ void NomadCharacter::runOverTo(const glm::vec3 runOverTo, const float offsetByUn
 	this->_movementState = MOVEMENT_STATE::RUNNING;
 
 	this->playAnimationWithTransition(doFunnyRun ? RUNNING_ANIM_2 : RUNNING_ANIM_1);
-	this->stopAndClearCurrentSound();
 	this->_currentSound = this->_sound->playTracked3D(NOMAD_SAND_RUNNING_TRACK, true, this->_currentPos);
 }
 
@@ -364,7 +355,6 @@ void NomadCharacter::defineWalkPlan(const float currentTime)
 
 	this->playAnimationWithTransition(WALKING_ANIM);
 
-	this->stopAndClearCurrentSound();
 	this->_currentSound = this->_sound->playTracked3D(NOMAD_SAND_WALKING_TRACK, true, this->_currentPos);
 }
 
@@ -373,7 +363,7 @@ void NomadCharacter::defineIdlePlan(const float currentTime)
 	this->_nextBehaviourChoiceAt = currentTime + (rand() % TIME_BETWEEN_CHOOSING_BEHAVIOURS_SEC + 1) + ANIMATION_TRANSITION_TIME; // <- seconds
 	this->_movementState = MOVEMENT_STATE::IDLE; // just stand still
 	this->playAnimationWithTransition(IDLE_ANIMS[rand() % IDLE_ANIMS.size()]);
-	this->stopAndClearCurrentSound();
+	this->_currentSound.stopAndRelease();
 }
 
 void NomadCharacter::performQueuedDialogue()
@@ -399,31 +389,11 @@ void NomadCharacter::updateModelTransform()
 	this->_model->setModelTransform(model);
 }
 
-void NomadCharacter::stopAndClearCurrentSound()
-{
-	if (this->_currentSound != nullptr)
-	{
-		this->_currentSound->stop();
-		this->_currentSound->drop();
-		this->_currentSound = nullptr;
-	}
-}
-
-void NomadCharacter::stopAndClearCurrentVoiceline()
-{
-	if (this->_currentVoiceLine != nullptr)
-	{
-		this->_currentVoiceLine->stop();
-		this->_currentVoiceLine->drop();
-		this->_currentVoiceLine = nullptr;
-	}
-}
 
 void NomadCharacter::sayVoiceLine(const std::string& voicelineFileName)
 {
-	this->stopAndClearCurrentVoiceline();
 	this->_currentVoiceLine = this->_sound->playTracked3D(VOICELINES_BASE_FOLDER + voicelineFileName, false, this->_currentPos + NOMAD_HEIGHT_OFFSET);
-	this->_currentVoiceLine->setMinDistance(VOICELINE_MIN_DISTANCE);
+	this->_currentVoiceLine.setMinimumDistance(VOICELINE_MIN_DISTANCE);
 }
 
 void NomadCharacter::doDialogueAnimation(const std::string& animationName, std::optional<const glm::vec3> lookInDirectionOfCoords, float playAnimationForSecs, bool smoothTransition)
@@ -441,8 +411,8 @@ void NomadCharacter::doDialogueAnimation(const std::string& animationName, std::
 	{
 		this->playAnimation(animationName);
 	}
-	
-	this->stopAndClearCurrentSound();
+
+	this->_currentSound.stopAndRelease();
 
 	if (lookInDirectionOfCoords.has_value())
 	{

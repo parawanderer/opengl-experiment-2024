@@ -11,7 +11,6 @@
 class OrnithopterCharacter : public AnimatedEntity
 {
 public:
-
 	OrnithopterCharacter(const WorldTimeManager* time, SoundManager* sound, RenderableGameObject* ornithropterObject, AnimationSet* animations);
 
 	void onNewFrame() override;
@@ -25,7 +24,7 @@ private:
 	RenderableGameObject* _model;
 	Animator _animator;
 
-	irrklang::ISound* _currentSound = nullptr;
+	AudioPlayer _currentSound;
 
 	glm::vec3 _currentPos;
 };

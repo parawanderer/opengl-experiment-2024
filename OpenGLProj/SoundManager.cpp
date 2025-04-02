@@ -1,5 +1,7 @@
 ﻿#include "SoundManager.h"
 
+#include "AudioUtilities.h"
+
 SoundManager::SoundManager(const std::string& basePath)
 :
 _soundEngine(irrklang::createIrrKlangDevice()),
@@ -25,8 +27,8 @@ void SoundManager::playOnce(const std::string& trackName)
 
 void SoundManager::updateListenerPos(const glm::vec3& listenerPosition, const glm::vec3& lookDirection)
 {
-	this->_listenerPos = convert(listenerPosition);
-	this->_lookDir = convert(lookDirection);
+	this->_listenerPos = AudioUtilities::convert(listenerPosition);
+	this->_lookDir = AudioUtilities::convert(lookDirection);
 
 	this->_soundEngine->setListenerPosition(
 		this->_listenerPos,
@@ -36,29 +38,24 @@ void SoundManager::updateListenerPos(const glm::vec3& listenerPosition, const gl
 	);
 }
 
-irrklang::ISound* SoundManager::playTracked(const std::string& trackName, bool loop)
-{
-	auto fullPath = this->getFullPath(trackName);
-	irrklang::ISound* result = this->_soundEngine->play2D(fullPath.c_str(), loop, false, true);
-	return result;
-}
-
-irrklang::ISound* SoundManager::playTracked3D(const std::string& trackName, bool loop, const glm::vec3& soundPos)
+AudioPlayer SoundManager::playTracked3D(const std::string& trackName, bool loop, const glm::vec3& soundPos)
 {
 	auto fullPath = this->getFullPath(trackName);
 	irrklang::ISound* result = this->_soundEngine->play3D(
-		fullPath.c_str(), 
-		convert(soundPos),
+		fullPath.c_str(),
+		AudioUtilities::convert(soundPos),
 		loop,
 		false,
 		true
-		);
-	return result;
+	);
+	return AudioPlayer(result);
 }
 
-irrklang::vec3df SoundManager::convert(const glm::vec3& position)
+AudioPlayer SoundManager::playTracked2D(const std::string& trackName, bool loop)
 {
-	return irrklang::vec3df(position.x, position.y, -position.z);
+	auto fullPath = this->getFullPath(trackName);
+	irrklang::ISound* result = this->_soundEngine->play2D(fullPath.c_str(), loop, false, true);
+	return AudioPlayer(result);
 }
 
 std::string SoundManager::getFullPath(const std::string& fileName)

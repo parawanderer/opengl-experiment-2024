@@ -74,11 +74,6 @@ _currentFront(WorldMathUtils::computeDirection(this->_pitch, this->_yaw))
 	this->updateModelTransform();
 }
 
-SandWormCharacter::~SandWormCharacter()
-{
-	this->stopAndClearCurrentSounds();
-}
-
 void SandWormCharacter::onNewFrame()
 {
 	const float currentTime = this->_time->getCurrentTime();
@@ -112,8 +107,9 @@ void SandWormCharacter::onNewFrame()
 
 	if (this->_showDust) this->updateParticlePlacement();
 
-	if (this->_backgroundNoise) this->_backgroundNoise->setPosition(SoundManager::convert(this->getHeadPosition()));
-	if (this->_inFrontNoise) this->_inFrontNoise->setPosition(SoundManager::convert(this->getHeadPosition()));
+	const glm::vec3 headPos = this->getHeadPosition();
+	this->_backgroundNoise.setPosition(headPos);
+	this->_inFrontNoise.setPosition(headPos);
 }
 
 void SandWormCharacter::draw(Shader& shader)
@@ -127,11 +123,11 @@ void SandWormCharacter::draw(Shader& shader)
 
 void SandWormCharacter::startQuakingEarth()
 {
-	if (!this->_backgroundNoise)
+	if (!this->_backgroundNoise.hasAudio())
 	{
 		this->_backgroundNoise = this->_sound->playTracked3D(BACKGROUND_RUMBLE_TRACK, true, this->getHeadPosition());
-		this->_backgroundNoise->setMinDistance(BACKGROUND_RUMBLE_MIN_DISTANCE);
-		this->_backgroundNoise->setVolume(0.0f);
+		this->_backgroundNoise.setMinimumDistance(BACKGROUND_RUMBLE_MIN_DISTANCE);
+		this->_backgroundNoise.setVolume(0.0f);
 		this->_earthquakeInterpolationStart = this->_time->getCurrentTime();
 
 		this->playAnimationWithTransition(MOVING_BELOWGROUND_ANIM);
@@ -159,22 +155,6 @@ void SandWormCharacter::appearAndMoveTowards(const glm::vec3& position)
 	this->showDust(true);
 }
 
-void SandWormCharacter::stopAndClearCurrentSounds()
-{
-	if (this->_backgroundNoise != nullptr)
-	{
-		this->_backgroundNoise->stop();
-		this->_backgroundNoise->drop();
-		this->_backgroundNoise = nullptr;
-	}
-
-	if (this->_inFrontNoise != nullptr)
-	{
-		this->_inFrontNoise->stop();
-		this->_inFrontNoise->drop();
-		this->_inFrontNoise = nullptr;
-	}
-}
 
 glm::vec3 SandWormCharacter::getHeadPosition() const
 {
@@ -183,16 +163,16 @@ glm::vec3 SandWormCharacter::getHeadPosition() const
 
 void SandWormCharacter::interpolateSound(const float currentTime)
 {
-	if (this->_backgroundNoise && currentTime <= this->_earthquakeInterpolationStart + SOUND_INTERPOLATION_DURATION_BG)
+	if (this->_backgroundNoise.hasAudio() && currentTime <= this->_earthquakeInterpolationStart + SOUND_INTERPOLATION_DURATION_BG)
 	{
 		const float volume = 1.0f - (((this->_earthquakeInterpolationStart + SOUND_INTERPOLATION_DURATION_BG) - currentTime) / SOUND_INTERPOLATION_DURATION_BG);
-		this->_backgroundNoise->setVolume(volume);
+		this->_backgroundNoise.setVolume(volume);
 	}
 
-	if (this->_inFrontNoise && currentTime <= this->_inFrontNoiseInterpolationStart + SOUND_INTERPOLATION_DURATION_FG)
+	if (this->_inFrontNoise.hasAudio() && currentTime <= this->_inFrontNoiseInterpolationStart + SOUND_INTERPOLATION_DURATION_FG)
 	{
 		const float volume = 1.0f - (((this->_inFrontNoiseInterpolationStart + SOUND_INTERPOLATION_DURATION_FG) - currentTime) / SOUND_INTERPOLATION_DURATION_FG);
-		this->_inFrontNoise->setVolume(volume);
+		this->_inFrontNoise.setVolume(volume);
 	}
 }
 
@@ -337,11 +317,11 @@ float SandWormCharacter::getYDifferenceHeadAndBody() const
 
 void SandWormCharacter::startCreatingPrimaryDestructionNoise()
 {
-	if (!this->_inFrontNoise)
+	if (!this->_inFrontNoise.hasAudio())
 	{
 		this->_inFrontNoise = this->_sound->playTracked3D(IN_FRONT_EARTH_BREAKING_TRACK, true, this->getHeadPosition());
-		this->_inFrontNoise->setMinDistance(IN_FRONT_EARTH_RIPPING_MIN_DISTANCE);
-		this->_inFrontNoise->setVolume(0.0f);
+		this->_inFrontNoise.setMinimumDistance(IN_FRONT_EARTH_RIPPING_MIN_DISTANCE);
+		this->_inFrontNoise.setVolume(0.0f);
 		this->_inFrontNoiseInterpolationStart = this->_time->getCurrentTime();
 	}
 }
