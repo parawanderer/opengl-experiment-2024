@@ -26,6 +26,22 @@ uniform Material material;
 uniform Light light;
 uniform vec3 viewPos;
 
+// TODO: provide these as variables (temp hardcoded values)
+uniform float FogEnd = 6000.0;
+uniform float ExpDensityFactor = 1.0;
+uniform vec3 FogColor = vec3(0.537, 0.506, 0.6);
+
+// ref: https://www.youtube.com/watch?v=oQksg57qsRA
+// I quite appreciate how this exponential function ends up looking visually on my terrain
+float calculateExponentialFog() 
+{
+    float cameraToPixelDist = length(FragPos - viewPos);
+    float distRatio = 4.0 * cameraToPixelDist / FogEnd;
+    float fogFactor = exp(-distRatio * ExpDensityFactor * distRatio * ExpDensityFactor);
+
+    return fogFactor;
+}
+
 void main() 
 {
     // ambient
@@ -46,7 +62,13 @@ void main()
     vec3 specular = light.specular * (spec * material.specular);  
         
     vec3 result = ambient + diffuse + specular;
-    //FragColor = texture(texture1, TexCoord); //vec4(result, 1.0);
-    FragColor = vec4(result, 1.0);
-    //FragColor = vec4(normalize(Normal) * 0.5, 1.0) + vec4(0.5);
+    vec4 nearFinalResult = vec4(result, 1.0);
+
+    if (FogColor != vec3(0)) {
+        float fogFactor = calculateExponentialFog();
+
+        nearFinalResult = mix(vec4(FogColor, 1.0), nearFinalResult, fogFactor);
+    }
+
+    FragColor = nearFinalResult;
 }
