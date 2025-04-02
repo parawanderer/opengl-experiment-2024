@@ -135,11 +135,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\glad\src\glad.c" />
+    <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="AnimationManager.cpp" />
+    <ClCompile Include="Animator.cpp" />
+    <ClCompile Include="Bone.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CameraManager.cpp" />
     <ClCompile Include="CameraUtils.cpp" />
     <ClCompile Include="DistanceFieldPostProcessor.cpp" />
     <ClCompile Include="CarriedGameObject.cpp" />
+    <ClCompile Include="MathConversionUtil.cpp" />
     <ClCompile Include="NomadCharacter.cpp" />
     <ClCompile Include="PlayerState.cpp" />
     <ClCompile Include="Quad.cpp" />
@@ -191,6 +196,11 @@
     <None Include="terrain.frag" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Animation.h" />
+    <ClInclude Include="AnimationManager.h" />
+    <ClInclude Include="Animator.h" />
+    <ClInclude Include="AssimpNode.h" />
+    <ClInclude Include="Bone.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CameraManager.h" />
     <ClInclude Include="CameraUtils.h" />
@@ -200,6 +210,7 @@
     <ClInclude Include="GameObjectConstants.h" />
     <ClInclude Include="jfa_algo_old.frag" />
     <ClInclude Include="DistanceFieldPostProcessor.h" />
+    <ClInclude Include="MathConversionUtil.h" />
     <ClInclude Include="NomadCharacter.h" />
     <ClInclude Include="PlayerState.h" />
     <ClInclude Include="Quad.h" />

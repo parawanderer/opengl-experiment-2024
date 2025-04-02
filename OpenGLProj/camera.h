@@ -1,6 +1,7 @@
 ﻿#ifndef CAMERA_MINE_H
 #define CAMERA_MINE_H
 
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/fwd.hpp>
 #include <glm/vec3.hpp>

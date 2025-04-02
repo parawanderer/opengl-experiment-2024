@@ -2,6 +2,8 @@
 
 #include <glm/ext/matrix_transform.hpp>
 
+#include "WorldMathUtils.h"
+
 Camera::Camera(WorldTimeManager* time, glm::vec3 initialPos, glm::vec3 initialFront, int initialWidth, int initialHeight, float speedMultiplier)
 : _time(time), _cameraPos(initialPos), _cameraFront(initialFront), _lastX(initialWidth / 2), _lastY(initialHeight / 2), _speedMultiplier(speedMultiplier)
 {}
@@ -70,11 +72,7 @@ void Camera::processMouse(GLFWwindow* window, double xpos, double ypos)
 	if (this->_pitch > 89.0f) this->_pitch = 89.0f;
 	if (this->_pitch < -89.0f) this->_pitch = -89.0f;
 
-	glm::vec3 direction;
-	direction.x = cos(glm::radians(this->_yaw)) * cos(glm::radians(this->_pitch));
-	direction.y = sin(glm::radians(this->_pitch));
-	direction.z = sin(glm::radians(this->_yaw)) * cos(glm::radians(this->_pitch));
-	this->_cameraFront = glm::normalize(direction);
+	this->_cameraFront = WorldMathUtils::computeDirection(this->_pitch, this->_yaw);
 }
 
 void Camera::processKey(GLFWwindow* window, int key, int scancode, int action, int mods)

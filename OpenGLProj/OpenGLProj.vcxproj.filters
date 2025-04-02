@@ -171,6 +171,21 @@
     <ClCompile Include="WorldTimeManager.cpp">
       <Filter>Header Files</Filter>
     </ClCompile>
+    <ClCompile Include="MathConversionUtil.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="Bone.cpp">
+      <Filter>Source Files\gameobject\models</Filter>
+    </ClCompile>
+    <ClCompile Include="Animation.cpp">
+      <Filter>Source Files\gameobject\models</Filter>
+    </ClCompile>
+    <ClCompile Include="Animator.cpp">
+      <Filter>Source Files\gameobject\models</Filter>
+    </ClCompile>
+    <ClCompile Include="AnimationManager.cpp">
+      <Filter>Source Files\gameobject\models</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -222,29 +237,29 @@
     <None Include="shader_lightsource.vert">
       <Filter>Source Files\world\sun</Filter>
     </None>
-    <None Include="masking.frag">
-      <Filter>Source Files\gameobject\models</Filter>
-    </None>
-    <None Include="jfa_init.frag">
-      <Filter>Source Files\gameobject\models</Filter>
-    </None>
-    <None Include="jfa.vert">
-      <Filter>Source Files\gameobject\models</Filter>
-    </None>
     <None Include="masking.vert">
-      <Filter>Source Files\gameobject\models</Filter>
+      <Filter>Source Files\postprocessing</Filter>
     </None>
-    <None Include="jfa_algo.frag">
-      <Filter>Source Files\gameobject\models</Filter>
+    <None Include="masking.frag">
+      <Filter>Source Files\postprocessing</Filter>
     </None>
     <None Include="justrenderthe2dtex.vert">
-      <Filter>Source Files\gameobject\models</Filter>
+      <Filter>Source Files\postprocessing</Filter>
     </None>
     <None Include="justrenderthe2dtex.frag">
-      <Filter>Source Files\gameobject\models</Filter>
+      <Filter>Source Files\postprocessing</Filter>
+    </None>
+    <None Include="jfa_init.frag">
+      <Filter>Source Files\postprocessing</Filter>
+    </None>
+    <None Include="jfa_algo.frag">
+      <Filter>Source Files\postprocessing</Filter>
+    </None>
+    <None Include="jfa.vert">
+      <Filter>Source Files\postprocessing</Filter>
     </None>
     <None Include="distancefield.frag">
-      <Filter>Source Files\gameobject\models</Filter>
+      <Filter>Source Files\postprocessing</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -314,9 +329,6 @@
     <ClInclude Include="Sun.h">
       <Filter>Header Files\world</Filter>
     </ClInclude>
-    <ClInclude Include="jfa_algo_old.frag">
-      <Filter>Source Files\gameobject\models</Filter>
-    </ClInclude>
     <ClInclude Include="DistanceFieldPostProcessor.h">
       <Filter>Header Files\postprocessing</Filter>
     </ClInclude>
@@ -346,6 +358,27 @@
     </ClInclude>
     <ClInclude Include="WorldTimeManager.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="jfa_algo_old.frag">
+      <Filter>Source Files\postprocessing</Filter>
+    </ClInclude>
+    <ClInclude Include="MathConversionUtil.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="Bone.h">
+      <Filter>Header Files\gameobject\models</Filter>
+    </ClInclude>
+    <ClInclude Include="Animation.h">
+      <Filter>Header Files\gameobject\models</Filter>
+    </ClInclude>
+    <ClInclude Include="Animator.h">
+      <Filter>Header Files\gameobject\models</Filter>
+    </ClInclude>
+    <ClInclude Include="AnimationManager.h">
+      <Filter>Header Files\gameobject\models</Filter>
+    </ClInclude>
+    <ClInclude Include="AssimpNode.h">
+      <Filter>Header Files\gameobject\models</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

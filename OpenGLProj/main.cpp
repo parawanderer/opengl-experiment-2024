@@ -1,5 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -19,6 +20,8 @@
 #include <set>
 #include <GL/gl.h>
 
+#include "Animation.h"
+#include "Animator.h"
 #include "Colors.h"
 #include "ErrorUtils.h"
 #include "Font.h"
@@ -118,6 +121,7 @@ int main()
 	genericShader.setVec3("light.ambient", sunLightColor * 0.5f);
 	genericShader.setVec3("light.diffuse", sunLightColor * 1.0f);
 	genericShader.setVec3("light.specular", sunLightColor * 1.0f);
+	genericShader.setBool("doAnimate", false);
 
 	Quad quad;
 	DistanceFieldPostProcessor distanceFieldPostProcessor(&quad, currentWidth, currentHeight);
@@ -140,6 +144,9 @@ int main()
 	SphericalBoxedGameObject thumper2(&thumperModel, 0.4f);
 
 	RenderableGameObject nomad("resources/models/rust-nomad/RustNomad.fbx");
+	glGetError();
+	AnimationManager nomadAnimations("resources/models/rust-nomad/RustNomad.fbx", nomad.getObjectModel());
+	glGetError();
 
 	RenderableGameObject sandWorm("resources/models/dune-sandworm/sandworm_edit.dae");
 
@@ -284,15 +291,21 @@ int main()
 	// state
 	PlayerState player;
 	std::set dynamicItems = { &thumper, &thumper2 };
-	NomadCharacter nomadCharacter(&timeMgr, &sandTerrain, &nomad, 20.0f, -20.0f);
+
+
+	Animator animator(&nomadAnimations);
+	glGetError();
+	NomadCharacter nomadCharacter(&timeMgr, &sandTerrain, &nomad, &animator, 20.0f, -20.0f);
+	glGetError();
 
 	// ============ [ MAIN LOOP ] ============
 	camMgr.beforeLoop();
 	while (!glfwWindowShouldClose(window))
 	{
-		timeMgr.onNewFrame();
 		processInput(window);
+		timeMgr.onNewFrame();
 		camMgr.processInput(window);
+		animator.updateAnimation(timeMgr.getDeltaTime());
 
 		nomadCharacter.onNewFrame();
 
@@ -361,7 +374,6 @@ int main()
 		// nomad
 		//nomad.draw(genericShader);
 		nomadCharacter.draw(genericShader);
-
 
 		// sand worm
 		sandWorm.draw(genericShader);

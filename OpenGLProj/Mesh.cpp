@@ -1,8 +1,10 @@
 #include "Mesh.h"
 
+#include <utility>
+
 // https://learnopengl.com/Model-Loading/Mesh
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned> indices, std::vector<Texture> textures):
-vertices(vertices), indices(indices), textures(textures)
+Mesh::Mesh(std::vector<VertexBoneData> vertices, std::vector<unsigned> indices, std::vector<Texture> textures):
+vertices(std::move(vertices)), indices(std::move(indices)), textures(std::move(textures))
 {
 	this->setupMesh();
 }
@@ -16,20 +18,26 @@ void Mesh::setupMesh()
 	glBindVertexArray(this->_VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, this->_VBO);
 
-	glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * sizeof(Vertex), &this->vertices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * sizeof(VertexBoneData), &this->vertices[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->indices.size() * sizeof(unsigned int), &this->indices[0], GL_STATIC_DRAW);
 
 
 	//vertex positions
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexBoneData), (void*)0);
 	//vertex normals
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(VertexBoneData), (void*)offsetof(VertexBoneData, normal));
 	//texture coords
 	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(VertexBoneData), (void*)offsetof(VertexBoneData, texCoords));
+	// ids
+	glEnableVertexAttribArray(3);
+	glVertexAttribIPointer(3, MAX_NUM_BONES_PER_VERTEX, GL_INT, sizeof(VertexBoneData), (void*)offsetof(VertexBoneData, boneIds));
+	//weights
+	glEnableVertexAttribArray(4);
+	glVertexAttribPointer(4, MAX_NUM_BONES_PER_VERTEX, GL_FLOAT, GL_FALSE, sizeof(VertexBoneData), (void*)offsetof(VertexBoneData, weights));
 
 	glBindVertexArray(0);
 }

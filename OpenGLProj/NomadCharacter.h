@@ -1,5 +1,6 @@
 ﻿#ifndef NOMADCHARACTER_MINE_H
 #define NOMADCHARACTER_MINE_H
+#include "Animator.h"
 #include "RenderableGameObject.h"
 #include "Terrain.h"
 #include "WorldTimeManager.h"
@@ -13,7 +14,7 @@ public:
 		WALKING = 1
 	};
 
-	NomadCharacter(WorldTimeManager* time, Terrain* terrain, RenderableGameObject* nomadGameObject, float initialX, float initialZ);
+	NomadCharacter(WorldTimeManager* time, Terrain* terrain, RenderableGameObject* nomadGameObject, Animator* animator, float initialX, float initialZ);
 
 	void onNewFrame();
 
@@ -23,6 +24,7 @@ private:
 	Terrain* _terrain;
 
 	RenderableGameObject* _nomadModel;
+	Animator* _animator;
 
 	glm::vec3 _currentPos;
 	glm::vec3 _currentFront;
@@ -35,6 +37,9 @@ private:
 	float _movementStartTime = 0.0f;
 
 	float _nextBehaviourChoiceAt = 0.0f;
+
+	void interpolateWalkState(float currentTime);
+	void defineWalkPlan(const float currentTime);
 };
 
 #endif
