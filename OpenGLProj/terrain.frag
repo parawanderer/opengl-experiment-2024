@@ -25,17 +25,30 @@ uniform Material material;
 uniform Light light;
 uniform vec3 viewPos;
 
+
+
 // attenuation test
-uniform Light light2;
-uniform float c1;
-uniform float c2;
-uniform float c3;
+struct Attenuation {
+    float c1;
+    float c2;
+    float c3;
+};
+
+const int MAX_ATTENUATED_LIGHTS = 4;
+uniform Light attLights[MAX_ATTENUATED_LIGHTS];
+uniform Attenuation attConsts[MAX_ATTENUATED_LIGHTS];
+uniform int numAttLights;
+//uniform Light light2;
+//uniform float c1;
+//uniform float c2;
+//uniform float c3;
 
 
-// TODO: provide these as variables (temp hardcoded values)
-uniform float FogEnd = 6000.0;
-uniform float ExpDensityFactor = 1.0;
-uniform vec3 FogColor = vec3(0.537, 0.506, 0.6);
+// fog
+const float FogEnd = 6000.0;
+const float ExpDensityFactor = 1.0;
+const vec3 FogColor = vec3(0.537, 0.506, 0.6);
+
 
 // ref: https://www.youtube.com/watch?v=oQksg57qsRA
 // I quite appreciate how this exponential function ends up looking visually on my terrain
@@ -59,18 +72,13 @@ void main()
     vec3 norm = normalize(Normal);
 
     // ambient
-    vec3 ambient = (light.ambient + light2.ambient) * vec3(texture(material.ambient, TexCoord));
+    vec3 ambientTex = vec3(texture(material.ambient, TexCoord));
+    vec3 ambient = light.ambient * ambientTex;
     
     // diffuse 
     vec3 lightDir = normalize(light.position - FragPos);
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoord));
-
-    // diffuse2 with attenuation
-    vec3 lightDir2 = normalize(light2.position - FragPos);
-    float diff2 = max(dot(norm, lightDir2), 0.0);
-    float fatt = computeAttenuationFactor(c1, c2, c3, length(light2.position - FragPos));
-    vec3 diffuse2 = fatt * light2.diffuse * diff2 * vec3(texture(material.diffuse, TexCoord));
 
     // specular
     vec3 viewDir = normalize(viewPos - FragPos);
@@ -78,13 +86,29 @@ void main()
     vec3 reflectDir = reflect(-lightDir, norm);  
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
     vec3 specular = light.specular * (spec * material.specular); 
-    
-    // specular2 with attenuation
-    vec3 reflectDir2 = reflect(-lightDir2, norm);  
-    float spec2 = pow(max(dot(viewDir, reflectDir2), 0.0), material.shininess);
-    vec3 specular2 = fatt * light2.specular * (spec2 * material.specular); 
+
+    vec3 totalAmbient = vec3(0.0);
+    vec3 totalDiffuseAtt = vec3(0.0);
+    vec3 totalSpecularAtt = vec3(0.0);
+    for (int i = 0; i < MAX_ATTENUATED_LIGHTS && i < numAttLights; ++i) {
+        // ambient 
+        totalAmbient += attLights[i].ambient * ambientTex;
+
+        // diffuse2 with attenuation
+        vec3 lightDirAtt = normalize(attLights[i].position - FragPos);
+        float diff2 = max(dot(norm, lightDirAtt), 0.0);
+        float fatt = computeAttenuationFactor(attConsts[i].c1, attConsts[i].c2, attConsts[i].c3, length(attLights[i].position - FragPos));
+        vec3 diffuse2 = fatt * attLights[i].diffuse * diff2 * vec3(texture(material.diffuse, TexCoord));
+        totalDiffuseAtt += diffuse2;
+
+        // specular2 with attenuation
+        vec3 reflectDir2 = reflect(-lightDirAtt, norm);  
+        float spec2 = pow(max(dot(viewDir, reflectDir2), 0.0), material.shininess);
+        vec3 specular2 = fatt * attLights[i].specular * (spec2 * material.specular); 
+        totalSpecularAtt += specular2;
+    }
         
-    vec3 result = ambient + (diffuse + diffuse2) + (specular + specular2);
+    vec3 result = (ambient + totalAmbient) + (diffuse + totalDiffuseAtt) + (specular + totalSpecularAtt);
     vec4 nearFinalResult = vec4(result, 1.0);
 
     if (FogColor != vec3(0)) {

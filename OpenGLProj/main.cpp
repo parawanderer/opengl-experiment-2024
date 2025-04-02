@@ -66,7 +66,6 @@
 
 constexpr auto SCREEN_OUTPUT_BUFFER_ID = 0;
 
-
 #pragma region STATE
 
 int currentWidth = INITIAL_WIDTH;
@@ -213,12 +212,16 @@ int main()
 		sunPos,
 		sunLightColor
 	);
-	terrainShader.setVec3("light2.ambient", Colors::WHITE * 0.01f);
-	terrainShader.setVec3("light2.diffuse", Colors::WHITE * 1.0f);
-	terrainShader.setVec3("light2.specular", Colors::WHITE * 1.0f);
-	terrainShader.setFloat("c1", attenuationC1);
-	terrainShader.setFloat("c2", attenuationC2);
-	terrainShader.setFloat("c3", attenuationC3);
+	for (int i = 0; i < 3; ++i)
+	{
+		terrainShader.setVec3("attLights[" + std::to_string(i) + "].ambient", Colors::WHITE * 0.00f);
+		terrainShader.setVec3("attLights[" + std::to_string(i) + "].diffuse", Colors::WHITE * 1.0f);
+		terrainShader.setVec3("attLights[" + std::to_string(i) + "].specular", Colors::WHITE * 1.0f);
+		terrainShader.setFloat("attConsts[" + std::to_string(i) + "].c1", attenuationC1);
+		terrainShader.setFloat("attConsts[" + std::to_string(i) + "].c2", attenuationC2);
+		terrainShader.setFloat("attConsts[" + std::to_string(i) + "].c3", attenuationC3);
+	}
+	terrainShader.setInt("numAttLights", 3);
 
 	camMgr.setTerrain(&sandTerrain);
 #pragma endregion
@@ -336,13 +339,20 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glCheckError();
 
-
-		const glm::vec3 spherePos = sandTerrain.getWorldHeightVecFor(-160, 50) + glm::vec3(sin(t) * 10.0f, 7.0 + cos(t / 2) * 3.0f, cos(t) * 10.0f);
+		std::vector<glm::vec3> smallLightSpherePositions = { // MAX size = 4 (as per terrain.frag)
+			sandTerrain.getWorldHeightVecFor(-160, 50) + glm::vec3(sin(t) * 10.0f, 7.0 + cos(t / 2) * 3.0f, cos(t) * 10.0f),
+			sandTerrain.getWorldHeightVecFor(-170, 60) + glm::vec3(sin(t) * 80.0f, 6.0 + sin(t) * 3.0f, cos(t) * 3.0f),
+			sandTerrain.getWorldHeightVecFor(-170, 40) + glm::vec3(sin(t) * 2.0f, 6.0 + sin(t) * 10.0f, cos(t) * 2.0f),
+		};
 
 		// WORLD
 		skybox.render(view, projection);
 		terrainShader.use();
-		terrainShader.setVec3("light2.position", spherePos);
+
+		for (int i = 0; i < smallLightSpherePositions.size(); ++i)
+		{
+			terrainShader.setVec3("attLights[" + std::to_string(i) + "].position", smallLightSpherePositions[i]);
+		}
 		sandTerrain.render(view, projection, cameraPos);
 
 		// ------ ** light cube ** ------
@@ -354,8 +364,11 @@ int main()
 
 		// I'll make this interesting because having a diminishing with distance light source is part of the assignment
 		// and I can't really think of anything super simple to implement that fits into the game world. So I'll just go with this.
-		lightCubeShader.setMat4("model", glm::translate(glm::mat4(1.0f), spherePos));
-		sphere.draw(lightCubeShader);
+		for (auto pos: smallLightSpherePositions)
+		{
+			lightCubeShader.setMat4("model", glm::translate(glm::mat4(1.0f), pos));
+			sphere.draw(lightCubeShader);
+		}
 
 		// ------ ** models ** ------
 		genericShader.use();
