@@ -1,4 +1,4 @@
-#include "Terrain.h"
+﻿#include "Terrain.h"
 
 #include <filesystem>
 #include <vector>
@@ -54,8 +54,45 @@ unsigned int Terrain::_loadTextureJpg(const char* texturePath, GLenum textureUni
 	return texture;
 }
 
+/*
+ * this builds out the following "tiles":
+
+		  ┌────┬────┬────┐
+		  │    │    │    │
+		  │ LB │ B  │ RB │
+		  ├────┼────┼────┤
+		  │    │    │    │
+		  │ L  │    │ R  │
+		  ├────┼────┼────┤
+		  │    │    │    │
+		  │ LF │ F  │ RF │
+		  └────┴────┴────┘
+
+if the middle "tile" is the main/primary tile
+
+TODO/note:
+-	first of all, the current ground pattern we have does not yield itself to forming
+	very nice patterns.
+	But it looks better than nothing
+
+-	this "tile" system could be optimized by using lower resolution "tiles"/meshes
+	(so 8bit heightmaps vs 16bit as I use now) when they are further away.
+	If I have some extra time I will implement this, such that based on your current
+	tile the tiles further away will be lower-res.
+	... You could probably also scale down the meshes with more "steps" as is done in
+	modern video games, but I will definitely not do anything this complex for this project.
+
+-	There's currently "seams" in the edges where the tiles meet each other because the
+	average vertex normal computation does not include normals at the other side of the tile
+	when computing something for one of the edges. The fix is obviously to take normals for all
+	the "virtual tiles" that would form seams (so you'd pretend that there's triangles there even
+	though there are not).
+
+*/
 void Terrain::_populateModelMatrices()
 {
+	
+
 	this->_terrainModelL = this->_terrainModel;
 	this->_terrainModelL = glm::translate(this->_terrainModelL, glm::vec3((this->_width - 2), 0.0f, 0.0f));
 	this->_terrainModelL = glm::scale(this->_terrainModelL, glm::vec3(-1.0f, 1.0f, 1.0f));
