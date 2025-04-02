@@ -149,6 +149,7 @@
     <ClCompile Include="NomadCharacter.cpp" />
     <ClCompile Include="PlayerState.cpp" />
     <ClCompile Include="Quad.cpp" />
+    <ClCompile Include="SandWormCharacter.cpp" />
     <ClCompile Include="Sphere.cpp" />
     <ClCompile Include="SphericalBoxedGameObject.cpp" />
     <ClCompile Include="ErrorUtils.cpp" />
@@ -217,6 +218,7 @@
     <ClInclude Include="NomadCharacter.h" />
     <ClInclude Include="PlayerState.h" />
     <ClInclude Include="Quad.h" />
+    <ClInclude Include="SandWormCharacter.h" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="SphericalBoundingBoxedEntity.h" />
     <ClInclude Include="SphericalBoxedGameObject.h" />

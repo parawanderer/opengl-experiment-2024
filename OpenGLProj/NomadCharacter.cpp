@@ -37,7 +37,7 @@ const std::string LOOK_BEHIND_RIGHT_ANIM = "lookright";
 NomadCharacter::NomadCharacter(WorldTimeManager* time, Terrain* terrain, RenderableGameObject* nomadGameObject, AnimationManager* animations, float initialX, float initialZ) :
 	_time(time),
 	_terrain(terrain),
-	_nomadModel(nomadGameObject),
+	_model(nomadGameObject),
 	_animator(animations),
 	_currentPos(terrain->getWorldHeightVecFor(initialX, initialZ) + SMALL_Y_OFFSET),
 	_currentFront(glm::vec3(0.0, 0.0, -1.0))
@@ -83,7 +83,7 @@ void NomadCharacter::onNewFrame()
 	model = glm::rotate(model, -glm::radians(this->_yaw) + glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // orient character along his movement direction
 	//model = glm::rotate(model, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // rotate the model into upward position
 	model = glm::scale(model, glm::vec3(0.01f));
-	this->_nomadModel->setModelTransform(model);
+	this->_model->setModelTransform(model);
 }
 
 void NomadCharacter::draw(Shader& shader)
@@ -91,7 +91,7 @@ void NomadCharacter::draw(Shader& shader)
 	const std::vector<glm::mat4> transforms = this->_animator.getFinalBoneMatrices();
 	this->setupEntityShaderForAnim(shader, transforms);
 
-	this->_nomadModel->draw(shader);
+	this->_model->draw(shader);
 	this->clearEntityShaderForAnim(shader);
 }
 

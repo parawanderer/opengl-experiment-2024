@@ -192,6 +192,9 @@
     <ClCompile Include="AnimatedEntity.cpp">
       <Filter>Source Files\game</Filter>
     </ClCompile>
+    <ClCompile Include="SandWormCharacter.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -393,6 +396,9 @@
       <Filter>Header Files\game</Filter>
     </ClInclude>
     <ClInclude Include="SphericalBoundingBoxedEntity.h">
+      <Filter>Header Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="SandWormCharacter.h">
       <Filter>Header Files\game</Filter>
     </ClInclude>
   </ItemGroup>

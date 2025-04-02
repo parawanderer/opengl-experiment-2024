@@ -43,6 +43,7 @@
 #include "CarriedGameObject.h"
 #include "GameObjectConstants.h"
 #include "NomadCharacter.h"
+#include "SandWormCharacter.h"
 #include "Thumper.h"
 #include "WorldTimeManager.h"
 
@@ -156,12 +157,12 @@ int main()
 	RenderableGameObject nomad("resources/models/rust-nomad/RustNomad.fbx");
 	AnimationManager nomadAnimations("resources/models/rust-nomad/RustNomad.fbx", nomad.getObjectModel());
 
-	RenderableGameObject sandWorm("resources/models/dune-sandworm/sandworm_edit.dae");
+	RenderableGameObject sandWorm("resources/models/sandworm2/Sandworm.fbx");
+	AnimationManager sandWormAnimations("resources/models/sandworm2/Sandworm.fbx", sandWorm.getObjectModel());
 
 	Model containerSmall("resources/models/military-container-free/Military_Container.dae");
 	RenderableGameObject containerS1(&containerSmall);
 	RenderableGameObject containerS2(&containerSmall);
-
 
 	Model containerLarge("resources/models/cargo-container/Container.dae");
 	RenderableGameObject containerL1(&containerLarge);
@@ -235,16 +236,6 @@ int main()
 	glm::mat4 thumper2Model = glm::mat4(1.0f);
 	thumper2Model = glm::translate(thumper2Model, sandTerrain.getWorldHeightVecFor(9.0f, 10.0f) + smallOffsetY);
 
-	glm::mat4 nomadModel = glm::mat4(1.0f);
-	nomadModel = glm::translate(nomadModel, sandTerrain.getWorldHeightVecFor(6.0f, 6.0f) + smallOffsetY);
-	nomadModel = glm::rotate(nomadModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	nomad.setModelTransform(nomadModel);
-
-	glm::mat4 sandWormModel = glm::mat4(1.0f);
-	sandWormModel = glm::translate(sandWormModel, sandTerrain.getWorldHeightVecFor(80.0f, 50.0f));
-	sandWormModel = glm::scale(sandWormModel, glm::vec3(3.0f));
-	sandWorm.setModelTransform(sandWormModel);
-
 	glm::mat4 containerS1Model = glm::mat4(1.0f);
 	containerS1Model = glm::translate(containerS1Model, sandTerrain.getWorldHeightVecFor(150.0f, -150.0f) + glm::vec3(0.0, -0.1f, 0.0f));
 	containerS1Model = glm::rotate(containerS1Model, glm::radians(4.0f), glm::vec3(0.0, 0.0, 1.0));
@@ -280,14 +271,13 @@ int main()
 	containerL3Model = glm::scale(containerL3Model, glm::vec3(0.02f));
 	containerL3.setModelTransform(containerL3Model);
 
-
 #pragma endregion
-
 
 	// state
 	PlayerState player;
 
 	NomadCharacter nomadCharacter(&timeMgr, &sandTerrain, &nomad, &nomadAnimations, 20.0f, -20.0f);
+	SandWormCharacter sandWormCharacter(&timeMgr, &sandTerrain, &sandWorm, &sandWormAnimations, 80.0f, 50.0f);
 
 	Thumper thumper1(&timeMgr, &thumperObj1, &thumperAnimations);
 	thumper1.setModelTransform(thumper1Model);
@@ -297,8 +287,8 @@ int main()
 
 	std::set<Thumper*> worldItemsThatPlayerCanPickUp = { &thumper1, &thumper2 };
 	std::vector<RenderableGameObject*> staticGameObjects = { &containerS1, &containerS2, &containerL1, &containerL2, &containerL3 };
-	std::vector<AnimatedEntity*> animatedEntitiesWithFrames = { &nomadCharacter, &thumper1, &thumper2 };
-	std::vector<AnimatedEntity*> independentAnimatedEntities = { &nomadCharacter };
+	std::vector<AnimatedEntity*> animatedEntitiesWithFrames = { &nomadCharacter, &sandWormCharacter, &thumper1, &thumper2 };
+	std::vector<AnimatedEntity*> independentAnimatedEntities = { &nomadCharacter, &sandWormCharacter };
 
 
 	const float worldInteractionCooldownSecs = 0.2f;
@@ -411,9 +401,6 @@ int main()
 
 		ornithopter.setModelTransform(computeOrnithroperModelTransform(t));
 		ornithopter.draw(genericShader);
-
-		// sand worm
-		sandWorm.draw(genericShader);
 
 		// static models in the world (non-characters/interacteable items)
 		for (auto staticObj: staticGameObjects) staticObj->draw(genericShader);

@@ -15,7 +15,6 @@ public:
 		WALKING = 1
 	};
 
-	//NomadCharacter(WorldTimeManager* time, Terrain* terrain, RenderableGameObject* nomadGameObject, Animator* animator, float initialX, float initialZ);
 	NomadCharacter(WorldTimeManager* time, Terrain* terrain, RenderableGameObject* nomadGameObject, AnimationManager* animations, float initialX, float initialZ);
 
 	void onNewFrame() override;
@@ -24,7 +23,7 @@ private:
 	WorldTimeManager* _time;
 	Terrain* _terrain;
 
-	RenderableGameObject* _nomadModel;
+	RenderableGameObject* _model;
 	Animator _animator;
 
 	glm::vec3 _currentPos;
@@ -33,6 +32,7 @@ private:
 	float _yaw = -90.0f;
 
 	MOVEMENT_STATE _movementState = MOVEMENT_STATE::IDLE;
+
 	glm::vec3 _movementStartPos = glm::vec3(0.0f);
 	glm::vec3 _movementTarget = glm::vec3(0.0f);
 	float _movementStartTime = 0.0f;
