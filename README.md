@@ -1,4 +1,4 @@
-# Dune-Themed OpenGL/C++ Experiment
+# Dune-Themed OpenGL/C++ Experiment 2024
 
 Demo video [here](https://youtu.be/mQCm1eSfVaM?si=vDtXalnGGEmv6kYr)
 
