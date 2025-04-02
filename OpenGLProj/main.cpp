@@ -29,7 +29,7 @@
 #pragma region STATE
 
 Camera camera(
-	glm::vec3(0.0, 30.0, 6.0),
+	glm::vec3(0.0, 30.0f, 6.0),
 	glm::vec3(0.0f, 0.0f, -1.0f), 
 	INITIAL_WIDTH, 
 	INITIAL_HEIGHT, 
@@ -41,7 +41,7 @@ const float RENDER_DISTANCE = 1500.0f;
 // world:
 
 // sun
-glm::vec3 sunPos(0.0f, 500.0f, -1000.0f);
+glm::vec3 sunPos(0.0f, 750.0f, -2000.0f);
 glm::vec3 sunLightColor = Colors::WHITE;
 
 #pragma endregion
@@ -193,35 +193,40 @@ int main()
 #pragma endregion
 
 #pragma region TERRAIN
-	const float yScaleMult = 32.0f;
-	const float yShift = 16.0f;
+	const float yScaleMult = 64.0f;
+	const float yShift = 32.0f;
 	Shader terrainShader = Shader::fromFiles("terrain.vert", "terrain.frag");
+	const glm::mat4 terrainModel = glm::scale(glm::mat4(1.0f), glm::vec3(2.0f));
 	Terrain sandTerrain(
-		terrainShader, 
-		"resources/16bittest.png", 
+		&terrainShader, 
+		"resources/final-dunes-first-try.png", // <- edited version of https://www.florisgroen.com/sandy-desert-3d/ 
+		// (this is a manual photoshop edit, and because it is a manual photoshop edit of an algorithm that is not
+		// clear to me, I don't think I'll be able to just easily implement a procedural dune terrain generation system.
+		// The problem I mainly have is that getting the "sand waves" to look good and not to look like minecraft is a huge problem)
 		"resources/sand_texture.jpg",
 		"resources/sand_texture2.jpg",
 		yScaleMult, 
-		yShift
+		yShift,
+		terrainModel,
+		sunPos,
+		sunLightColor
 	);
-	terrainShader.use();
-	const glm::mat4 terrainModel = glm::mat4(1.0f);
-	terrainShader.setMat4("model", terrainModel); // model transform (to world coords)
-	const glm::mat3 terrainNormalMatrix = glm::mat3(glm::transpose(glm::inverse(terrainModel)));
+	//terrainShader.use();
+	//const glm::mat4 terrainModel = glm::mat4(1.0f);
+	//terrainShader.setMat4("model", terrainModel); // model transform (to world coords)
+	//const glm::mat3 terrainNormalMatrix = glm::mat3(glm::transpose(glm::inverse(terrainModel)));
 	// matrix to model the normal if there's non-linear scaling going on in the model matrix
-	terrainShader.setMat3("normalMatrix", terrainNormalMatrix);
-	// material (terrain)
-	// terrainShader.setVec3("material.ambient", Colors::SAND);
-	// terrainShader.setVec3("material.diffuse", Colors::SAND);
-	terrainShader.setInt("material.diffuse", 0);
-	terrainShader.setVec3("material.specular", Colors::SAND);
-	terrainShader.setFloat("material.shininess", 16);
-	// light (sun)
-	terrainShader.setVec3("light.position", sunPos);
-	terrainShader.setVec3("light.ambient", sunLightColor * 0.4f);
-	terrainShader.setVec3("light.diffuse", sunLightColor * 0.9f);
-	terrainShader.setVec3("light.specular", sunLightColor * 0.1f);
-	terrainShader.setInt("texture1", 0);
+	// terrainShader.setMat3("normalMatrix", terrainNormalMatrix);
+	// // material (terrain)
+	// terrainShader.setInt("material.diffuse", 0);
+	// terrainShader.setVec3("material.specular", Colors::SAND);
+	// terrainShader.setFloat("material.shininess", 16);
+	// // light (sun)
+	// terrainShader.setVec3("light.position", sunPos);
+	// terrainShader.setVec3("light.ambient", sunLightColor * 0.4f);
+	// terrainShader.setVec3("light.diffuse", sunLightColor * 0.9f);
+	// terrainShader.setVec3("light.specular", sunLightColor * 0.1f);
+	// terrainShader.setInt("texture1", 0);
 #pragma endregion
 
 # pragma region MAIN_LOOP
@@ -253,11 +258,11 @@ int main()
 		skybox.render(view, projection);
 
 		// ** terrain **
-		terrainShader.use();
-		terrainShader.setMat4("view", view);
-		terrainShader.setMat4("projection", projection);
-		terrainShader.setVec3("viewPos", cameraPos);
-		sandTerrain.render();
+		// terrainShader.use();
+		// terrainShader.setMat4("view", view);
+		// terrainShader.setMat4("projection", projection);
+		// terrainShader.setVec3("viewPos", cameraPos);
+		sandTerrain.render(view, projection, cameraPos);
 
 		// ** light cube **
 		lightCubeShader.use();

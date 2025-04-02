@@ -5,6 +5,7 @@
 #include <vector>
 #include <glad/glad.h>
 
+#include "Colors.h"
 #include "ErrorUtils.h"
 #include "ResourceUtils.h"
 #include "stb_image.h"
@@ -12,15 +13,15 @@
 
 
 
-void _insertNormContribution(std::vector<TerrainVertex>& vertices, unsigned int index0, unsigned int index1, unsigned int index2)
+void Terrain::_insertNormContribution(unsigned int index0, unsigned int index1, unsigned int index2)
 {
-	glm::vec3 v1 = vertices[index0].pos - vertices[index1].pos;
-	glm::vec3 v2 = vertices[index0].pos - vertices[index2].pos;
+	glm::vec3 v1 = this->_vertices[index0].pos - this->_vertices[index1].pos;
+	glm::vec3 v2 = this->_vertices[index0].pos - this->_vertices[index2].pos;
 	glm::vec3 contrib = glm::cross(v1, v2);
 
-	vertices[index0].normal += contrib;
-	vertices[index1].normal += contrib;
-	vertices[index2].normal += contrib;
+	this->_vertices[index0].normal += contrib;
+	this->_vertices[index1].normal += contrib;
+	this->_vertices[index2].normal += contrib;
 }
 
 unsigned int _loadTextureJpg(const char* texturePath, GLenum textureUnit)
@@ -60,22 +61,36 @@ unsigned int _loadTextureJpg(const char* texturePath, GLenum textureUnit)
  * https://www.youtube.com/watch?v=bwq_y0zxpQM&list=PLA0dXqQjCx0S9qG5dWLsheiCJV-_eLUM0&index=6,
  * https://www.youtube.com/watch?v=xoqESu9iOUE&list=PLA0dXqQjCx0S9qG5dWLsheiCJV-_eLUM0&index=3
  */
-Terrain::Terrain(Shader& shader, const std::string& sourceHeightMapPath, const std::string& texturePath0, const std::string& texturePath1, float yScaleMult, float yShift)
+Terrain::Terrain(
+	Shader* shader, 
+	const std::string& sourceHeightMapPath, // must be 16-bit
+	const std::string& texturePath0, 
+	const std::string& texturePath1, 
+	float yScaleMult, 
+	float yShift,
+	const glm::mat4& terrainModel,
+	const glm::vec3& sunPos,
+	const glm::vec3& sunLightColor)
+: _shader(shader), _terrainNormalMatrix(glm::mat3(glm::transpose(glm::inverse(terrainModel))))
 {
 	int width, height, nChannels;
 	assertFileExists(sourceHeightMapPath);
 	assertFileExists(texturePath0);
 	assertFileExists(texturePath1);
-	//unsigned char* data = stbi_load(sourceHeightMapPath.c_str(), &width, &height, &nChannels, 0);
+	// load 16-bit heightmap image
 	unsigned short* data = stbi_load_16(sourceHeightMapPath.c_str(), &width, &height, &nChannels, 0);
 	if (width == 1 || height == 1) throw std::exception("Height map must have a width and height dimension of at least 2px");
-	this->_textureId0 = _loadTextureJpg(texturePath0.c_str(), GL_TEXTURE0);
-	this->_textureId1 = _loadTextureJpg(texturePath1.c_str(), GL_TEXTURE1);
+
+	// load textures
+	this->_textureId0 = _loadTextureJpg(texturePath0.c_str(), GL_TEXTURE0); // texture0
+	this->_textureId1 = _loadTextureJpg(texturePath1.c_str(), GL_TEXTURE1); // texture1
+
+	const float textureDivScaling = 2.0f;
 
 	// vertex generation
-	const float yScale = yScaleMult / 65536.0f;//256.0f;
+	const float yScale = yScaleMult / 65536.0f; // 16-bit image gives more possible levels...
 
-	this->_vertices.resize(width * height);
+	this->_vertices.resize(width * height); // make space
 
 	// 1. generate vertices from the height map. The x and z are evenly spaced on a grid.
 	// The height map (color) gives the height of the vertex = the y coordinate
@@ -99,8 +114,8 @@ Terrain::Terrain(Shader& shader, const std::string& sourceHeightMapPath, const s
 				zPos // z
 			);
 			this->_vertices[index].texture = glm::vec2(
-				xPos/10,
-				zPos/10
+				xPos / textureDivScaling,
+				zPos / textureDivScaling
 			);
 
 			index++;
@@ -116,7 +131,7 @@ Terrain::Terrain(Shader& shader, const std::string& sourceHeightMapPath, const s
 			// every set of 4 pixels is considered as the vertices.
 			// These 4 pixels are split into two triangles
 			
-			// first/left triangle:
+			// first/left triangle:  (clockwise)
 			//                  0---2
 			//                  | / |
 			//                  1----
@@ -127,9 +142,9 @@ Terrain::Terrain(Shader& shader, const std::string& sourceHeightMapPath, const s
 			this->_indices.push_back(index1); // 1
 			this->_indices.push_back(index2); // 2
 
-			_insertNormContribution(this->_vertices, index0, index1, index2); // 3.1 calculate normals for smooth surface rendering (https://www.youtube.com/watch?v=bwq_y0zxpQM&list=PLA0dXqQjCx0S9qG5dWLsheiCJV-_eLUM0&index=6)
+			this->_insertNormContribution(index0, index1, index2); // 3.1 calculate normals for smooth surface rendering (https://www.youtube.com/watch?v=bwq_y0zxpQM&list=PLA0dXqQjCx0S9qG5dWLsheiCJV-_eLUM0&index=6)
 
-			// second/right triangle:
+			// second/right triangle:  (clockwise)
 			//                  ----2
 			//                  | / |
 			//                  1---3
@@ -138,27 +153,9 @@ Terrain::Terrain(Shader& shader, const std::string& sourceHeightMapPath, const s
 			this->_indices.push_back(index3); // 3
 			this->_indices.push_back(index2); // 2
 
-			_insertNormContribution(this->_vertices, index1, index3, index2); // 3.1 calculate normals for smooth surface rendering
+			this->_insertNormContribution(index1, index3, index2); // 3.1 calculate normals for smooth surface rendering
 		}
 	}
-
-	// 3.1 calculate normals for smooth surface rendering (https://www.youtube.com/watch?v=bwq_y0zxpQM&list=PLA0dXqQjCx0S9qG5dWLsheiCJV-_eLUM0&index=6)
-	// [this could likely be moved into the above loop]
-	// for (unsigned int i = 0; i + 2 < this->_indices.size(); i += 3)
-	// {
-	// 	// every triangle (composed of clockwise sides {0, 1, 2})
-	// 	unsigned int index0 = this->_indices[i];
-	// 	unsigned int index1 = this->_indices[i + 1];
-	// 	unsigned int index2 = this->_indices[i + 2];
-	//
-	// 	glm::vec3 v1 = this->_vertices[index0].pos - this->_vertices[index1].pos;
-	// 	glm::vec3 v2 = this->_vertices[index0].pos - this->_vertices[index2].pos;
-	// 	glm::vec3 contrib = glm::cross(v1, v2);
-	//
-	// 	this->_vertices[index0].normal += contrib;
-	// 	this->_vertices[index1].normal += contrib;
-	// 	this->_vertices[index2].normal += contrib;
-	// }
 
 	// 3.2 normalize all the vertex normals (average of all the plane normals that share this vertex. Up to 6 but possibly less!)
 	for (unsigned int i = 0; i < this->_vertices.size(); ++i)
@@ -184,13 +181,31 @@ Terrain::Terrain(Shader& shader, const std::string& sourceHeightMapPath, const s
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->_indices.size() * sizeof(unsigned int), &this->_indices[0], GL_STATIC_DRAW);
 
-	shader.use();
-	shader.setInt("material.diffuse", 0);
-	shader.setInt("material.ambient", 1);
+	// configure shader
+	this->_shader->use();
+
+	this->_shader->setMat4("model", terrainModel); // model transform (to world coords)
+	// matrix to model the normal if there's non-linear scaling going on in the model matrix
+	this->_shader->setMat3("normalMatrix", this->_terrainNormalMatrix);
+	// material (terrain)
+	this->_shader->setInt("material.diffuse", 0); // material (texture references) -- texture0
+	this->_shader->setInt("material.ambient", 1); // material (texture references) -- texture1
+	this->_shader->setVec3("material.specular", glm::vec3(0.949, 0.776, 0.431));
+	this->_shader->setFloat("material.shininess", 16);
+	// light (sun)
+	this->_shader->setVec3("light.position", sunPos);
+	this->_shader->setVec3("light.ambient", sunLightColor * 0.4f);
+	this->_shader->setVec3("light.diffuse", sunLightColor * 0.9f);
+	this->_shader->setVec3("light.specular", sunLightColor * 0.1f);
 }
 
-void Terrain::render()
+void Terrain::render(const glm::mat4& view, const glm::mat4& projection, const glm::vec3& viewPos)
 {
+	this->_shader->use();
+	this->_shader->setMat4("view", view);
+	this->_shader->setMat4("projection", projection);
+	this->_shader->setVec3("viewPos", viewPos);
+
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	glBindVertexArray(this->_VAO);
 	glActiveTexture(GL_TEXTURE0);
