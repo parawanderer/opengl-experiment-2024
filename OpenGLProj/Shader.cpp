@@ -1,4 +1,4 @@
-#include "ShaderMine.h"
+#include "Shader.h"
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -43,7 +43,7 @@ void _checkLinkSuccess(GLuint shaderProgramId)
 }
 
 
-ShaderMine ShaderMine::fromFiles(const char* vertexPath, const char* fragmentPath)
+Shader Shader::fromFiles(const char* vertexPath, const char* fragmentPath)
 {
     // 1. retrieve the vertex/fragment source code from filePath
     std::string vertexCode;
@@ -76,16 +76,16 @@ ShaderMine ShaderMine::fromFiles(const char* vertexPath, const char* fragmentPat
     const char* vShaderCode = vertexCode.c_str();
     const char* fShaderCode = fragmentCode.c_str();
 
-    return ShaderMine(vShaderCode, fShaderCode);
+    return Shader(vShaderCode, fShaderCode);
 }
 
-ShaderMine ShaderMine::fromSource(const char* vertexShaderCode, const char* fragmentShaderCode)
+Shader Shader::fromSource(const char* vertexShaderCode, const char* fragmentShaderCode)
 {
-    return ShaderMine(vertexShaderCode, fragmentShaderCode);
+    return Shader(vertexShaderCode, fragmentShaderCode);
 }
 
 
-ShaderMine::ShaderMine(const char* vShaderCode, const char* fShaderCode)
+Shader::Shader(const char* vShaderCode, const char* fShaderCode)
 {
     // compile shaders
     unsigned int vertex = _compileShader(vShaderCode, GL_VERTEX_SHADER);
@@ -104,32 +104,32 @@ ShaderMine::ShaderMine(const char* vShaderCode, const char* fShaderCode)
     glDeleteShader(fragment);
 }
 
-void ShaderMine::use()
+void Shader::use()
 {
     glUseProgram(this->ID);
 }
 
-void ShaderMine::setBool(const std::string &name, bool value) const
+void Shader::setBool(const std::string &name, bool value) const
 {
     glUniform1i(GET_LOCATION, (int)value);
 }
 
-void ShaderMine::setInt(const std::string& name, int value) const
+void Shader::setInt(const std::string& name, int value) const
 {
     glUniform1i(GET_LOCATION, value);
 }
 
-void ShaderMine::setFloat(const std::string& name, float value) const
+void Shader::setFloat(const std::string& name, float value) const
 {
     glUniform1f(GET_LOCATION, value);
 }
 
-void ShaderMine::setMat4(const std::string& name, const glm::mat4& matrix) const
+void Shader::setMat4(const std::string& name, const glm::mat4& matrix) const
 {
     glUniformMatrix4fv(GET_LOCATION, 1, GL_FALSE, &matrix[0][0]);
 }
 
-void ShaderMine::setVec3(const std::string& name, const glm::vec3& vec) const
+void Shader::setVec3(const std::string& name, const glm::vec3& vec) const
 {
     glUniform3fv(GET_LOCATION, 1, &vec[0]);
 }

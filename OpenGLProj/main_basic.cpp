@@ -6,10 +6,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#define STB_IMAGE_IMPLEMENTATION
+//#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-#include "ShaderMine.h"
+#include "Shader.h"
 
 
 #define INITIAL_WIDTH 1280
@@ -147,7 +147,7 @@ unsigned int giveMeDaTexture(const char* texturePath, GLenum textureUnit, bool i
 	return texture;
 }
 
-void processPos(GLFWwindow* window, float* pos, ShaderMine& ourShader)
+void processPos(GLFWwindow* window, float* pos, Shader& ourShader)
 {
 	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
 	{
@@ -273,7 +273,7 @@ int _main()
 	glEnableVertexAttribArray(0);
 
 
-	ShaderMine ourShader = ShaderMine::fromFiles("shader1.vert", "shader1.frag");
+	Shader ourShader = Shader::fromFiles("shader1.vert", "shader1.frag");
 
 	unsigned int texture = giveMeDaTexture("container.jpg", GL_TEXTURE0);
 	unsigned int texture2 = giveMeDaTexture("awesomeface.png", GL_TEXTURE1, true);

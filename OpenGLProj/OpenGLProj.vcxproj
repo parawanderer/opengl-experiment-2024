@@ -108,11 +108,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;freetyped.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -133,30 +135,43 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\glad\src\glad.c" />
+    <ClCompile Include="ErrorUtils.cpp" />
+    <ClCompile Include="Font.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="main_basic.cpp" />
     <ClCompile Include="main_light.cpp" />
-    <ClCompile Include="ShaderMine.cpp" />
+    <ClCompile Include="Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
+    <None Include="font.frag" />
+    <None Include="font.vert" />
     <None Include="shader_lightsource.frag" />
     <None Include="shader1.frag" />
     <None Include="shader1.vert" />
     <None Include="shader2.frag" />
     <None Include="shader2.vert" />
     <None Include="shader_lightsource.vert" />
+    <None Include="terrain.frag" />
+    <None Include="terrain.vert" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h" />
-    <ClInclude Include="ShaderMine.h" />
+    <ClInclude Include="Colors.h" />
+    <ClInclude Include="ErrorUtils.h" />
+    <ClInclude Include="Font.h" />
+    <ClInclude Include="Shader.h" />
     <ClInclude Include="shader_m.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="awesomeface.png" />
     <Image Include="container.jpg" />
+    <Image Include="iceland_heightmap.png" />
     <Image Include="wall.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="resources\calibri.ttf" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -78,8 +78,8 @@ int main()
 
     // build and compile our shader zprogram
     // ------------------------------------
-    Shader lightingShader("shader2.vert", "shader2.frag");
-    Shader lightCubeShader("shader_lightsource.vert", "shader_lightsource.frag");
+    ShaderM lightingShader("shader2.vert", "shader2.frag");
+    ShaderM lightCubeShader("shader_lightsource.vert", "shader_lightsource.frag");
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
