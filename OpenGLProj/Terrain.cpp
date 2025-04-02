@@ -44,8 +44,6 @@ Terrain::Terrain(const std::string& sourceHeightMapPath, float yScaleMult, float
 		}
 	}
 
-	// normals
-
 	this->_numStrips = height - 1;
 	this->_numVertsPerStrip = width * 2;
 

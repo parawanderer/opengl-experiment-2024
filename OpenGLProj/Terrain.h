@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+#include "Shader.h"
+
 class Terrain
 {
 public:

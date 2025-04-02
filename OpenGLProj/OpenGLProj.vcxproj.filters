@@ -13,73 +13,85 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\font">
+      <UniqueIdentifier>{b3887131-9563-47c8-baee-06194d51e7e0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\old">
+      <UniqueIdentifier>{953c52c2-a835-42b5-808e-ec89d3e80314}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\terrain">
+      <UniqueIdentifier>{0c59a444-28cc-4888-a926-4f0ecd450785}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\glad\src\glad.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="main_basic.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Shader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="main_light.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Font.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ErrorUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Terrain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Font.cpp">
+      <Filter>Source Files\font</Filter>
+    </ClCompile>
+    <ClCompile Include="main_light.cpp">
+      <Filter>Source Files\old</Filter>
+    </ClCompile>
+    <ClCompile Include="main_basic.cpp">
+      <Filter>Source Files\old</Filter>
+    </ClCompile>
+    <ClCompile Include="Terrain.cpp">
+      <Filter>Source Files\terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="Skybox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader1.vert">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="shader1.frag">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="shader2.frag">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="shader2.vert">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="shader_lightsource.frag">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="shader_lightsource.vert">
-      <Filter>Source Files</Filter>
-    </None>
     <None Include=".gitignore" />
-    <None Include="terrain.vert">
+    <None Include="skybox.frag">
       <Filter>Source Files</Filter>
     </None>
-    <None Include="terrain.frag">
-      <Filter>Source Files</Filter>
-    </None>
-    <None Include="font.vert">
+    <None Include="skybox.vert">
       <Filter>Source Files</Filter>
     </None>
     <None Include="font.frag">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\font</Filter>
     </None>
-    <None Include="terrain.geom">
-      <Filter>Source Files</Filter>
+    <None Include="font.vert">
+      <Filter>Source Files\font</Filter>
     </None>
-    <None Include="terrain_basic.frag">
-      <Filter>Source Files</Filter>
+    <None Include="shader_lightsource.vert">
+      <Filter>Source Files\old</Filter>
+    </None>
+    <None Include="shader_lightsource.frag">
+      <Filter>Source Files\old</Filter>
+    </None>
+    <None Include="shader2.vert">
+      <Filter>Source Files\old</Filter>
+    </None>
+    <None Include="shader2.frag">
+      <Filter>Source Files\old</Filter>
+    </None>
+    <None Include="shader1.vert">
+      <Filter>Source Files\old</Filter>
+    </None>
+    <None Include="shader1.frag">
+      <Filter>Source Files\old</Filter>
+    </None>
+    <None Include="terrain.vert">
+      <Filter>Source Files\terrain</Filter>
+    </None>
+    <None Include="terrain.frag">
+      <Filter>Source Files\terrain</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -108,6 +120,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Skybox.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

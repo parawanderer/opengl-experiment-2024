@@ -10,7 +10,7 @@ namespace Colors
 	constexpr glm::vec3 RED(1.0f, 0.0f, 0.0f);
 	constexpr glm::vec3 GREEN(0.0f, 1.0f, 0.0f);
 	constexpr glm::vec3 BLUE(0.0f, 0.0f, 1.0f);
-	constexpr glm::vec3 SAND(0.8f, 0.68f, 0.43f);
+	constexpr glm::vec3 SAND(0.81f, 0.54f, 0.28f);
 }
 
 #endif

@@ -18,6 +18,7 @@
 #include "stb_image.h"
 #include "Terrain.h"
 #include "Camera.h"
+#include "Skybox.h"
 
 #define INITIAL_WIDTH 1280
 #define INITIAL_HEIGHT 800
@@ -26,7 +27,7 @@
 #pragma region STATE
 
 Camera camera(
-	glm::vec3(-55, 43, -103), 
+	glm::vec3(-55, 43, -103),
 	glm::vec3(0.0f, 0.0f, -1.0f), 
 	INITIAL_WIDTH, 
 	INITIAL_HEIGHT, 
@@ -105,18 +106,32 @@ int main()
 
 # pragma endregion
 
-	// text
+#pragma region TEXT
 	Shader fontShader = Shader::fromFiles("font.vert", "font.frag");
 	glm::mat4 textProjection = glm::ortho(0.0f, (float)INITIAL_WIDTH, 0.0f, (float)INITIAL_HEIGHT);
 	fontShader.use();
 	fontShader.setMat4("projection", textProjection);
 	Font font("resources/calibri.ttf", &fontShader);
+#pragma endregion
 
-	// terrain
+#pragma region SKYBOX
+	std::vector<std::string> skyboxFaces{
+		"resources/skybox2/right.jpg",
+		"resources/skybox2/left.jpg",
+		"resources/skybox2/top.jpg",
+		"resources/skybox2/bottom.jpg",
+		"resources/skybox2/front.jpg",
+		"resources/skybox2/back.jpg",
+	};
+	Shader skyboxShader = Shader::fromFiles("skybox.vert", "skybox.frag");
+	Skybox skybox(&skyboxShader, skyboxFaces);
+#pragma endregion
+
+#pragma region TERRAIN
 	const float yScaleMult = 64.0f;
 	const float yShift = 16.0f;
+	Shader terrainShader = Shader::fromFiles("terrain.vert", "terrain.frag");
 	Terrain sandTerrain("resources/perlin-noise-texture.png", yScaleMult, yShift);
-	Shader terrainShader = Shader::fromFiles("terrain.vert", "terrain_basic.frag");
 	terrainShader.use();
 	const glm::mat4 terrainModel = glm::mat4(1.0f);
 	terrainShader.setMat4("model", terrainModel); // model transform (to world coords)
@@ -133,8 +148,7 @@ int main()
 	terrainShader.setVec3("light.ambient", sunLightColor * 0.1f);
 	terrainShader.setVec3("light.diffuse", sunLightColor * 0.5f);
 	terrainShader.setVec3("light.specular", sunLightColor);
-	// view position/camera position
-	//terrainShader.setVec3("viewPos", cameraPos);// update in loop
+#pragma endregion
 
 # pragma region MAIN_LOOP
 
@@ -151,13 +165,18 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 		// ** view/projection transformations **
-		glm::mat4 view = camera.getView(); //glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+		glm::mat4 view = camera.getView();
 		glm::mat4 projection = glm::perspective(
 			glm::radians(camera.getFov()), 
 			(float)INITIAL_WIDTH / (float)INITIAL_HEIGHT, 
 			0.1f, 
 			RENDER_DISTANCE
 		);
+
+		// ======== RENDERING ========
+
+		// ** skybox **
+		skybox.render(view, projection);
 
 		// ** terrain **
 		terrainShader.use();
