@@ -73,11 +73,16 @@ private:
 	glm::mat3 _terrainNormalMatrixRB;
 	std::vector<std::pair<glm::mat4, glm::mat3>> _renderMatrices;
 
-	void _insertNormContribution(unsigned int index0, unsigned int index1, unsigned int index2);
-	static unsigned int _loadTextureJpg(const char* texturePath, GLenum textureUnit);
-	void _populateModelMatrices();
+	void insertNormContribution(unsigned int index0, unsigned int index1, unsigned int index2);
+	static unsigned int loadTextureJpg(const char* texturePath, GLenum textureUnit);
+	void populateModelMatrices();
 
-	float _getWorldHeight(int x, int z) const;
+	float getWorldHeight(int x, int z) const;
+
+	void generateVerticesFromHeightMap(unsigned short* data, int nChannels, float yScale, float yShift);
+	void mapTriangles();
+	void setupMesh();
+	void setupShader(const glm::vec3& sunPos, const glm::vec3& sunLightColor);
 };
 
 #endif

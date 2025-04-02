@@ -8,12 +8,6 @@
 // (Acceleration due to gravity) m/s^2
 #define G -9.81f
 
-
-std::set _MOVEMENT_KEYS = {
-	GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D
-};
-
-
 PlayerCamera::PlayerCamera(
 	glm::vec3 initialPos, 
 	glm::vec3 initialFront, 
@@ -39,7 +33,7 @@ glm::mat4 PlayerCamera::getView() const
 	glm::vec3 playerPos = this->getPosIncludingJump();
 	glm::mat4 view = glm::lookAt(playerPos, playerPos + this->_cameraFront, this->_cameraUp);
 
-	if (!this->_isJumping && this->_isAnyMovementKeyPressed())
+	if (!this->_isJumping && this->isAnyMovementKeyPressed())
 	{
 		const float sprintingMultiplier = this->_isShiftPressed ? 1.5f : 1.0f;
 		// transform to get something that looks like "movement" (head-bobbing)
@@ -141,11 +135,11 @@ void PlayerCamera::processKey(GLFWwindow* window, int key, int scancode, int act
 	// https://www.glfw.org/docs/latest/input_guide.html#input_key
 	if (action == GLFW_PRESS)
 	{
-		this->_assignWASDValue(true, key);
+		this->assignWASDValue(true, key);
 	}
 	else if (action == GLFW_RELEASE)
 	{
-		this->_assignWASDValue(false, key);
+		this->assignWASDValue(false, key);
 	}
 }
 
@@ -159,12 +153,12 @@ void PlayerCamera::teleportToFloor()
 	}
 }
 
-bool PlayerCamera::_isAnyMovementKeyPressed() const
+bool PlayerCamera::isAnyMovementKeyPressed() const
 {
 	return this->_keyStates.W || this->_keyStates.A || this->_keyStates.S || this->_keyStates.D;
 }
 
-void PlayerCamera::_assignWASDValue(bool state, int key)
+void PlayerCamera::assignWASDValue(bool state, int key)
 {
 	if (key == GLFW_KEY_W) this->_keyStates.W = state;
 	if (key == GLFW_KEY_A) this->_keyStates.A = state;

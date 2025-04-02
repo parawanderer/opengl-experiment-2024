@@ -12,7 +12,7 @@
 # define GET_LOCATION glGetUniformLocation(this->ID, name.c_str())
 
 
-unsigned int Shader::_compileShader(const char *shaderSourceCode, GLenum type)
+unsigned int Shader::compileShader(const char *shaderSourceCode, GLenum type)
 {
     int success;
     const unsigned int shaderId = glCreateShader(type);
@@ -33,7 +33,7 @@ unsigned int Shader::_compileShader(const char *shaderSourceCode, GLenum type)
     return shaderId;
 }
 
-void Shader::_checkLinkSuccess(GLuint shaderProgramId)
+void Shader::checkLinkSuccess(GLuint shaderProgramId)
 {
     int  success;
     glGetProgramiv(shaderProgramId, GL_LINK_STATUS, &success);
@@ -45,7 +45,7 @@ void Shader::_checkLinkSuccess(GLuint shaderProgramId)
     }
 }
 
-std::string Shader::_readFile(const std::string& fileName)
+std::string Shader::readFile(const std::string& fileName)
 {
     std::string content;
     std::ifstream file;
@@ -77,12 +77,12 @@ Shader Shader::fromFiles(const char* vertexPath, const char* fragmentPath, const
     // 1. retrieve the vertex/fragment source code from filePath
     assertFileExists(vertexPath);
 	assertFileExists(fragmentPath);
-    std::string vertexCode = _readFile(vertexPath);
-    std::string fragmentCode = _readFile(fragmentPath);
+    std::string vertexCode = readFile(vertexPath);
+    std::string fragmentCode = readFile(fragmentPath);
     std::string geomShaderCode = "";
     if (geomShaderPath != nullptr) {
         assertFileExists(geomShaderPath);
-        geomShaderCode = _readFile(geomShaderPath);
+        geomShaderCode = readFile(geomShaderPath);
     }
 
 	if (vertexCode.empty() || fragmentCode.empty())
@@ -103,10 +103,15 @@ Shader Shader::fromSource(const char* vertexShaderCode, const char* fragmentShad
 
 Shader::Shader(const char* vShaderCode, const char* fShaderCode, const char* geomShaderCode)
 {
+    if (std::string(vShaderCode).find(' ') == std::string::npos)
+    {
+        std::cout << "Most likely invalid shader source code supplied. Did you mean to use Shader::fromFiles()?" << std::endl;
+    }
+
     // compile shaders
-    unsigned int vertex = _compileShader(vShaderCode, GL_VERTEX_SHADER);
-    unsigned int fragment = _compileShader(fShaderCode, GL_FRAGMENT_SHADER);
-    unsigned int geom = geomShaderCode != nullptr ? _compileShader(geomShaderCode, GL_GEOMETRY_SHADER) : 0;
+    unsigned int vertex = compileShader(vShaderCode, GL_VERTEX_SHADER);
+    unsigned int fragment = compileShader(fShaderCode, GL_FRAGMENT_SHADER);
+    unsigned int geom = geomShaderCode != nullptr ? compileShader(geomShaderCode, GL_GEOMETRY_SHADER) : 0;
 
     // shader Program
     this->ID = glCreateProgram();
@@ -115,7 +120,7 @@ Shader::Shader(const char* vShaderCode, const char* fShaderCode, const char* geo
     if (geom != 0) glAttachShader(this->ID, geom);
     glLinkProgram(ID);
     // print linking errors if any
-    _checkLinkSuccess(this->ID);
+    checkLinkSuccess(this->ID);
 
     // delete the shaders as they're linked into our program now and no longer necessary
     glDeleteShader(vertex);

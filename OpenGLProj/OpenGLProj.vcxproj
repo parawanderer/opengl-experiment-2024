@@ -114,7 +114,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>glfw3.lib;opengl32.lib;freetyped.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;freetyped.lib;assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -137,10 +137,13 @@
     <ClCompile Include="..\..\glad\src\glad.c" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ErrorUtils.cpp" />
+    <ClCompile Include="FileUtils.cpp" />
     <ClCompile Include="Font.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="main_basic.cpp" />
     <ClCompile Include="main_light.cpp" />
+    <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="Model.cpp" />
     <ClCompile Include="PlayerCamera.cpp" />
     <ClCompile Include="ResourceUtils.cpp" />
     <ClCompile Include="Shader.cpp" />
@@ -149,6 +152,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
+    <None Include="basic.frag" />
+    <None Include="basic.vert" />
     <None Include="font.frag" />
     <None Include="font.vert" />
     <None Include="shader_lightsource.frag" />
@@ -167,7 +172,10 @@
     <ClInclude Include="camera_m.h" />
     <ClInclude Include="Colors.h" />
     <ClInclude Include="ErrorUtils.h" />
+    <ClInclude Include="FileUtils.h" />
     <ClInclude Include="Font.h" />
+    <ClInclude Include="Mesh.h" />
+    <ClInclude Include="Model.h" />
     <ClInclude Include="PlayerCamera.h" />
     <ClInclude Include="ResourceUtils.h" />
     <ClInclude Include="Shader.h" />

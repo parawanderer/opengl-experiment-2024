@@ -53,8 +53,8 @@ public:
     void setVec3(const std::string& name, const glm::vec3& vec) const;
 
 private:
-    static std::string _readFile(const std::string& fileName);
-    static void _checkLinkSuccess(GLuint shaderProgramId);
-    static unsigned int _compileShader(const char* shaderSourceCode, GLenum type);
+    static std::string readFile(const std::string& fileName);
+    static void checkLinkSuccess(GLuint shaderProgramId);
+    static unsigned int compileShader(const char* shaderSourceCode, GLenum type);
 };
 #endif

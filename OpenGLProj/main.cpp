@@ -20,6 +20,7 @@
 #include "stb_image.h"
 #include "Terrain.h"
 #include "Camera.h"
+#include "Model.h"
 #include "PlayerCamera.h"
 #include "Skybox.h"
 
@@ -66,13 +67,13 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height)
 void mouseCallback(GLFWwindow* window, double xpos, double ypos)
 {
 	playerCamera.processMouse(window, xpos, ypos);
-	// camera.processMouse(window, xpos, ypos);
+	//camera.processMouse(window, xpos, ypos);
 }
 
 void scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	playerCamera.processScroll(window, xoffset, yoffset);
-	// camera.processScroll(window, xoffset, yoffset);
+	//camera.processScroll(window, xoffset, yoffset);
 }
 
 void processInput(GLFWwindow* window)
@@ -81,7 +82,7 @@ void processInput(GLFWwindow* window)
 		glfwSetWindowShouldClose(window, true);
 
 	playerCamera.processInput(window);
-	// camera.processInput(window);
+	//camera.processInput(window);
 }
 
 void processKey(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -128,6 +129,33 @@ int main()
 	glfwSetKeyCallback(window, processKey);
 
 # pragma endregion
+
+	Shader genericShader = Shader::fromFiles("basic.vert", "basic.frag");
+	// backpack
+	// Model backpack("resources/models/backpack/backpack.obj");
+	// glm::mat4 backpackModel = glm::mat4(1.0f);
+	// backpackModel = glm::translate(backpackModel, glm::vec3(0.0f, 80.0f, 0.0f));
+	// backpackModel = glm::scale(backpackModel, glm::vec3(1.0f, 1.0f, 1.0f));	
+	// glCheckError();
+
+	// some models
+	Model ornithopter("resources/models/dune-ornithopter/OrnithopterFinalDune.fbx");
+
+	Model thumper("resources/models/thumper_dune/thumper_dune.obj");
+	glm::mat4 thumperModel = glm::mat4(1.0f);
+
+	Model nomad("resources/models/rust-nomad/RustNomad.fbx");
+	glm::mat4 nomadModel = glm::mat4(1.0f);
+
+	Model drone("resources/models/scifi-drone-11/drone.fbx");
+	glm::mat4 droneModel = glm::mat4(1.0f);
+
+	Model sandRocks("resources/models/sand-rock-pack-08/Mesher.fbx");
+	glm::mat4 sandRocksModel = glm::mat4(1.0f);
+
+	Model sandWorm("resources/models/dune-sandworm/SandwormV2.fbx");
+	glm::mat4 sandWormModel = glm::mat4(1.0f);
+		
 
 #pragma region TEXT
 	Shader fontShader = Shader::fromFiles("font.vert", "font.frag");
@@ -229,6 +257,22 @@ int main()
 	);
 
 	playerCamera.setTerrain(&sandTerrain);
+
+	
+	thumperModel = glm::translate(thumperModel, glm::vec3(5.0f, sandTerrain.getWorldHeightAt(5.0f, 6.0f) + 0.1f, 6.0f));
+
+	nomadModel = glm::translate(nomadModel, glm::vec3(-20.0f, sandTerrain.getWorldHeightAt(-20.0f, 15.0f) + 0.1f, 15.0f));
+	nomadModel = glm::rotate(nomadModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+	droneModel = glm::translate(droneModel, glm::vec3(-24.0f, sandTerrain.getWorldHeightAt(-24.0f, 24.0f) + 2.0f, 24.0f));
+	droneModel = glm::scale(droneModel, glm::vec3(0.003f));
+
+	sandRocksModel = glm::translate(sandRocksModel, glm::vec3(980.0f, sandTerrain.getWorldHeightAt(980.0f, 15.0f) - 20.0f, 15.0f));
+	sandRocksModel = glm::scale(sandRocksModel, glm::vec3(0.25f, 0.5f, 0.25f));
+
+	sandWormModel = glm::translate(sandWormModel, glm::vec3(80.0f, sandTerrain.getWorldHeightAt(80.0f, 50.0f), 50.0f));
+	sandWormModel = glm::scale(sandWormModel, glm::vec3(3.0f));
+
 #pragma endregion
 
 # pragma region MAIN_LOOP
@@ -241,14 +285,15 @@ int main()
 		// const glm::vec3 cameraPos = camera.getPos();
 		// const glm::mat4 view = camera.getView(); 
 		// const float fov = camera.getFov();
+		// const glm::vec3 cameraPosForDisplay = cameraPos;
 		playerCamera.onNewFrame();
+		// ** input **
+		processInput(window);
+
 		const glm::vec3 cameraPos = playerCamera.getPos();
 		const glm::vec3 cameraPosForDisplay = playerCamera.getPosIncludingJump();
 		const glm::mat4 view = playerCamera.getView();
 		const float fov = playerCamera.getFov();
-
-		// ** input **
-		processInput(window);
 
 		// ** rendering **
 		glClearColor(0.45f, 0.49f, 0.61f, 1.0f);
@@ -276,6 +321,48 @@ int main()
 		lightCubeShader.setMat4("view", view);
 		glBindVertexArray(lightCubeVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		// ** model loading **
+
+		genericShader.use();
+		genericShader.setMat4("projection", projection);
+		genericShader.setMat4("view", view);
+
+		//backpack
+		// genericShader.setMat4("model", backpackModel);
+		// backpack.draw(genericShader);
+
+		// ornithopter
+		float orniZDisplacement = sin(-glfwGetTime() / 3.0f) * 1500.f;
+		float orniYDisplacement = (cos(glfwGetTime()) - 1) * 25.0f;
+		float orniXDisplacement = sin(glfwGetTime()) * -10.f;
+		glm::mat4 orniModel = glm::mat4(1.0f);
+		orniModel = glm::translate(orniModel, glm::vec3(orniXDisplacement, 400.0f + orniYDisplacement, orniZDisplacement));
+		orniModel = glm::rotate(orniModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		orniModel = glm::scale(orniModel, glm::vec3(2.0f));
+		genericShader.setMat4("model", orniModel);
+		ornithopter.draw(genericShader);
+
+		// thumper
+		genericShader.setMat4("model", thumperModel);
+		thumper.draw(genericShader);
+
+		// nomad
+		genericShader.setMat4("model", nomadModel);
+		nomad.draw(genericShader);
+
+		// drone
+		genericShader.setMat4("model", droneModel);
+		drone.draw(genericShader);
+
+		// sand rocks
+		genericShader.setMat4("model", sandRocksModel);
+		sandRocks.draw(genericShader);
+
+		// sand worm
+		genericShader.setMat4("model", sandWormModel);
+		sandWorm.draw(genericShader);
+
 
 
 		// ** text overlay **

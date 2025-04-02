@@ -43,8 +43,8 @@ private:
 	float _currentYVelocity = 0.0f;
 	float _yDisplacement = 0.0f;
 
-	bool _isAnyMovementKeyPressed() const;
-	void _assignWASDValue(bool state, int key);
+	bool isAnyMovementKeyPressed() const;
+	void assignWASDValue(bool state, int key);
 };
 
 #endif

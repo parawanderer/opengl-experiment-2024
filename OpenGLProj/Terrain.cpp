@@ -22,7 +22,7 @@
 
 const float Terrain::_resizeFactor = 2.0f;
 
-void Terrain::_insertNormContribution(unsigned int index0, unsigned int index1, unsigned int index2)
+void Terrain::insertNormContribution(unsigned int index0, unsigned int index1, unsigned int index2)
 {
 	glm::vec3 v1 = this->_vertices[index0].pos - this->_vertices[index1].pos;
 	glm::vec3 v2 = this->_vertices[index0].pos - this->_vertices[index2].pos;
@@ -33,7 +33,7 @@ void Terrain::_insertNormContribution(unsigned int index0, unsigned int index1, 
 	this->_vertices[index2].normal += contrib;
 }
 
-unsigned int Terrain::_loadTextureJpg(const char* texturePath, GLenum textureUnit)
+unsigned int Terrain::loadTextureJpg(const char* texturePath, GLenum textureUnit)
 {
 	unsigned int texture;
 	glGenTextures(1, &texture);
@@ -46,7 +46,6 @@ unsigned int Terrain::_loadTextureJpg(const char* texturePath, GLenum textureUni
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	// load and generate the texture
 	int width, height, nrChannels;
-	stbi_set_flip_vertically_on_load(true);
 	unsigned char* data = stbi_load(texturePath, &width, &height, &nrChannels, 0);
 	if (data)
 	{
@@ -117,7 +116,7 @@ its very own problem... I'll just stick with my "plastic" looking map for now.
 
 
 */
-void Terrain::_populateModelMatrices()
+void Terrain::populateModelMatrices()
 {
 	// this->_terrainModelL = this->_terrainModel;
 	// this->_terrainModelL = glm::translate(this->_terrainModelL, glm::vec3((this->_width - 2), 0.0f, 0.0f));
@@ -171,6 +170,75 @@ void Terrain::_populateModelMatrices()
 	// _renderMatrices.emplace_back(this->_terrainModelRB, this->_terrainNormalMatrixRB);
 }
 
+void Terrain::generateVerticesFromHeightMap(unsigned short* data, int nChannels, float yScale, float yShift)
+{
+	const float textureDivScaling = 2.0f;
+
+	int index = 0;
+	for (unsigned int z = 0; z < this->_height; ++z)
+	{
+		for (unsigned int x = 0; x < this->_width; ++x)
+		{
+			unsigned short* texel = data + (x + this->_width * z) * nChannels;
+			unsigned short y = texel[0];
+
+			const float xPos = -this->_width / _resizeFactor + x;
+			const float yPos = (float)y * yScale - yShift;
+			const float zPos = -this->_height / _resizeFactor + z;
+
+			this->_vertices[index].pos = glm::vec3(
+				xPos, // x
+				yPos, // y
+				zPos // z
+			);
+			this->_vertices[index].texture = glm::vec2(
+				xPos / textureDivScaling,
+				zPos / textureDivScaling
+			);
+
+			this->_heightMap[x + this->_width * z] = yPos;
+
+			index++;
+		}
+	}
+}
+
+void Terrain::mapTriangles()
+{
+	for (unsigned int i = 0; i < this->_height - 1; i++)
+	{
+		for (unsigned int j = 0; j < this->_width - 1; j++)
+		{
+			// every set of 4 pixels is considered as the vertices.
+			// These 4 pixels are split into two triangles
+
+			// first/left triangle:  (clockwise)
+			//                  0---2
+			//                  | / |
+			//                  1----
+			const unsigned int index0 = j + (this->_width * i);
+			const unsigned int index1 = j + (this->_width * (i + 1));
+			const unsigned int index2 = (j + 1) + (this->_width * i);
+			this->_indices.push_back(index0); // 0
+			this->_indices.push_back(index1); // 1
+			this->_indices.push_back(index2); // 2
+
+			this->insertNormContribution(index0, index1, index2); // 3.1 calculate normals for smooth surface rendering (https://www.youtube.com/watch?v=bwq_y0zxpQM&list=PLA0dXqQjCx0S9qG5dWLsheiCJV-_eLUM0&index=6)
+
+			// second/right triangle:  (clockwise)
+			//                  ----2
+			//                  | / |
+			//                  1---3
+			const unsigned int index3 = (j + 1) + (this->_width * (i + 1));
+			this->_indices.push_back(index1); // 1
+			this->_indices.push_back(index3); // 3
+			this->_indices.push_back(index2); // 2
+
+			this->insertNormContribution(index1, index3, index2); // 3.1 calculate normals for smooth surface rendering
+		}
+	}
+}
+
 
 /**
  * inspired by the following articles/videos:
@@ -199,100 +267,51 @@ _terrainNormalMatrix(glm::mat3(glm::transpose(glm::inverse(_terrainModel))))
 	assertFileExists(texturePath1);
 	assertFileExists(textureNormalMap);
 
-
 	// load 16-bit heightmap image
 	unsigned short* data = stbi_load_16(sourceHeightMapPath.c_str(), &width, &height, &nChannels, 0);
 	if (width == 1 || height == 1) throw std::exception("Height map must have a width and height dimension of at least 2px");
+
+	// 0. setup
 	this->_width = width;
 	this->_height = height;
 	this->_heightMap.resize(this->_height * this->_width); // fill out to be referenced later
+	this->_vertices.resize(this->_width * this->_height); // make space
 
-	this->_populateModelMatrices();
+	this->populateModelMatrices(); // for terrain "tiling"
 
 	// load textures
-	this->_textureId0 = _loadTextureJpg(texturePath0.c_str(), GL_TEXTURE0); // texture0
-	this->_textureId1 = _loadTextureJpg(texturePath1.c_str(), GL_TEXTURE1); // texture1
-	this->_textureNormalId = _loadTextureJpg(textureNormalMap.c_str(), GL_TEXTURE2); // texture2 (normal map)
-	const float textureDivScaling = 2.0f;
+	this->_textureId0 = loadTextureJpg(texturePath0.c_str(), GL_TEXTURE0); // texture0
+	this->_textureId1 = loadTextureJpg(texturePath1.c_str(), GL_TEXTURE1); // texture1
+	this->_textureNormalId = loadTextureJpg(textureNormalMap.c_str(), GL_TEXTURE2); // texture2 (normal map)
 
 	// vertex generation
 	const float yScale = yScaleMult / 65536.0f; // 16-bit image gives more possible levels...
 
-	this->_vertices.resize(width * height); // make space
-
 	// 1. generate vertices from the height map. The x and z are evenly spaced on a grid.
 	// The height map (color) gives the height of the vertex = the y coordinate
-	int index = 0;
-	for (unsigned int z = 0; z < height; ++z)
-	{
-		for (unsigned int x = 0; x < width; ++x)
-		{
-			unsigned short* texel = data + (x + width * z) * nChannels;
-			unsigned short y = texel[0];
-
-			const float xPos = -width / _resizeFactor + x;
-			const float yPos = (float)y * yScale - yShift;
-			const float zPos = -height / _resizeFactor + z;
-
-			this->_vertices[index].pos = glm::vec3(
-				xPos, // x
-				yPos, // y
-				zPos // z
-			);
-			this->_vertices[index].texture = glm::vec2(
-				xPos / textureDivScaling,
-				zPos / textureDivScaling
-			);
-
-			this->_heightMap[x + width * z] = yPos;
-
-			index++;
-		}
-	}
-
+	this->generateVerticesFromHeightMap(data, nChannels, yScale, yShift);
 	stbi_image_free(data);
 
 	// 2. the indices array here maps out the vertices composing individual triangles to prevent repetitions
-	for (unsigned int i = 0; i < height - 1; i++)
-	{
-		for (unsigned int j = 0; j < width - 1; j++)
-		{
-			// every set of 4 pixels is considered as the vertices.
-			// These 4 pixels are split into two triangles
-			
-			// first/left triangle:  (clockwise)
-			//                  0---2
-			//                  | / |
-			//                  1----
-			const unsigned int index0 = j + (width * i);
-			const unsigned int index1 = j + (width * (i + 1));
-			const unsigned int index2 = (j + 1) + (width * i);
-			this->_indices.push_back(index0); // 0
-			this->_indices.push_back(index1); // 1
-			this->_indices.push_back(index2); // 2
+	this->mapTriangles();
 
-			this->_insertNormContribution(index0, index1, index2); // 3.1 calculate normals for smooth surface rendering (https://www.youtube.com/watch?v=bwq_y0zxpQM&list=PLA0dXqQjCx0S9qG5dWLsheiCJV-_eLUM0&index=6)
-
-			// second/right triangle:  (clockwise)
-			//                  ----2
-			//                  | / |
-			//                  1---3
-			const unsigned int index3 = (j + 1) + (width * (i + 1));
-			this->_indices.push_back(index1); // 1
-			this->_indices.push_back(index3); // 3
-			this->_indices.push_back(index2); // 2
-
-			this->_insertNormContribution(index1, index3, index2); // 3.1 calculate normals for smooth surface rendering
-		}
-	}
-
-	// 3.2 normalize all the vertex normals (average of all the plane normals that share this vertex. Up to 6 but possibly less!)
+	// 3. normalize all the vertex normals (average of all the plane normals that share this vertex. Up to 6 but possibly less!)
 	for (unsigned int i = 0; i < this->_vertices.size(); ++i)
 	{
-		//this->_vertices[i].normal = glm::normalize(this->_vertices[i].normal);
 		this->_vertices[i].normal = glm::normalize(this->_vertices[i].normal);
 	}
 
+	// 4. OpenGL initialization of triangle data
+	this->setupMesh();
+
+	// 5. Shader configuration
+	this->setupShader(sunPos, sunLightColor);
+
+	glBindVertexArray(0);
+}
+
+void Terrain::setupMesh()
+{
 	glGenVertexArrays(1, &this->_VAO);
 	glBindVertexArray(this->_VAO);
 
@@ -301,18 +320,19 @@ _terrainNormalMatrix(glm::mat3(glm::transpose(glm::inverse(_terrainModel))))
 	glBufferData(GL_ARRAY_BUFFER, this->_vertices.size() * sizeof(TerrainVertex), &this->_vertices[0], GL_STATIC_DRAW);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)0);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)(sizeof(glm::vec3)));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)offsetof(TerrainVertex, texture));
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)(sizeof(glm::vec3) + sizeof(glm::vec2)));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)offsetof(TerrainVertex, normal));
 	glEnableVertexAttribArray(2);
 
 	glGenBuffers(1, &this->_EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->_indices.size() * sizeof(unsigned int), &this->_indices[0], GL_STATIC_DRAW);
+}
 
-	// configure shader
+void Terrain::setupShader(const glm::vec3& sunPos, const glm::vec3& sunLightColor)
+{
 	this->_shader->use();
-
 	this->_shader->setMat4("model", this->_terrainModel); // model transform (to world coords)
 	// matrix to model the normal if there's non-linear scaling going on in the model matrix
 	this->_shader->setMat3("normalMatrix", this->_terrainNormalMatrix);
@@ -327,8 +347,6 @@ _terrainNormalMatrix(glm::mat3(glm::transpose(glm::inverse(_terrainModel))))
 	this->_shader->setVec3("light.ambient", sunLightColor * 0.4f);
 	this->_shader->setVec3("light.diffuse", sunLightColor * 0.9f);
 	this->_shader->setVec3("light.specular", sunLightColor * 0.0f);
-
-	glCheckError();
 }
 
 void Terrain::render(const glm::mat4& view, const glm::mat4& projection, const glm::vec3& viewPos)
@@ -361,17 +379,17 @@ void Terrain::render(const glm::mat4& view, const glm::mat4& projection, const g
 	DEBUG_RENDER_AS_MESH_CONFIG_POST
 }
 
-float _baryCentricWeightPart1(float x0, float y0, float x1, float y1, float x2, float y2)
+float _barycentricWeightPart1(float x0, float y0, float x1, float y1, float x2, float y2)
 {
 	return (y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2);
 }
 
-float _baryCentricWeightPart2(float x0, float y0, float x1, float y1, float x2, float y2)
+float _barycentricWeightPart2(float x0, float y0, float x1, float y1, float x2, float y2)
 {
 	return (y2 - y1) * (x0 - x2) + (x1 - x2) * (y0 - y2);
 }
 
-float _baryCentricWeightPart3(float x0, float y0, float x1, float y1, float x2, float y2)
+float _barycentricWeightPart3(float x0, float y0, float x1, float y1, float x2, float y2)
 {
 	return (y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2);
 }
@@ -394,7 +412,7 @@ float Terrain::getWorldHeightAt(float x, float z) const
 
 	// assume that we are standing exactly on the vertex
 	if (fabs(xIndex - xFloor) < allowedError && fabs(zIndex - zFloor) < allowedError)
-		return this->_getWorldHeight(xFloorInt0, zFloorInt0); // resulting value is already scaled/transformed to world scale
+		return this->getWorldHeight(xFloorInt0, zFloorInt0); // resulting value is already scaled/transformed to world scale
 
 	// otherwise we will interpolate the appropriate height across the triangle.
 	// (Barycentric Coordinates solution)
@@ -428,11 +446,11 @@ float Terrain::getWorldHeightAt(float x, float z) const
 	const int zFloorOpt = d > 0 ? zFloorInt0 : (zFloorInt0 + 1);
 
 	// get weights (how much every vertex will "contribute" to the final "height" that a point on this triangle should be at)
-	float w1 = _baryCentricWeightPart1(xIndex, zIndex, xFloor1, zFloor1, xFloor2, zFloor2)
-				/ _baryCentricWeightPart1(xFloorOpt, zFloorOpt, xFloor1, zFloor1, xFloor2, zFloor2);
+	float w1 = _barycentricWeightPart1(xIndex, zIndex, xFloor1, zFloor1, xFloor2, zFloor2)
+				/ _barycentricWeightPart1(xFloorOpt, zFloorOpt, xFloor1, zFloor1, xFloor2, zFloor2);
 
-	float w2 = _baryCentricWeightPart2(xIndex, zIndex, xFloorOpt, zFloorOpt, xFloor2, zFloor2)
-				/ _baryCentricWeightPart3(xFloorOpt, zFloorOpt, xFloor1, zFloor1, xFloor2, zFloor2);
+	float w2 = _barycentricWeightPart2(xIndex, zIndex, xFloorOpt, zFloorOpt, xFloor2, zFloor2)
+				/ _barycentricWeightPart3(xFloorOpt, zFloorOpt, xFloor1, zFloor1, xFloor2, zFloor2);
 
 	float w3 = 1 - w1 - w2;
 
@@ -440,12 +458,12 @@ float Terrain::getWorldHeightAt(float x, float z) const
 		throw std::exception("Point is not inside triangle!");
 
 	// apply weights to results
-	return (w1 * this->_getWorldHeight(xFloorOpt, zFloorOpt))
-		+ (w2 * this->_getWorldHeight(xFloor1, zFloor1))
-		+ (w3 * this->_getWorldHeight(xFloor2, zFloor2));
+	return (w1 * this->getWorldHeight(xFloorOpt, zFloorOpt))
+		+ (w2 * this->getWorldHeight(xFloor1, zFloor1))
+		+ (w3 * this->getWorldHeight(xFloor2, zFloor2));
 }
 
-float Terrain::_getWorldHeight(int x, int z) const
+float Terrain::getWorldHeight(int x, int z) const
 {
 	return this->_heightMap[x + this->_width * z];
 }
