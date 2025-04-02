@@ -35,6 +35,7 @@ private:
 	float _playerHeight;
 
 	PlayerMovementKeyStates _keyStates;
+	bool _isShiftPressed = false;
 
 	bool _isAnyMovementKeyPressed() const;
 	void _assignWASDValue(bool state, int key);

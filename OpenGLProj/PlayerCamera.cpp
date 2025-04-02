@@ -31,11 +31,12 @@ glm::mat4 PlayerCamera::getView() const
 	glm::mat4 view = Camera::getView();
 	if (this->_isAnyMovementKeyPressed())
 	{
-		// transform to get something that looks like "movement" (headbobbing)
+		const float sprintingMultiplier = this->_isShiftPressed ? 1.5f : 1.0f;
+		// transform to get something that looks like "movement" (head-bobbing)
 		const double t = glfwGetTime();
 		view = glm::translate(view, glm::vec3(
-			sin(t * 5.0f * PI) / 32.0f, // x
-			cos(t * 5.0f * PI) / 8.0f, // y
+			sin(t * 5.0f * PI * sprintingMultiplier) / 32.0f, // x
+			cos(t * 5.0f * PI * sprintingMultiplier) / 8.0f, // y
 			0.0f // z
 		));
 	}
@@ -49,7 +50,8 @@ void PlayerCamera::onNewFrame()
 
 void PlayerCamera::processInput(GLFWwindow* window)
 {
-	const float cameraSpeed = _deltaTime * this->_speedMultiplier;
+	const float sprintingMultiplier = this->_isShiftPressed ? 2.0f : 1.0f;
+	const float cameraSpeed = _deltaTime * this->_speedMultiplier * sprintingMultiplier;
 	bool hasMoved = false;
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -131,6 +133,7 @@ void PlayerCamera::_assignWASDValue(bool state, int key)
 	if (key == GLFW_KEY_A) this->_keyStates.A = state;
 	if (key == GLFW_KEY_S) this->_keyStates.S = state;
 	if (key == GLFW_KEY_D) this->_keyStates.D = state;
+	if (key == GLFW_KEY_LEFT_SHIFT) this->_isShiftPressed = state;
 }
 
 glm::vec3 PlayerCamera::getPos() const
