@@ -24,6 +24,8 @@ public:
 	 */
 	virtual float getFov() const;
 
+	glm::vec3 getFront() const;
+
 	virtual void onNewFrame();
 	virtual void processInput(GLFWwindow* window);
 	virtual void processScroll(GLFWwindow* window, double xoffset, double yoffset);

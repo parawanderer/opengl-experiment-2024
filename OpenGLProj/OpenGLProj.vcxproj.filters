@@ -22,12 +22,6 @@
     <Filter Include="Header Files\old">
       <UniqueIdentifier>{de164cc7-a357-4d3f-97b8-39093fb08e79}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\models">
-      <UniqueIdentifier>{61cd2a3f-a990-4aed-a609-bc298095cf83}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\models">
-      <UniqueIdentifier>{36ca2889-c119-4616-b919-f853fff716f4}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\user">
       <UniqueIdentifier>{5247ade8-031f-4007-9e07-f3f91790c1bb}</UniqueIdentifier>
     </Filter>
@@ -51,6 +45,24 @@
     </Filter>
     <Filter Include="Source Files\world\terrain">
       <UniqueIdentifier>{0c59a444-28cc-4888-a926-4f0ecd450785}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\gameobject">
+      <UniqueIdentifier>{38d2ab40-16a7-45e0-ae73-b9df46f71c01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gameobject">
+      <UniqueIdentifier>{821809e0-e3f2-498e-88ce-8b857a7ecf7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\gameobject\models">
+      <UniqueIdentifier>{36ca2889-c119-4616-b919-f853fff716f4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gameobject\models">
+      <UniqueIdentifier>{61cd2a3f-a990-4aed-a609-bc298095cf83}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\gameobject\primitives">
+      <UniqueIdentifier>{4082ba05-4465-49d1-90be-b3c934100232}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\gameobject\primitives">
+      <UniqueIdentifier>{247f3bdd-06de-4285-9dc8-f11deaaa3405}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -82,10 +94,10 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Mesh.cpp">
-      <Filter>Source Files\models</Filter>
+      <Filter>Source Files\gameobject\models</Filter>
     </ClCompile>
     <ClCompile Include="Model.cpp">
-      <Filter>Source Files\models</Filter>
+      <Filter>Source Files\gameobject\models</Filter>
     </ClCompile>
     <ClCompile Include="PlayerCamera.cpp">
       <Filter>Source Files\user</Filter>
@@ -101,6 +113,15 @@
     </ClCompile>
     <ClCompile Include="CameraManager.cpp">
       <Filter>Source Files\user</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderableGameObject.cpp">
+      <Filter>Source Files\gameobject</Filter>
+    </ClCompile>
+    <ClCompile Include="SphericalBoxedGameObject.cpp">
+      <Filter>Source Files\gameobject</Filter>
+    </ClCompile>
+    <ClCompile Include="Sphere.cpp">
+      <Filter>Source Files\gameobject\primitives</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -142,10 +163,16 @@
       <Filter>Source Files\world\skybox</Filter>
     </None>
     <None Include="basic.frag">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\gameobject\models</Filter>
     </None>
     <None Include="basic.vert">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\gameobject\models</Filter>
+    </None>
+    <None Include="mesh.vert">
+      <Filter>Source Files\gameobject\models</Filter>
+    </None>
+    <None Include="mesh.frag">
+      <Filter>Source Files\gameobject\models</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -171,10 +198,10 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Model.h">
-      <Filter>Header Files\models</Filter>
+      <Filter>Header Files\gameobject\models</Filter>
     </ClInclude>
     <ClInclude Include="Mesh.h">
-      <Filter>Header Files\models</Filter>
+      <Filter>Header Files\gameobject\models</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
       <Filter>Header Files\user</Filter>
@@ -196,6 +223,21 @@
     </ClInclude>
     <ClInclude Include="CameraManager.h">
       <Filter>Header Files\user</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderableGameObject.h">
+      <Filter>Header Files\gameobject</Filter>
+    </ClInclude>
+    <ClInclude Include="SphericalBoxedGameObject.h">
+      <Filter>Header Files\gameobject</Filter>
+    </ClInclude>
+    <ClInclude Include="Sphere.h">
+      <Filter>Header Files\gameobject\primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="Vertex.h">
+      <Filter>Header Files\gameobject</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldMathUtils.h">
+      <Filter>Header Files\util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

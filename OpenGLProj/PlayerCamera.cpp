@@ -1,9 +1,9 @@
 #include "PlayerCamera.h"
 
-#include <set>
 #include <glm/ext/matrix_transform.hpp>
 
-#define PI 3.14159265359
+#define _USE_MATH_DEFINES
+#include "math.h"
 
 // (Acceleration due to gravity) m/s^2
 #define G -9.81f
@@ -39,8 +39,8 @@ glm::mat4 PlayerCamera::getView() const
 		// transform to get something that looks like "movement" (head-bobbing)
 		const double t = glfwGetTime();
 		view = glm::translate(view, glm::vec3(
-			sin(t * 5.0f * PI * sprintingMultiplier) / 64.0f, // x
-			cos(t * 5.0f * PI * sprintingMultiplier) / 16.0f, // y
+			sin(t * 5.0f * M_PI * sprintingMultiplier) / 64.0f, // x
+			cos(t * 5.0f * M_PI * sprintingMultiplier) / 16.0f, // y
 			0.0f // z
 		));
 	}

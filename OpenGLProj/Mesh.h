@@ -3,14 +3,9 @@
 #include "Shader.h"
 
 #include <vector>
-#include <glm/glm.hpp>
 
-struct Vertex
-{
-	glm::vec3 position;
-	glm::vec3 normal;
-	glm::vec2 texCoords;
-};
+#include "Vertex.h"
+
 
 // We store the id of the texture and its type e.g. a diffuse or specular texture.
 struct Texture

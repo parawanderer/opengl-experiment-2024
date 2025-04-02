@@ -34,6 +34,10 @@ public:
 	void render(const glm::mat4&view, const glm::mat4& projection, const glm::vec3& viewPos);
 
 	float getWorldHeightAt(float x, float z) const;
+	/**
+	 * \brief Will produce a vector [x, y, z] by using getWorldHeightAt(x, z) for y.
+	 */
+	glm::vec3 getWorldHeightVecFor(float x, float z) const;
 	int getWidth() const;
 	int getHeight() const;
 private:
@@ -74,7 +78,6 @@ private:
 	std::vector<std::pair<glm::mat4, glm::mat3>> _renderMatrices;
 
 	void insertNormContribution(unsigned int index0, unsigned int index1, unsigned int index2);
-	static unsigned int loadTextureJpg(const char* texturePath, GLenum textureUnit);
 	void populateModelMatrices();
 
 	float getWorldHeight(int x, int z) const;

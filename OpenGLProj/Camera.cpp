@@ -21,6 +21,11 @@ float Camera::getFov() const
 	return this->_fov;
 }
 
+glm::vec3 Camera::getFront() const
+{
+	return this->_cameraFront;
+}
+
 void Camera::onNewFrame()
 {
 	float currentFrame = glfwGetTime();

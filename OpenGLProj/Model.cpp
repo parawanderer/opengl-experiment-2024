@@ -1,4 +1,6 @@
 #include "Model.h"
+
+#include <iostream>
 #include <assimp/postprocess.h>
 
 #include "FileUtils.h"

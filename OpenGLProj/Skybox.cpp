@@ -1,5 +1,7 @@
 #include "Skybox.h"
 
+#include <iostream>
+
 #include "ErrorUtils.h"
 #include "stb_image.h"
 
@@ -53,7 +55,6 @@ Skybox::Skybox(Shader* shader, std::vector<std::string>& faces) : _shader(shader
 {
 	glGenTextures(1, &this->_textureId);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, this->_textureId);
-	glCheckError();
 
 	stbi_set_flip_vertically_on_load(false);
 
@@ -99,5 +100,4 @@ void Skybox::render(glm::mat4 view, glm::mat4 projection)
 	glBindTexture(GL_TEXTURE_CUBE_MAP, this->_textureId);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glDepthMask(GL_TRUE);
-	glCheckError();
 }

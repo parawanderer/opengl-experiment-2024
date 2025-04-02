@@ -137,9 +137,12 @@
     <ClCompile Include="..\..\glad\src\glad.c" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CameraManager.cpp" />
+    <ClCompile Include="Sphere.cpp" />
+    <ClCompile Include="SphericalBoxedGameObject.cpp" />
     <ClCompile Include="ErrorUtils.cpp" />
     <ClCompile Include="FileUtils.cpp" />
     <ClCompile Include="Font.cpp" />
+    <ClCompile Include="RenderableGameObject.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="main_basic.cpp" />
     <ClCompile Include="main_light.cpp" />
@@ -157,6 +160,8 @@
     <None Include="basic.vert" />
     <None Include="font.frag" />
     <None Include="font.vert" />
+    <None Include="mesh.frag" />
+    <None Include="mesh.vert" />
     <None Include="shader_lightsource.frag" />
     <None Include="shader1.frag" />
     <None Include="shader1.vert" />
@@ -172,10 +177,13 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CameraManager.h" />
     <ClInclude Include="camera_m.h" />
+    <ClInclude Include="Sphere.h" />
+    <ClInclude Include="SphericalBoxedGameObject.h" />
     <ClInclude Include="Colors.h" />
     <ClInclude Include="ErrorUtils.h" />
     <ClInclude Include="FileUtils.h" />
     <ClInclude Include="Font.h" />
+    <ClInclude Include="RenderableGameObject.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="PlayerCamera.h" />
@@ -185,6 +193,8 @@
     <ClInclude Include="Skybox.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="Terrain.h" />
+    <ClInclude Include="Vertex.h" />
+    <ClInclude Include="WorldMathUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="awesomeface.png" />
