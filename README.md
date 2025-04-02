@@ -1,5 +1,7 @@
 # Dune-Themed OpenGL/C++ Experiment 2024
 
+(I made this in 2024 and had to update the commits to remove references to an old unused email)
+
 Demo video [here](https://youtu.be/mQCm1eSfVaM?si=vDtXalnGGEmv6kYr)
 
 [![Screenshot of the demo video](./screenshot.png)](https://youtu.be/mQCm1eSfVaM?si=vDtXalnGGEmv6kYr)
@@ -49,7 +51,9 @@ So reading and implementing these papers & articles was interesting and insightf
 
 Obviously the "theme" of this project are the new Dune movies (2021 & 2024), because I loved how they did the visuals for those.
 
-Some of the assets I made myself (with my aforementioned background in design/art). A lot of assets were sourced from different authors via:
+Some of the assets I made myself (with my aforementioned background in design/art). This includes some 3D modelling work in Blender, some animations on the models and some texture editing (I didn't make any textures from scratch in this project, I was mostly tweaking source assets in Photoshop and other image editors).
+
+A lot of assets were sourced from different authors via:
 
 - [sketchfab.com](https://sketchfab.com/)
 - [ambientcg.com](ambientcg.com)
