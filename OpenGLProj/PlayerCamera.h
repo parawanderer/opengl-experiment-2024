@@ -30,6 +30,9 @@ public:
 	void processMouse(GLFWwindow* window, double xpos, double ypos) override;
 	void processKey(GLFWwindow* window, int key, int scancode, int action, int mods) override;
 
+	bool isMoving() const override;
+	bool isSpeeding() const override;
+
 	void teleportToFloor();
 private:
 	Terrain* _terrain = nullptr;

@@ -22,7 +22,7 @@ public:
 	void beforeLoop();
 	void processInput(GLFWwindow* window);
 
-	Camera* getCurrentCamera();
+	Camera* getCurrentCamera() const;
 
 	void onNewFrame();
 
@@ -30,7 +30,9 @@ public:
 	void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 	void processKey(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-	glm::vec3 getPos();
+	glm::vec3 getPos() const;
+
+	bool isPlayer() const;
 private:
 	Camera _noclipCam;
 	PlayerCamera _playerCam;

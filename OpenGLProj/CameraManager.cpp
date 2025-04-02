@@ -40,7 +40,7 @@ void CameraManager::processInput(GLFWwindow* window)
 	this->_currentCam->processInput(window);
 }
 
-Camera* CameraManager::getCurrentCamera()
+Camera* CameraManager::getCurrentCamera() const
 {
 	return this->_currentCam;
 }
@@ -65,9 +65,14 @@ void CameraManager::processKey(GLFWwindow* window, int key, int scancode, int ac
 	this->_currentCam->processKey(window, key, scancode, action, mods);
 }
 
-glm::vec3 CameraManager::getPos()
+glm::vec3 CameraManager::getPos() const
 {
 	return this->_currentCam == &this->_noclipCam
 		? this->_currentCam->getPos()
 		: this->_playerCam.getPosIncludingJump();
+}
+
+bool CameraManager::isPlayer() const
+{
+	return this->_currentCam == &this->_playerCam;
 }

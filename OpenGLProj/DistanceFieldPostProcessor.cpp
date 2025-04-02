@@ -1,6 +1,7 @@
 ﻿#include "DistanceFieldPostProcessor.h"
 
 #include <iostream>
+#include <GLFW/glfw3.h>
 
 #include "Colors.h"
 #include "ErrorUtils.h"
@@ -239,7 +240,8 @@ void DistanceFieldPostProcessor::computeAndRenderOverlay(const glm::mat4& projec
 
 
 	this->_jfaDistanceFieldConvertorShader.use();
-	this->_jfaDistanceFieldConvertorShader.setFloat("outlinePlacementOffset", this->_outlineSize);
+	const float outlinePulse = sin(6.0f * glfwGetTime()) / 1000.0f;
+	this->_jfaDistanceFieldConvertorShader.setFloat("outlinePlacementOffset", this->_outlineSize + outlinePulse);
 
 	this->_quad->draw(lastTexture);
 	glCheckError();

@@ -73,6 +73,12 @@
     <Filter Include="Source Files\postprocessing">
       <UniqueIdentifier>{c99863bc-99fe-4e76-8664-b3237c2a86b9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\game">
+      <UniqueIdentifier>{f0b3096b-1484-48a6-b21a-a2b69ea6f856}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\game">
+      <UniqueIdentifier>{17441d32-783d-468a-93ad-f553d34369e1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\glad\src\glad.c">
@@ -140,6 +146,12 @@
     </ClCompile>
     <ClCompile Include="Quad.cpp">
       <Filter>Source Files\postprocessing</Filter>
+    </ClCompile>
+    <ClCompile Include="PlayerState.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="CarriedGameObject.cpp">
+      <Filter>Source Files\game</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -295,6 +307,12 @@
     </ClInclude>
     <ClInclude Include="Quad.h">
       <Filter>Header Files\postprocessing</Filter>
+    </ClInclude>
+    <ClInclude Include="PlayerState.h">
+      <Filter>Header Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="CarriedGameObject.h">
+      <Filter>Header Files\game</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

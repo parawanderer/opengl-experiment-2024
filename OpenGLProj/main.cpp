@@ -10,9 +10,13 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#define _USE_MATH_DEFINES
+#include "math.h"
+
 #define STB_IMAGE_IMPLEMENTATION
 
 #include <filesystem>
+#include <set>
 #include <GL/gl.h>
 
 #include "Colors.h"
@@ -30,6 +34,8 @@
 #include "SphericalBoxedGameObject.h"
 #include "Sun.h"
 #include "WorldMathUtils.h"
+#include "PlayerState.h"
+#include "CarriedGameObject.h"
 
 // keeping this at a power of two to support the outline-rendering JFA algorithm.
 // I could make this not a power of two but then I need to perform some annoying buffer size remappings during the JFA algo.
@@ -128,6 +134,7 @@ int main()
 
 # pragma endregion
 
+#pragma region SHADERS_AND_POSTPROCESSING
 	Shader genericShader = Shader::fromFiles("mesh.vert", "mesh.frag");
 	genericShader.use();
 	genericShader.setVec3("light.position", sunPos);
@@ -135,50 +142,15 @@ int main()
 	genericShader.setVec3("light.diffuse", sunLightColor * 1.0f);
 	genericShader.setVec3("light.specular", sunLightColor * 0.1f);
 
-	Shader maskingShader = Shader::fromFiles("masking.vert", "masking.frag"); // for creating black background white model renderings
+	Quad quad;
+	DistanceFieldPostProcessor distanceFieldPostProcessor(
+		&quad,
+		currentWidth,
+		currentHeight
+	);
+	distanceFieldPostProcessor.setOutlineSize(0.003f);
 
-	Shader orthogonalUV2DShader = Shader::fromFiles("jfa.vert", "jfa_init.frag");
-	orthogonalUV2DShader.use();
-	orthogonalUV2DShader.setInt("mask", 0);
-
-	Shader jfaAlgorithmShader = Shader::fromFiles("jfa.vert", "jfa_algo.frag");
-	jfaAlgorithmShader.use();
-	jfaAlgorithmShader.setInt("UVtexture", 0);
-	jfaAlgorithmShader.setInt("textureWidth", currentWidth);
-	jfaAlgorithmShader.setInt("textureHeight", currentHeight);
-
-	Shader justRenderThe2DTextureShader = Shader::fromFiles("justrenderthe2dtex.vert", "justrenderthe2dtex.frag");
-	justRenderThe2DTextureShader.use();
-	justRenderThe2DTextureShader.setInt("screenTexture", 0);
-
-	Shader distanceFieldConvertor = Shader::fromFiles("justrenderthe2dtex.vert", "distancefield.frag");
-	distanceFieldConvertor.use();
-	distanceFieldConvertor.setInt("screenTexture", 0);
-	 
-
-	float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
-
-		// positions   // texCoords
-		-1.0f,  1.0f,  0.0f, 1.0f,
-		-1.0f, -1.0f,  0.0f, 0.0f,
-		 1.0f, -1.0f,  1.0f, 0.0f,
-
-		-1.0f,  1.0f,  0.0f, 1.0f,
-		 1.0f, -1.0f,  1.0f, 0.0f,
-		 1.0f,  1.0f,  1.0f, 1.0f
-	};
-
-	unsigned int quadVAO, quadVBO;
-	glGenVertexArrays(1, &quadVAO);
-	glGenBuffers(1, &quadVBO);
-	glBindVertexArray(quadVAO);
-	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
-
+#pragma endregion
 
 #pragma region GAME_MODELS
 	
@@ -209,7 +181,7 @@ int main()
 	glm::mat4 textProjection = glm::ortho(0.0f, (float)currentWidth, 0.0f, (float)currentHeight);
 	fontShader.use();
 	fontShader.setMat4("projection", textProjection);
-	Font font("resources/calibri.ttf", &fontShader);
+	Font font("resources/font/play/Play-Regular.ttf", &fontShader);
 #pragma endregion
 
 #pragma region SKYBOX
@@ -256,16 +228,19 @@ int main()
 
 	const glm::vec3 smallOffsetY = glm::vec3(0.0, 0.1, 0.0);
 
-	thumper.setModelTransform(
-		glm::translate(glm::mat4(1.0f), sandTerrain.getWorldHeightVecFor(0.0f, 0.0f) + smallOffsetY)
-	);
 
-	thumper2.setModelTransform(
-		glm::translate(glm::mat4(1.0f), sandTerrain.getWorldHeightVecFor(9.0f, 10.0f) + smallOffsetY)
-	);
+	glm::mat4 thumper1Model = glm::mat4(1.0f);
+	thumper1Model = glm::translate(thumper1Model, sandTerrain.getWorldHeightVecFor(5.0f, 6.0f) + smallOffsetY);
+	thumper1Model = glm::scale(thumper1Model, glm::vec3(0.7f));
+	thumper.setModelTransform(thumper1Model);
+
+	glm::mat4 thumper2Model = glm::mat4(1.0f);
+	thumper2Model = glm::translate(thumper2Model, sandTerrain.getWorldHeightVecFor(9.0f, 10.0f) + smallOffsetY);
+	thumper2Model = glm::scale(thumper2Model, glm::vec3(0.7f));
+	thumper2.setModelTransform(thumper2Model);
 
 	glm::mat4 nomadModel = glm::mat4(1.0f);
-	nomadModel = glm::translate(nomadModel, sandTerrain.getWorldHeightVecFor(-20.0f, 15.0f) + smallOffsetY);
+	nomadModel = glm::translate(nomadModel, sandTerrain.getWorldHeightVecFor(6.0f, 6.0f) + smallOffsetY);
 	nomadModel = glm::rotate(nomadModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	nomad.setModelTransform(nomadModel);
 
@@ -282,74 +257,13 @@ int main()
 
 #pragma endregion
 
+
+	// state
+	PlayerState player;
+
+	std::set dynamicItems = { &thumper, &thumper2 };
+
 	// ============ [ MAIN LOOP ] ============
-
-	Quad quad;
-	DistanceFieldPostProcessor distanceFieldPostProcessor(
-		&quad,
-		currentWidth,
-		currentHeight
-	);
-
-
-	// personal notes RE: value clamping/blending as it is relevant for the JFA algo: https://stackoverflow.com/questions/54873828/blend-negative-value-into-framebuffer-0-opengl
-	//
-	// unsigned int framebuffer1; // https://learnopengl.com/Advanced-OpenGL/Framebuffers
-	// glGenFramebuffers(1, &framebuffer1); // for "off-screen rendering"
-	// glBindFramebuffer(GL_FRAMEBUFFER, framebuffer1);
-	//
-	//
-	// // generate texture
-	// unsigned int textureColorbuffer1;
-	// glGenTextures(1, &textureColorbuffer1);
-	// glBindTexture(GL_TEXTURE_2D, textureColorbuffer1);
-	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, currentWidth, currentHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); // must be GL_NEAREST to do point-sampling (i.e. don't interpolate between colours). Not doing point-sampling (=interpolating) messes up the Distance Field
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	// glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer1, 0);
-	// glCheckError();
-	//
-	//
-	// unsigned int rbo1;
-	// glGenRenderbuffers(1, &rbo1);
-	// glBindRenderbuffer(GL_RENDERBUFFER, rbo1);
-	// glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, currentWidth, currentHeight); // use a single renderbuffer object for both a depth AND stencil buffer.
-	// glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo1); // now actually attach it
-	// // now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
-	// if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-	// 	std::cout << "ERROR::FRAMEBUFFER:: Framebuffer 1 is not complete!" << std::endl;
-	// glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	//
-	//
-	// // second one for multiple pass switching
-	// unsigned int framebuffer2;
-	// glGenFramebuffers(1, &framebuffer2);
-	// glBindFramebuffer(GL_FRAMEBUFFER, framebuffer2);
-	//
-	// // generate texture
-	// unsigned int textureColorbuffer2;
-	// glGenTextures(1, &textureColorbuffer2);
-	// glBindTexture(GL_TEXTURE_2D, textureColorbuffer2);
-	// glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, currentWidth, currentHeight, 0, GL_RGBA, GL_FLOAT, NULL);
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	// glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	// glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer2, 0);
-	// glCheckError();
-	//
-	//
-	// unsigned int rbo2;
-	// glGenRenderbuffers(1, &rbo2);
-	// glBindRenderbuffer(GL_RENDERBUFFER, rbo2);
-	// glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, currentWidth, currentHeight);
-	// glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo2);
-	// if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-	// 	std::cout << "ERROR::FRAMEBUFFER:: Framebuffer 2 is not complete!" << std::endl;
-	// glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-
-	const float outlineSize = 0.004f;
-	distanceFieldPostProcessor.setOutlineSize(outlineSize);
-
 	camMgr.beforeLoop();
 	while (!glfwWindowShouldClose(window))
 	{
@@ -376,12 +290,17 @@ int main()
 
 		// ------ ** mouse ray picking ** ------
 #pragma region MOUSE_RAY_PICKING
-		SphericalBoxedGameObject* result = WorldMathUtils::findClosestIntersection(
-			{ &thumper, &thumper2 },
-			cameraPos,
-			cameraFront,
-			5.0f
-		);
+
+		SphericalBoxedGameObject* result = nullptr;
+		if (!player.hasCarriedItem()) {
+			std::vector considered(dynamicItems.begin(), dynamicItems.end());
+			result = WorldMathUtils::findClosestIntersection(
+				considered,
+				cameraPos,
+				cameraFront,
+				5.0f
+			);
+		}
 
 #pragma endregion
 
@@ -428,19 +347,48 @@ int main()
 		ornithopter.setModelTransform(orniModel);
 		ornithopter.draw(genericShader);
 
-		// thumper
-		thumper.draw(genericShader);
-		thumper2.draw(genericShader);
-
 		// nomad
 		nomad.draw(genericShader);
 
 		// sand worm
 		sandWorm.draw(genericShader);
 
+		// *dynamic items*
+		// thumpers
+		// thumper.draw(genericShader);
+		// thumper2.draw(genericShader);
+		for (auto thump : dynamicItems) // dynamic world items
+		{
+			thump->draw(genericShader);
+		}
+
+		if (player.hasCarriedItem()) // dynamic "in player hand" items
+		{
+			// (the perspective on this thing doesn't really make sense in the world)
+			CarriedGameObject& item = player.getCarriedItem();
+			glm::mat4 model = view;
+			model = glm::inverse(model); // cancel view transformation (makes object stick to the camera)
+			const float t = glfwGetTime();
+			const float speedMultiplier = camMgr.getCurrentCamera()->isSpeeding() ? 1.5f : 1.0f;
+			const float xWobble = camMgr.getCurrentCamera()->isMoving() ? (sin(t * 2.0f * M_PI * speedMultiplier) / 200.0f) * speedMultiplier : 0.0;
+			const float yWobble = camMgr.getCurrentCamera()->isMoving() ? sin(t * 4.0f * M_PI * speedMultiplier) / 200.0f : 0.0;
+			const float xRotate = camMgr.getCurrentCamera()->isMoving() ? (float)glm::radians(sin(t * 2.0f * M_PI * speedMultiplier) * 2.0f * speedMultiplier) : 0.0;
+			model = glm::translate(model, glm::vec3(0.5f + xWobble, -0.4f + yWobble, -1.0f)); // move "forwards", "right" and "down"
+			model = glm::scale(model, glm::vec3(0.7f)); // scale it down
+			model = glm::rotate(model, -xRotate, glm::vec3(0.0f, 0.0f, 1.0f)); // wobble-related rotate
+			model = glm::rotate(model, glm::radians(-15.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // rotate to make position look better perspective-wise
+
+			item.getModel()->setModelTransform(model);
+			item.getModel()->draw(genericShader);
+		}
+
 		glCheckError();
 
 		// ------ ** post-processing ** ------
+
+
+		fontShader.use();
+		fontShader.setMat4("projection", textProjection);
 
 		// highlight selectable item
 		if (result != nullptr) {
@@ -470,11 +418,62 @@ int main()
 				0.5f,
 				Colors::WHITE
 			);
+			// TODO: this should toggle an animation with sound effects, I'd say
+			font.renderText(
+				"E) ACTIVATE",
+				(currentWidth * (5.0f / 8.0f)),
+				(currentHeight / 2.0f) - 80.0f,
+				0.5f,
+				Colors::WHITE * 0.8f
+			);
+
+			if (!player.hasCarriedItem() && glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) // only pick up if "hands are free"
+			{
+				// player is picking this specific one up
+				dynamicItems.erase(result);
+				player.setCarriedItem(CarriedGameObject(result));
+			}
 		}
 
+		if (player.hasCarriedItem())
+		{
+			font.renderText(
+				"Thumper",
+				(currentWidth - 150.0f),
+				55.0f,
+				0.45f,
+				Colors::WHITE
+			);
+
+			font.renderText(
+				"E) DROP",
+				(currentWidth - 150.0f),
+				30.0f,
+				0.35f,
+				Colors::WHITE
+			);
+
+			if (camMgr.isPlayer() && glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+			{
+				// drop the item
+				SphericalBoxedGameObject* model = player.getCarriedItem().getModel();
+				player.removeCarriedItem();
+
+				// update its position
+				glm::mat4 newModel = glm::mat4(1.0f);
+
+				newModel = glm::translate(newModel, sandTerrain.getWorldHeightVecFor(cameraPos.x + (cameraFront.x * 2.5f), cameraPos.z + (cameraFront.z * 2.5f)) + smallOffsetY);
+				newModel = glm::scale(newModel, glm::vec3(0.7f));
+				model->setModelTransform(newModel);
+
+				// add it back to the dynamic items (for next loop)
+				dynamicItems.insert(model);
+			}
+		}
+
+
 		// ------ ** text overlay ** ------
-		fontShader.use();
-		fontShader.setMat4("projection", textProjection);
+		
 		font.renderText(
 			std::format("X:{:.2f} Y:{:.2f}, Z:{:.2f}", cameraPos.x, cameraPos.y, cameraPos.z),
 			25.0f,

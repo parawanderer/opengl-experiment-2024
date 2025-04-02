@@ -32,6 +32,9 @@ public:
 	virtual void processMouse(GLFWwindow* window, double xpos, double ypos);
 	virtual void processKey(GLFWwindow* window, int key, int scancode, int action, int mods);
 
+	virtual bool isMoving() const;
+	virtual bool isSpeeding() const;
+
 protected:
 	glm::vec3 _cameraPos;
 	glm::vec3 _cameraFront;

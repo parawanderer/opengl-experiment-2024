@@ -88,3 +88,13 @@ void Camera::processKey(GLFWwindow* window, int key, int scancode, int action, i
 {
 	// nothing
 }
+
+bool Camera::isMoving() const
+{
+	return false;
+}
+
+bool Camera::isSpeeding() const
+{
+	return false;
+}

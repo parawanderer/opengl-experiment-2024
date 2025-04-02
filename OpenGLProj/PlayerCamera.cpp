@@ -39,8 +39,8 @@ glm::mat4 PlayerCamera::getView() const
 		// transform to get something that looks like "movement" (head-bobbing)
 		const double t = glfwGetTime();
 		view = glm::translate(view, glm::vec3(
-			sin(t * 5.0f * M_PI * sprintingMultiplier) / 64.0f, // x
-			cos(t * 5.0f * M_PI * sprintingMultiplier) / 16.0f, // y
+			0, //sin(t * 5.0f * M_PI * sprintingMultiplier) / 40.0, // x
+			cos(t * 5.0f * M_PI * sprintingMultiplier) / 32.0, // y
 			0.0f // z
 		));
 	}
@@ -141,6 +141,16 @@ void PlayerCamera::processKey(GLFWwindow* window, int key, int scancode, int act
 	{
 		this->assignWASDValue(false, key);
 	}
+}
+
+bool PlayerCamera::isMoving() const
+{
+	return !this->_isJumping && this->isAnyMovementKeyPressed();
+}
+
+bool PlayerCamera::isSpeeding() const
+{
+	return this->_isShiftPressed && this->isMoving();
 }
 
 void PlayerCamera::teleportToFloor()
