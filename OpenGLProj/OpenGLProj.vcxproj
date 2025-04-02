@@ -140,6 +140,7 @@
     <ClCompile Include="CameraUtils.cpp" />
     <ClCompile Include="DistanceFieldPostProcessor.cpp" />
     <ClCompile Include="CarriedGameObject.cpp" />
+    <ClCompile Include="NomadCharacter.cpp" />
     <ClCompile Include="PlayerState.cpp" />
     <ClCompile Include="Quad.cpp" />
     <ClCompile Include="Sphere.cpp" />
@@ -160,6 +161,7 @@
     <ClCompile Include="Sun.cpp" />
     <ClCompile Include="Terrain.cpp" />
     <ClCompile Include="UITextRenderer.cpp" />
+    <ClCompile Include="WorldTimeManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -198,6 +200,7 @@
     <ClInclude Include="GameObjectConstants.h" />
     <ClInclude Include="jfa_algo_old.frag" />
     <ClInclude Include="DistanceFieldPostProcessor.h" />
+    <ClInclude Include="NomadCharacter.h" />
     <ClInclude Include="PlayerState.h" />
     <ClInclude Include="Quad.h" />
     <ClInclude Include="Sphere.h" />
@@ -220,6 +223,7 @@
     <ClInclude Include="UITextRenderer.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="WorldMathUtils.h" />
+    <ClInclude Include="WorldTimeManager.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="awesomeface.png" />

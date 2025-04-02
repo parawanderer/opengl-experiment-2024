@@ -2,11 +2,13 @@
 #define CAMERAMANAGER_MINE_H
 
 #include "PlayerCamera.h"
+#include "WorldTimeManager.h"
 
 class CameraManager
 {
 public:
 	CameraManager(
+		WorldTimeManager* time,
 		bool startWithPlayer,
 		glm::vec3 initialPos,
 		glm::vec3 initialFront,
@@ -23,8 +25,6 @@ public:
 	void processInput(GLFWwindow* window);
 
 	Camera* getCurrentCamera() const;
-
-	void onNewFrame();
 
 	void mouseCallback(GLFWwindow* window, double xpos, double ypos);
 	void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);

@@ -2,8 +2,8 @@
 
 #include <glm/ext/matrix_transform.hpp>
 
-Camera::Camera(glm::vec3 initialPos, glm::vec3 initialFront, int initialWidth, int initialHeight, float speedMultiplier)
-: _cameraPos(initialPos), _cameraFront(initialFront), _lastX(initialWidth / 2), _lastY(initialHeight / 2), _speedMultiplier(speedMultiplier)
+Camera::Camera(WorldTimeManager* time, glm::vec3 initialPos, glm::vec3 initialFront, int initialWidth, int initialHeight, float speedMultiplier)
+: _time(time), _cameraPos(initialPos), _cameraFront(initialFront), _lastX(initialWidth / 2), _lastY(initialHeight / 2), _speedMultiplier(speedMultiplier)
 {}
 
 glm::mat4 Camera::getView() const
@@ -26,16 +26,9 @@ glm::vec3 Camera::getFront() const
 	return this->_cameraFront;
 }
 
-void Camera::onNewFrame()
-{
-	float currentFrame = glfwGetTime();
-	this->_deltaTime = currentFrame - this->_lastFrame;
-	this->_lastFrame = currentFrame;
-}
-
 void Camera::processInput(GLFWwindow* window)
 {
-	const float cameraSpeed = _deltaTime * this->_speedMultiplier;
+	const float cameraSpeed = this->getDeltaTime() * this->_speedMultiplier;
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		this->_cameraPos += cameraSpeed * this->_cameraFront;
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -97,4 +90,9 @@ bool Camera::isMoving() const
 bool Camera::isSpeeding() const
 {
 	return false;
+}
+
+float Camera::getDeltaTime() const
+{
+	return this->_time->getDeltaTime();
 }

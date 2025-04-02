@@ -165,6 +165,12 @@
     <ClCompile Include="UITextRenderer.cpp">
       <Filter>Source Files\UI</Filter>
     </ClCompile>
+    <ClCompile Include="NomadCharacter.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldTimeManager.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -333,6 +339,12 @@
       <Filter>Header Files\UI</Filter>
     </ClInclude>
     <ClInclude Include="GameObjectConstants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NomadCharacter.h">
+      <Filter>Header Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldTimeManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

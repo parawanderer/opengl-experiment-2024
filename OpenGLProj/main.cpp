@@ -39,6 +39,8 @@
 #include "PlayerState.h"
 #include "CarriedGameObject.h"
 #include "GameObjectConstants.h"
+#include "NomadCharacter.h"
+#include "WorldTimeManager.h"
 
 // keeping this at a power of two to support the outline-rendering JFA algorithm.
 // I could make this not a power of two but then I need to perform some annoying buffer size remappings during the JFA algo.
@@ -67,7 +69,10 @@ constexpr auto SCREEN_OUTPUT_BUFFER_ID = 0;
 int currentWidth = INITIAL_WIDTH;
 int currentHeight = INITIAL_HEIGHT;
 
+WorldTimeManager timeMgr;
+
 CameraManager camMgr(
+	&timeMgr,
 	true,
 	glm::vec3(0.0f, 410.0f, 0.0f),
 	glm::vec3(0.0f, 0.0f, -1.0f),
@@ -110,9 +115,9 @@ int main()
 	Shader genericShader = Shader::fromFiles("mesh.vert", "mesh.frag");
 	genericShader.use();
 	genericShader.setVec3("light.position", sunPos);
-	genericShader.setVec3("light.ambient", sunLightColor * 0.3f);
+	genericShader.setVec3("light.ambient", sunLightColor * 0.5f);
 	genericShader.setVec3("light.diffuse", sunLightColor * 1.0f);
-	genericShader.setVec3("light.specular", sunLightColor * 0.1f);
+	genericShader.setVec3("light.specular", sunLightColor * 1.0f);
 
 	Quad quad;
 	DistanceFieldPostProcessor distanceFieldPostProcessor(&quad, currentWidth, currentHeight);
@@ -137,6 +142,17 @@ int main()
 	RenderableGameObject nomad("resources/models/rust-nomad/RustNomad.fbx");
 
 	RenderableGameObject sandWorm("resources/models/dune-sandworm/sandworm_edit.dae");
+
+	Model containerSmall("resources/models/military-container-free/Military_Container.dae");
+	RenderableGameObject containerS1(&containerSmall);
+	RenderableGameObject containerS2(&containerSmall);
+
+
+	Model containerLarge("resources/models/cargo-container/Container.dae");
+	RenderableGameObject containerL1(&containerLarge);
+	RenderableGameObject containerL2(&containerLarge);
+	RenderableGameObject containerL3(&containerLarge);
+
 
 	// I'll use this as my second light source
 	Sphere sphere(20, 20, 1.0f);
@@ -225,19 +241,60 @@ int main()
 	sandWormModel = glm::scale(sandWormModel, glm::vec3(3.0f));
 	sandWorm.setModelTransform(sandWormModel);
 
+	glm::mat4 containerS1Model = glm::mat4(1.0f);
+	containerS1Model = glm::translate(containerS1Model, sandTerrain.getWorldHeightVecFor(150.0f, -150.0f) + glm::vec3(0.0, -0.1f, 0.0f));
+	containerS1Model = glm::rotate(containerS1Model, glm::radians(4.0f), glm::vec3(0.0, 0.0, 1.0));
+	containerS1Model = glm::scale(containerS1Model, glm::vec3(0.01f));
+	containerS1.setModelTransform(containerS1Model);
+
+	glm::mat4 containerS2Model = glm::mat4(1.0f);
+	containerS2Model = glm::translate(containerS2Model, sandTerrain.getWorldHeightVecFor(155.0, -155.0f) + glm::vec3(0.0, -0.1f, 0.0f));
+	containerS2Model = glm::rotate(containerS2Model, glm::radians(-32.0f), glm::vec3(0.0, 0.0, 1.0));
+	containerS2Model = glm::scale(containerS2Model, glm::vec3(0.01f));
+	containerS2.setModelTransform(containerS2Model);
+
+	glm::mat4 containerL1Model = glm::mat4(1.0f);
+	containerL1Model = glm::translate(containerL1Model, sandTerrain.getWorldHeightVecFor(160.0f, -160.0f) + glm::vec3(0.0, -1.8f, 0.0f));
+	containerL1Model = glm::rotate(containerL1Model, glm::radians(35.0f), glm::vec3(1.0, 0.0, 0.0));
+	containerL1Model = glm::rotate(containerL1Model, glm::radians(10.0f), glm::vec3(0.0, 1.0, 0.0));
+	containerL1Model = glm::scale(containerL1Model, glm::vec3(0.02f));
+	containerL1.setModelTransform(containerL1Model);
+
+	glm::mat4 containerL2Model = glm::mat4(1.0f);
+	containerL2Model = glm::translate(containerL2Model, sandTerrain.getWorldHeightVecFor(182.0f, -175.0f) + glm::vec3(0.0, -2.0f, 0.0f));
+	containerL2Model = glm::rotate(containerL2Model, glm::radians(74.0f), glm::vec3(1.0, 0.0, 0.0));
+	containerL2Model = glm::rotate(containerL2Model, glm::radians(112.0f), glm::vec3(0.0, 1.0, 0.0));
+	containerL2Model = glm::rotate(containerL2Model, glm::radians(-12.0f), glm::vec3(0.0, 0.0, 1.0));
+	containerL2Model = glm::scale(containerL2Model, glm::vec3(0.02f));
+	containerL2.setModelTransform(containerL2Model);
+
+	glm::mat4 containerL3Model = glm::mat4(1.0f);
+	containerL3Model = glm::translate(containerL3Model, sandTerrain.getWorldHeightVecFor(182, -227) + glm::vec3(0.0, -1.5f, 0.0f));
+	containerL3Model = glm::rotate(containerL3Model, glm::radians(-21.0f), glm::vec3(1.0, 0.0, 0.0));
+	containerL3Model = glm::rotate(containerL3Model, glm::radians(-3.0f), glm::vec3(0.0, 1.0, 0.0));
+	containerL3Model = glm::rotate(containerL3Model, glm::radians(15.0f), glm::vec3(0.0, 0.0, 1.0));
+	containerL3Model = glm::scale(containerL3Model, glm::vec3(0.02f));
+	containerL3.setModelTransform(containerL3Model);
+
+
 #pragma endregion
+
+	std::vector staticGameObjects = { &containerS1, &containerS2, &containerL1, &containerL2, &containerL3 };
 
 	// state
 	PlayerState player;
 	std::set dynamicItems = { &thumper, &thumper2 };
+	NomadCharacter nomadCharacter(&timeMgr, &sandTerrain, &nomad, 20.0f, -20.0f);
 
 	// ============ [ MAIN LOOP ] ============
 	camMgr.beforeLoop();
 	while (!glfwWindowShouldClose(window))
 	{
-		camMgr.onNewFrame();
+		timeMgr.onNewFrame();
 		processInput(window);
 		camMgr.processInput(window);
+
+		nomadCharacter.onNewFrame();
 
 #pragma region PROJECTING
 		const glm::vec3 cameraPos = camMgr.getPos();
@@ -302,10 +359,19 @@ int main()
 		ornithopter.draw(genericShader);
 
 		// nomad
-		nomad.draw(genericShader);
+		//nomad.draw(genericShader);
+		nomadCharacter.draw(genericShader);
+
 
 		// sand worm
 		sandWorm.draw(genericShader);
+
+
+		// containers
+		for (auto staticObj: staticGameObjects)
+		{
+			staticObj->draw(genericShader);
+		}
 
 		// *dynamic items*
 		for (auto thump : dynamicItems) // dynamic world items

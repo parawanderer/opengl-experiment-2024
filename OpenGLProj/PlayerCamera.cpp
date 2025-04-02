@@ -9,6 +9,7 @@
 #define G -9.81f
 
 PlayerCamera::PlayerCamera(
+	WorldTimeManager* time,
 	glm::vec3 initialPos, 
 	glm::vec3 initialFront, 
 	int initialWidth, 
@@ -16,7 +17,7 @@ PlayerCamera::PlayerCamera(
 	float speedMultiplier, 
 	float playerHeightWorldSpace,
 	float startingVelocityOfJump)
-: Camera(initialPos, initialFront, initialWidth, initialHeight, speedMultiplier),
+: Camera(time, initialPos, initialFront, initialWidth, initialHeight, speedMultiplier),
 _playerHeight(playerHeightWorldSpace),
 _jumpStartVelocity(startingVelocityOfJump)
 {
@@ -47,18 +48,13 @@ glm::mat4 PlayerCamera::getView() const
 	return view;
 }
 
-void PlayerCamera::onNewFrame()
-{
-	Camera::onNewFrame();
-}
-
 void PlayerCamera::processInput(GLFWwindow* window)
 {
 	if (this->_isJumping) // update jumping state
 	{
 		// kinematics https://en.wikipedia.org/wiki/Equations_of_motion
-		this->_yDisplacement = this->_yDisplacement + (this->_currentYVelocity * this->_deltaTime) + (0.5 * G * (this->_deltaTime * this->_deltaTime)); // update y pos
-		this->_currentYVelocity = (G * this->_deltaTime) + this->_currentYVelocity; // update remaining velocity
+		this->_yDisplacement = this->_yDisplacement + (this->_currentYVelocity * this->getDeltaTime()) + (0.5 * G * (this->getDeltaTime() * this->getDeltaTime())); // update y pos
+		this->_currentYVelocity = (G * this->getDeltaTime()) + this->_currentYVelocity; // update remaining velocity
 
 		if (this->_yDisplacement <= 0.0f) // reached limit of displacement
 		{
@@ -70,7 +66,7 @@ void PlayerCamera::processInput(GLFWwindow* window)
 
 	const float sprintingMultiplier = this->_isShiftPressed ? 2.0f : 1.0f;
 	const float jumpingMultiplier = this->_isJumping ? 0.5 : 1.0f; // decrease amount of (x,z) movement we can do while jumping
-	const float cameraSpeed = _deltaTime * (this->_speedMultiplier * sprintingMultiplier * jumpingMultiplier);
+	const float cameraSpeed = this->getDeltaTime() * (this->_speedMultiplier * sprintingMultiplier * jumpingMultiplier);
 	bool hasMoved = false;
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)

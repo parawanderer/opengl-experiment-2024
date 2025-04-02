@@ -15,7 +15,7 @@ struct PlayerMovementKeyStates {
 class PlayerCamera : public Camera
 {
 public:
-	PlayerCamera(glm::vec3 initialPos, glm::vec3 initialFront, int initialWidth, int initialHeight, float speedMultiplier, float playerHeightWorldSpace, float startingVelocityOfJump);
+	PlayerCamera(WorldTimeManager* time, glm::vec3 initialPos, glm::vec3 initialFront, int initialWidth, int initialHeight, float speedMultiplier, float playerHeightWorldSpace, float startingVelocityOfJump);
 
 	void setTerrain(Terrain* terrain);
 
@@ -24,7 +24,6 @@ public:
 	float getFov() const override;
 
 	glm::mat4 getView() const override;
-	void onNewFrame() override;
 	void processInput(GLFWwindow* window) override;
 	void processScroll(GLFWwindow* window, double xoffset, double yoffset) override;
 	void processMouse(GLFWwindow* window, double xpos, double ypos) override;

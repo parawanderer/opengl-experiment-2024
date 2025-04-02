@@ -5,11 +5,13 @@
 #include <glm/fwd.hpp>
 #include <glm/vec3.hpp>
 
+#include "WorldTimeManager.h"
+
 class Camera
 {
 public:
 	virtual ~Camera() = default;
-	Camera(glm::vec3 initialPos, glm::vec3 initialFront, int initialWidth, int initialHeight, float speedMultiplier);
+	Camera(WorldTimeManager* time, glm::vec3 initialPos, glm::vec3 initialFront, int initialWidth, int initialHeight, float speedMultiplier);
 
 	/**
 	 * \return The view transformation matrix
@@ -26,7 +28,6 @@ public:
 
 	glm::vec3 getFront() const;
 
-	virtual void onNewFrame();
 	virtual void processInput(GLFWwindow* window);
 	virtual void processScroll(GLFWwindow* window, double xoffset, double yoffset);
 	virtual void processMouse(GLFWwindow* window, double xpos, double ypos);
@@ -36,11 +37,11 @@ public:
 	virtual bool isSpeeding() const;
 
 protected:
+	WorldTimeManager* _time;
+
 	glm::vec3 _cameraPos;
 	glm::vec3 _cameraFront;
 	glm::vec3 _cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-	float _deltaTime = 0.0f; // time between current and last frame
-	float _lastFrame = 0.0f; // time of last frame
 
 	float _pitch = 0.0f;
 	float _yaw = -90.0f;
@@ -53,6 +54,8 @@ protected:
 	float _fov = 45.0f;
 
 	float _speedMultiplier;
+
+	float getDeltaTime() const;
 };
 
 #endif

@@ -4,14 +4,15 @@ constexpr auto PLAYER_HEIGHT_WOLD_SPACE = 2.0f;
 constexpr auto STARTING_VELOCITY_OF_JUMP = 5.0f;
 
 CameraManager::CameraManager(
+	WorldTimeManager* time,
 	bool startWithPlayer,
 	glm::vec3 initialPos,
 	glm::vec3 initialFront,
 	int initialWidth,
 	int initialHeight,
 	float speedMultiplier) :
-_noclipCam(Camera(initialPos, initialFront, initialWidth, initialHeight, speedMultiplier)),
-_playerCam(PlayerCamera(initialPos, initialFront, initialWidth, initialHeight, speedMultiplier, PLAYER_HEIGHT_WOLD_SPACE, STARTING_VELOCITY_OF_JUMP)),
+_noclipCam(Camera(time, initialPos, initialFront, initialWidth, initialHeight, speedMultiplier)),
+_playerCam(PlayerCamera(time, initialPos, initialFront, initialWidth, initialHeight, speedMultiplier, PLAYER_HEIGHT_WOLD_SPACE, STARTING_VELOCITY_OF_JUMP)),
 _currentCam(startWithPlayer ? &this->_playerCam : &this->_noclipCam)
 {}
 
@@ -49,11 +50,6 @@ void CameraManager::processInput(GLFWwindow* window)
 Camera* CameraManager::getCurrentCamera() const
 {
 	return this->_currentCam;
-}
-
-void CameraManager::onNewFrame()
-{
-	this->_currentCam->onNewFrame();
 }
 
 void CameraManager::mouseCallback(GLFWwindow* window, double xpos, double ypos)
