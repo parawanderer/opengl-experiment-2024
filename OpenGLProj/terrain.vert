@@ -15,8 +15,7 @@ out vec2 TexCoord;
 
 void main() {
 	FragPos = vec3(model * vec4(aPos, 1.0));
-	// this matrix multiplication is important to deal with the case of doing non-uniform scaling on an object
-    Normal = normalMatrix * aNormal;
+    Normal = normalMatrix * aNormal; // this matrix multiplication is important to deal with the case of doing non-uniform scaling on an object
 	TexCoord = aTexCoord;
 
 	gl_Position = projection * view * model * vec4(aPos, 1.0);

@@ -29,13 +29,21 @@
 
 #pragma region STATE
 
-PlayerCamera camera(
+Camera camera(glm::vec3(0.0f, 118.0f, 0.0f),
+	glm::vec3(0.0f, 0.0f, -1.0f),
+	INITIAL_WIDTH,
+	INITIAL_HEIGHT,
+	40.0f
+);
+
+PlayerCamera playerCamera(
 	glm::vec3(0.0f, 118.0f, 0.0f),
 	glm::vec3(0.0f, 0.0f, -1.0f), 
 	INITIAL_WIDTH, 
 	INITIAL_HEIGHT, 
-	20.0f,
-	2.0f
+	10.0f,
+	2.0f,
+	5.0f
 );
 
 const float RENDER_DISTANCE = 1500.0f;
@@ -44,6 +52,7 @@ const float RENDER_DISTANCE = 1500.0f;
 
 // sun
 glm::vec3 sunPos(1024.0f, 750.0f, -2000.0f);
+//glm::vec3 sunPos(50.0f, 750.0f, 0.0f);
 glm::vec3 sunLightColor = Colors::WHITE;
 
 #pragma endregion
@@ -56,12 +65,14 @@ void framebufferSizeCallback(GLFWwindow* window, int width, int height)
 
 void mouseCallback(GLFWwindow* window, double xpos, double ypos)
 {
-	camera.processMouse(window, xpos, ypos);
+	playerCamera.processMouse(window, xpos, ypos);
+	// camera.processMouse(window, xpos, ypos);
 }
 
 void scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	camera.processScroll(window, xoffset, yoffset);
+	playerCamera.processScroll(window, xoffset, yoffset);
+	// camera.processScroll(window, xoffset, yoffset);
 }
 
 void processInput(GLFWwindow* window)
@@ -69,12 +80,13 @@ void processInput(GLFWwindow* window)
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
-	camera.processInput(window);
+	playerCamera.processInput(window);
+	// camera.processInput(window);
 }
 
 void processKey(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-	camera.processKey(window, key, scancode, action, mods);
+	playerCamera.processKey(window, key, scancode, action, mods);
 }
 
 
@@ -201,33 +213,39 @@ int main()
 #pragma endregion
 
 #pragma region TERRAIN
-	const float yScaleMult = 64.0f;
+	const float yScaleMult = 192.0f;
 	const float yShift = 32.0f;
 	Shader terrainShader = Shader::fromFiles("terrain.vert", "terrain.frag");
 	Terrain sandTerrain(
 		&terrainShader, 
-		"resources/final-dunes-first-try.png", // <- edited version of https://www.florisgroen.com/sandy-desert-3d/ 
-		// (this is a manual photoshop edit, and because it is a manual photoshop edit of an algorithm that is not
-		// clear to me, I don't think I'll be able to just easily implement a procedural dune terrain generation system.
-		// The problem I mainly have is that getting the "sand waves" to look good and not to look like minecraft is a huge problem)
-		"resources/sand_texture.jpg",
-		"resources/sand_texture2.jpg",
+		"resources/terrain/heightmap/yetanothermap2.png",
+		"resources/terrain/texture/sand_texture.jpg",
+		"resources/terrain/texture/sand_texture2.jpg",
+		"resources/terrain/texture/testtt.jpg",
 		yScaleMult, 
 		yShift,
 		sunPos,
 		sunLightColor
 	);
 
-	camera.setTerrain(&sandTerrain);
+	playerCamera.setTerrain(&sandTerrain);
 #pragma endregion
 
 # pragma region MAIN_LOOP
 
-	camera.teleportToFloor();
+	playerCamera.teleportToFloor();
 	while(!glfwWindowShouldClose(window))
 	{
-		camera.onNewFrame();
-		glm::vec3 cameraPos = camera.getPos();
+		// ** view/projection transformations **
+		// camera.onNewFrame();
+		// const glm::vec3 cameraPos = camera.getPos();
+		// const glm::mat4 view = camera.getView(); 
+		// const float fov = camera.getFov();
+		playerCamera.onNewFrame();
+		const glm::vec3 cameraPos = playerCamera.getPos();
+		const glm::vec3 cameraPosForDisplay = playerCamera.getPosIncludingJump();
+		const glm::mat4 view = playerCamera.getView();
+		const float fov = playerCamera.getFov();
 
 		// ** input **
 		processInput(window);
@@ -236,10 +254,8 @@ int main()
 		glClearColor(0.45f, 0.49f, 0.61f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-		// ** view/projection transformations **
-		glm::mat4 view = camera.getView();
 		glm::mat4 projection = glm::perspective(
-			glm::radians(camera.getFov()), 
+			glm::radians(fov),
 			(float)INITIAL_WIDTH / (float)INITIAL_HEIGHT, 
 			0.1f, 
 			RENDER_DISTANCE
@@ -264,7 +280,7 @@ int main()
 
 		// ** text overlay **
 		font.renderText(
-			std::format("X:{:.2f} Y:{:.2f}, Z:{:.2f}", cameraPos.x, cameraPos.y, cameraPos.z),
+			std::format("X:{:.2f} Y:{:.2f}, Z:{:.2f}", cameraPosForDisplay.x, cameraPosForDisplay.y, cameraPosForDisplay.z),
 			25.0f,
 			INITIAL_HEIGHT - 25.0f,
 			0.5f,

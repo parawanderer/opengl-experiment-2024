@@ -5,6 +5,10 @@
 
 #define PI 3.14159265359
 
+// (Acceleration due to gravity) m/s^2
+#define G -9.81f
+
+
 std::set _MOVEMENT_KEYS = {
 	GLFW_KEY_W, GLFW_KEY_S, GLFW_KEY_A, GLFW_KEY_D
 };
@@ -16,8 +20,11 @@ PlayerCamera::PlayerCamera(
 	int initialWidth, 
 	int initialHeight,
 	float speedMultiplier, 
-	float playerHeightWorldSpace)
-: Camera(initialPos, initialFront, initialWidth, initialHeight, speedMultiplier), _playerHeight(playerHeightWorldSpace)
+	float playerHeightWorldSpace,
+	float startingVelocityOfJump)
+: Camera(initialPos, initialFront, initialWidth, initialHeight, speedMultiplier),
+_playerHeight(playerHeightWorldSpace),
+_jumpStartVelocity(startingVelocityOfJump)
 {
 }
 
@@ -28,15 +35,18 @@ void PlayerCamera::setTerrain(Terrain* terrain)
 
 glm::mat4 PlayerCamera::getView() const
 {
-	glm::mat4 view = Camera::getView();
-	if (this->_isAnyMovementKeyPressed())
+	//glm::mat4 view = glm::lookAt(this->_cameraPos, this->_cameraPos + this->_cameraFront, this->_cameraUp);
+	glm::vec3 playerPos = this->getPosIncludingJump();
+	glm::mat4 view = glm::lookAt(playerPos, playerPos + this->_cameraFront, this->_cameraUp);
+
+	if (!this->_isJumping && this->_isAnyMovementKeyPressed())
 	{
 		const float sprintingMultiplier = this->_isShiftPressed ? 1.5f : 1.0f;
 		// transform to get something that looks like "movement" (head-bobbing)
 		const double t = glfwGetTime();
 		view = glm::translate(view, glm::vec3(
-			sin(t * 5.0f * PI * sprintingMultiplier) / 32.0f, // x
-			cos(t * 5.0f * PI * sprintingMultiplier) / 8.0f, // y
+			sin(t * 5.0f * PI * sprintingMultiplier) / 64.0f, // x
+			cos(t * 5.0f * PI * sprintingMultiplier) / 16.0f, // y
 			0.0f // z
 		));
 	}
@@ -50,8 +60,23 @@ void PlayerCamera::onNewFrame()
 
 void PlayerCamera::processInput(GLFWwindow* window)
 {
+	if (this->_isJumping) // update jumping state
+	{
+		// kinematics https://en.wikipedia.org/wiki/Equations_of_motion
+		this->_yDisplacement = this->_yDisplacement + (this->_currentYVelocity * this->_deltaTime) + (0.5 * G * (this->_deltaTime * this->_deltaTime)); // update y pos
+		this->_currentYVelocity = (G * this->_deltaTime) + this->_currentYVelocity; // update remaining velocity
+
+		if (this->_yDisplacement <= 0.0f) // reached limit of displacement
+		{
+			this->_yDisplacement = 0.0f;
+			this->_currentYVelocity = 0;
+			this->_isJumping = false;
+		}
+	}
+
 	const float sprintingMultiplier = this->_isShiftPressed ? 2.0f : 1.0f;
-	const float cameraSpeed = _deltaTime * this->_speedMultiplier * sprintingMultiplier;
+	const float jumpingMultiplier = this->_isJumping ? 0.5 : 1.0f; // decrease amount of (x,z) movement we can do while jumping
+	const float cameraSpeed = _deltaTime * (this->_speedMultiplier * sprintingMultiplier * jumpingMultiplier);
 	bool hasMoved = false;
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -86,6 +111,18 @@ void PlayerCamera::processInput(GLFWwindow* window)
 		// ignore the 'y' we determined above with this "Player" camera,
 		// we have our own "y" that we will get (potentially interpolate) from the height map, using the terrain
 		this->_cameraPos.y = this->_terrain->getWorldHeightAt(this->_cameraPos.x, this->_cameraPos.z) + this->_playerHeight;
+	}
+
+	if (!this->_isJumping && glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+	{
+		// jump when started jumping
+		this->_isJumping = true;
+		this->_currentYVelocity = this->_jumpStartVelocity;
+		// 1. first we kind of "sit down" (camera moves down for a few frames) -> ~ cos(t) function until pi
+		// 2. then we do the traveling with upwards velocity in the y direction. The x & z direction stay as they are for now
+		// 3. there'll be a max height where the acceleration due to gravity counteracts the velocity
+		// 4. then we fall down (only gravity acts on us)
+
 	}
 }
 
@@ -139,6 +176,12 @@ void PlayerCamera::_assignWASDValue(bool state, int key)
 glm::vec3 PlayerCamera::getPos() const
 {
 	return Camera::getPos();
+}
+
+glm::vec3 PlayerCamera::getPosIncludingJump() const
+{
+	glm::vec3 noJumpPos = Camera::getPos();
+	return glm::vec3(noJumpPos.x, noJumpPos.y + this->_yDisplacement, + noJumpPos.z);
 }
 
 float PlayerCamera::getFov() const

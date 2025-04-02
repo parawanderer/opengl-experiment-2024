@@ -21,7 +21,8 @@ public:
 		Shader* shader, 
 		const std::string& sourceHeightMapPath, 
 		const std::string& texturePath0, 
-		const std::string& texturePath1, 
+		const std::string& texturePath1,
+		const std::string& textureNormalMap,
 		float yScaleMult, 
 		float yShift,
 		const glm::vec3& sunPos,
@@ -50,6 +51,7 @@ private:
 	unsigned int _EBO;
 	unsigned int _textureId0;
 	unsigned int _textureId1;
+	unsigned int _textureNormalId;
 
 	glm::mat4 _terrainModel;
 	glm::mat3 _terrainNormalMatrix;

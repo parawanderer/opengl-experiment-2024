@@ -9,6 +9,17 @@
 #include "ResourceUtils.h"
 #include "stb_image.h"
 
+#define RENDER_AS_MESH false
+
+#if RENDER_AS_MESH
+#define DEBUG_RENDER_AS_MESH_CONFIG_PRE glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+#define DEBUG_RENDER_AS_MESH_CONFIG_POST glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#else
+#define DEBUG_RENDER_AS_MESH_CONFIG_PRE 
+#define DEBUG_RENDER_AS_MESH_CONFIG_POST 
+#endif
+
+
 const float Terrain::_resizeFactor = 2.0f;
 
 void Terrain::_insertNormContribution(unsigned int index0, unsigned int index1, unsigned int index2)
@@ -108,56 +119,56 @@ its very own problem... I'll just stick with my "plastic" looking map for now.
 */
 void Terrain::_populateModelMatrices()
 {
-	this->_terrainModelL = this->_terrainModel;
-	this->_terrainModelL = glm::translate(this->_terrainModelL, glm::vec3((this->_width - 2), 0.0f, 0.0f));
-	this->_terrainModelL = glm::scale(this->_terrainModelL, glm::vec3(-1.0f, 1.0f, 1.0f));
-	this->_terrainNormalMatrixL = glm::mat3(glm::transpose(glm::inverse(this->_terrainModelL)));
-
-	this->_terrainModelR = this->_terrainModel;
-	this->_terrainModelR = glm::translate(this->_terrainModelR, glm::vec3(-(this->_width - 2), 0.0f, 0.0f));
-	this->_terrainModelR = glm::scale(this->_terrainModelR, glm::vec3(-1.0f, 1.0f, 1.0f));
-	this->_terrainNormalMatrixR = glm::mat3(glm::transpose(glm::inverse(this->_terrainModelR)));
-
-	this->_terrainModelF = this->_terrainModel;
-	this->_terrainModelF = glm::translate(this->_terrainModelF, glm::vec3(0.0f, 0.0f, (this->_height - 2)));
-	this->_terrainModelF = glm::scale(this->_terrainModelF, glm::vec3(1.0f, 1.0f, -1.0f));
-	this->_terrainNormalMatrixF = glm::mat3(glm::transpose(glm::inverse(this->_terrainModelF)));
-
-	this->_terrainModelB = this->_terrainModel;
-	this->_terrainModelB = glm::translate(this->_terrainModelB, glm::vec3(0.0f, 0.0f, -(this->_height)));
-	this->_terrainModelB = glm::scale(this->_terrainModelB, glm::vec3(1.0f, 1.0f, -1.0f));
-	this->_terrainNormalMatrixB = glm::mat3(glm::transpose(glm::inverse(this->_terrainModelB)));
-
-	this->_terrainModelLF = this->_terrainModel;
-	this->_terrainModelLF = glm::translate(this->_terrainModelLF, glm::vec3((this->_width - 2), 0.0f, (this->_height - 2)));
-	this->_terrainModelLF = glm::scale(this->_terrainModelLF, glm::vec3(-1.0f, 1.0f, -1.0f));
-	this->_terrainNormalMatrixLF = glm::mat3(glm::transpose(glm::inverse(this->_terrainModelLF)));
-
-	this->_terrainModelRF = this->_terrainModel;
-	this->_terrainModelRF = glm::translate(this->_terrainModelRF, glm::vec3(-(this->_width - 2), 0.0f, (this->_height - 2)));
-	this->_terrainModelRF = glm::scale(this->_terrainModelRF, glm::vec3(-1.0f, 1.0f, -1.0f));
-	this->_terrainNormalMatrixRF = glm::mat3(glm::transpose(glm::inverse(this->_terrainModelRF)));
-
-	this->_terrainModelLB = this->_terrainModel;
-	this->_terrainModelLB = glm::translate(this->_terrainModelLB, glm::vec3((this->_width - 2), 0.0f, -(this->_height)));
-	this->_terrainModelLB = glm::scale(this->_terrainModelLB, glm::vec3(-1.0f, 1.0f, -1.0f));
-	this->_terrainNormalMatrixLB = glm::mat3(glm::transpose(glm::inverse(this->_terrainModelLB)));
-
-	this->_terrainModelRB = this->_terrainModel;
-	this->_terrainModelRB = glm::translate(this->_terrainModelRB, glm::vec3(-(this->_width - 2), 0.0f, -(this->_height)));
-	this->_terrainModelRB = glm::scale(this->_terrainModelRB, glm::vec3(-1.0f, 1.0f, -1.0f));
-	this->_terrainNormalMatrixRB = glm::mat3(glm::transpose(glm::inverse(this->_terrainModelRB)));
+	// this->_terrainModelL = this->_terrainModel;
+	// this->_terrainModelL = glm::translate(this->_terrainModelL, glm::vec3((this->_width - 2), 0.0f, 0.0f));
+	// this->_terrainModelL = glm::scale(this->_terrainModelL, glm::vec3(-1.0f, 1.0f, 1.0f));
+	// this->_terrainNormalMatrixL = glm::mat3(glm::transpose(glm::inverse(this->_terrainModelL)));
+	//
+	// this->_terrainModelR = this->_terrainModel;
+	// this->_terrainModelR = glm::translate(this->_terrainModelR, glm::vec3(-(this->_width - 2), 0.0f, 0.0f));
+	// this->_terrainModelR = glm::scale(this->_terrainModelR, glm::vec3(-1.0f, 1.0f, 1.0f));
+	// this->_terrainNormalMatrixR = glm::mat3(glm::transpose(glm::inverse(this->_terrainModelR)));
+	//
+	// this->_terrainModelF = this->_terrainModel;
+	// this->_terrainModelF = glm::translate(this->_terrainModelF, glm::vec3(0.0f, 0.0f, (this->_height - 2)));
+	// this->_terrainModelF = glm::scale(this->_terrainModelF, glm::vec3(1.0f, 1.0f, -1.0f));
+	// this->_terrainNormalMatrixF = glm::mat3(glm::transpose(glm::inverse(this->_terrainModelF)));
+	//
+	// this->_terrainModelB = this->_terrainModel;
+	// this->_terrainModelB = glm::translate(this->_terrainModelB, glm::vec3(0.0f, 0.0f, -(this->_height)));
+	// this->_terrainModelB = glm::scale(this->_terrainModelB, glm::vec3(1.0f, 1.0f, -1.0f));
+	// this->_terrainNormalMatrixB = glm::mat3(glm::transpose(glm::inverse(this->_terrainModelB)));
+	//
+	// this->_terrainModelLF = this->_terrainModel;
+	// this->_terrainModelLF = glm::translate(this->_terrainModelLF, glm::vec3((this->_width - 2), 0.0f, (this->_height - 2)));
+	// this->_terrainModelLF = glm::scale(this->_terrainModelLF, glm::vec3(-1.0f, 1.0f, -1.0f));
+	// this->_terrainNormalMatrixLF = glm::mat3(glm::transpose(glm::inverse(this->_terrainModelLF)));
+	//
+	// this->_terrainModelRF = this->_terrainModel;
+	// this->_terrainModelRF = glm::translate(this->_terrainModelRF, glm::vec3(-(this->_width - 2), 0.0f, (this->_height - 2)));
+	// this->_terrainModelRF = glm::scale(this->_terrainModelRF, glm::vec3(-1.0f, 1.0f, -1.0f));
+	// this->_terrainNormalMatrixRF = glm::mat3(glm::transpose(glm::inverse(this->_terrainModelRF)));
+	//
+	// this->_terrainModelLB = this->_terrainModel;
+	// this->_terrainModelLB = glm::translate(this->_terrainModelLB, glm::vec3((this->_width - 2), 0.0f, -(this->_height)));
+	// this->_terrainModelLB = glm::scale(this->_terrainModelLB, glm::vec3(-1.0f, 1.0f, -1.0f));
+	// this->_terrainNormalMatrixLB = glm::mat3(glm::transpose(glm::inverse(this->_terrainModelLB)));
+	//
+	// this->_terrainModelRB = this->_terrainModel;
+	// this->_terrainModelRB = glm::translate(this->_terrainModelRB, glm::vec3(-(this->_width - 2), 0.0f, -(this->_height)));
+	// this->_terrainModelRB = glm::scale(this->_terrainModelRB, glm::vec3(-1.0f, 1.0f, -1.0f));
+	// this->_terrainNormalMatrixRB = glm::mat3(glm::transpose(glm::inverse(this->_terrainModelRB)));
 
 
 	_renderMatrices.emplace_back(this->_terrainModel, this->_terrainNormalMatrix);
-	_renderMatrices.emplace_back(this->_terrainModelL, this->_terrainNormalMatrixL);
-	_renderMatrices.emplace_back(this->_terrainModelR, this->_terrainNormalMatrixR);
-	_renderMatrices.emplace_back(this->_terrainModelF, this->_terrainNormalMatrixF);
-	_renderMatrices.emplace_back(this->_terrainModelB, this->_terrainNormalMatrixB);
-	_renderMatrices.emplace_back(this->_terrainModelLF, this->_terrainNormalMatrixLF);
-	_renderMatrices.emplace_back(this->_terrainModelRF, this->_terrainNormalMatrixRF);
-	_renderMatrices.emplace_back(this->_terrainModelLB, this->_terrainNormalMatrixLB);
-	_renderMatrices.emplace_back(this->_terrainModelRB, this->_terrainNormalMatrixRB);
+	// _renderMatrices.emplace_back(this->_terrainModelL, this->_terrainNormalMatrixL);
+	// _renderMatrices.emplace_back(this->_terrainModelR, this->_terrainNormalMatrixR);
+	// _renderMatrices.emplace_back(this->_terrainModelF, this->_terrainNormalMatrixF);
+	// _renderMatrices.emplace_back(this->_terrainModelB, this->_terrainNormalMatrixB);
+	// _renderMatrices.emplace_back(this->_terrainModelLF, this->_terrainNormalMatrixLF);
+	// _renderMatrices.emplace_back(this->_terrainModelRF, this->_terrainNormalMatrixRF);
+	// _renderMatrices.emplace_back(this->_terrainModelLB, this->_terrainNormalMatrixLB);
+	// _renderMatrices.emplace_back(this->_terrainModelRB, this->_terrainNormalMatrixRB);
 }
 
 
@@ -171,7 +182,8 @@ Terrain::Terrain(
 	Shader* shader, 
 	const std::string& sourceHeightMapPath, // must be 16-bit
 	const std::string& texturePath0, 
-	const std::string& texturePath1, 
+	const std::string& texturePath1,
+	const std::string& textureNormalMap,
 	float yScaleMult, 
 	float yShift,
 	const glm::vec3& sunPos,
@@ -185,6 +197,7 @@ _terrainNormalMatrix(glm::mat3(glm::transpose(glm::inverse(_terrainModel))))
 	assertFileExists(sourceHeightMapPath);
 	assertFileExists(texturePath0);
 	assertFileExists(texturePath1);
+	assertFileExists(textureNormalMap);
 
 
 	// load 16-bit heightmap image
@@ -199,6 +212,7 @@ _terrainNormalMatrix(glm::mat3(glm::transpose(glm::inverse(_terrainModel))))
 	// load textures
 	this->_textureId0 = _loadTextureJpg(texturePath0.c_str(), GL_TEXTURE0); // texture0
 	this->_textureId1 = _loadTextureJpg(texturePath1.c_str(), GL_TEXTURE1); // texture1
+	this->_textureNormalId = _loadTextureJpg(textureNormalMap.c_str(), GL_TEXTURE2); // texture2 (normal map)
 	const float textureDivScaling = 2.0f;
 
 	// vertex generation
@@ -305,6 +319,7 @@ _terrainNormalMatrix(glm::mat3(glm::transpose(glm::inverse(_terrainModel))))
 	// material (terrain)
 	this->_shader->setInt("material.diffuse", 0); // material (texture references) -- texture0
 	this->_shader->setInt("material.ambient", 1); // material (texture references) -- texture1
+	this->_shader->setInt("material.normal", 2); // material (texture references) -- texture2
 	this->_shader->setVec3("material.specular", glm::vec3(0.949, 0.776, 0.431));
 	this->_shader->setFloat("material.shininess", 1);
 	// light (sun)
@@ -312,6 +327,8 @@ _terrainNormalMatrix(glm::mat3(glm::transpose(glm::inverse(_terrainModel))))
 	this->_shader->setVec3("light.ambient", sunLightColor * 0.4f);
 	this->_shader->setVec3("light.diffuse", sunLightColor * 0.9f);
 	this->_shader->setVec3("light.specular", sunLightColor * 0.0f);
+
+	glCheckError();
 }
 
 void Terrain::render(const glm::mat4& view, const glm::mat4& projection, const glm::vec3& viewPos)
@@ -321,12 +338,15 @@ void Terrain::render(const glm::mat4& view, const glm::mat4& projection, const g
 	this->_shader->setMat4("projection", projection);
 	this->_shader->setVec3("viewPos", viewPos);
 
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	DEBUG_RENDER_AS_MESH_CONFIG_PRE
+
 	glBindVertexArray(this->_VAO);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, this->_textureId0);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, this->_textureId1);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, this->_textureNormalId);
 
 	for (std::pair<glm::mat4, glm::mat3>& p : this->_renderMatrices)
 	{
@@ -335,8 +355,10 @@ void Terrain::render(const glm::mat4& view, const glm::mat4& projection, const g
 		glDrawElements(GL_TRIANGLES, this->_indices.size(), GL_UNSIGNED_INT, 0);
 	}
 
+	glCheckError();
 	glBindVertexArray(0);
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	DEBUG_RENDER_AS_MESH_CONFIG_POST
 }
 
 float _baryCentricWeightPart1(float x0, float y0, float x1, float y1, float x2, float y2)
@@ -353,7 +375,6 @@ float _baryCentricWeightPart3(float x0, float y0, float x1, float y1, float x2, 
 {
 	return (y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2);
 }
-
 
 float Terrain::getWorldHeightAt(float x, float z) const
 {
