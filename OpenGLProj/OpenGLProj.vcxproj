@@ -137,6 +137,7 @@
     <ClCompile Include="..\..\glad\src\glad.c" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CameraManager.cpp" />
+    <ClCompile Include="CameraUtils.cpp" />
     <ClCompile Include="DistanceFieldPostProcessor.cpp" />
     <ClCompile Include="CarriedGameObject.cpp" />
     <ClCompile Include="PlayerState.cpp" />
@@ -158,6 +159,7 @@
     <ClCompile Include="Skybox.cpp" />
     <ClCompile Include="Sun.cpp" />
     <ClCompile Include="Terrain.cpp" />
+    <ClCompile Include="UITextRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -189,9 +191,11 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CameraManager.h" />
+    <ClInclude Include="CameraUtils.h" />
     <ClInclude Include="camera_m.h" />
     <ClInclude Include="FileConstants.h" />
     <ClInclude Include="CarriedGameObject.h" />
+    <ClInclude Include="GameObjectConstants.h" />
     <ClInclude Include="jfa_algo_old.frag" />
     <ClInclude Include="DistanceFieldPostProcessor.h" />
     <ClInclude Include="PlayerState.h" />
@@ -213,6 +217,7 @@
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="Sun.h" />
     <ClInclude Include="Terrain.h" />
+    <ClInclude Include="UITextRenderer.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="WorldMathUtils.h" />
   </ItemGroup>

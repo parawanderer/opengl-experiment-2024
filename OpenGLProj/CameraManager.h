@@ -32,7 +32,7 @@ public:
 
 	glm::vec3 getPos() const;
 
-	bool isPlayer() const;
+	bool isPlayerCamera() const;
 private:
 	Camera _noclipCam;
 	PlayerCamera _playerCam;

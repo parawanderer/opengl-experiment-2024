@@ -129,6 +129,11 @@ void DistanceFieldPostProcessor::setOutlineSize(float outlineSize)
 	this->_outlineSize = outlineSize;
 }
 
+void DistanceFieldPostProcessor::setOutlinePulsate(bool doPulsate)
+{
+	this->_outlinePulsate = doPulsate;
+}
+
 /**
  * 	trying to create an outline following https://bgolus.medium.com/the-quest-for-very-wide-outlines-ba82ed442cd9
  *	https://www.youtube.com/watch?v=nKJgUsAU2d0
@@ -192,7 +197,6 @@ void DistanceFieldPostProcessor::computeAndRenderOverlay(const glm::mat4& projec
 	// see: https://en.wikipedia.org/wiki/Jump_flooding_algorithm
 	// main reference here: https://computergraphics.stackexchange.com/questions/2102/is-jump-flood-algorithm-separable
 
-
 	unsigned int currentFrameBuffer = this->_framebuffer1;
 	unsigned int currentTexture = this->_textureColorbuffer1;
 	unsigned int lastFrameBuffer = this->_framebuffer2;
@@ -240,7 +244,7 @@ void DistanceFieldPostProcessor::computeAndRenderOverlay(const glm::mat4& projec
 
 
 	this->_jfaDistanceFieldConvertorShader.use();
-	const float outlinePulse = sin(6.0f * glfwGetTime()) / 1000.0f;
+	const float outlinePulse = this->_outlinePulsate ? sin(6.0f * glfwGetTime()) / 1000.0f : 0.0f;
 	this->_jfaDistanceFieldConvertorShader.setFloat("outlinePlacementOffset", this->_outlineSize + outlinePulse);
 
 	this->_quad->draw(lastTexture);

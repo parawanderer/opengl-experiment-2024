@@ -16,7 +16,7 @@ public:
 	void setCarriedItem(const CarriedGameObject& item);
 	CarriedGameObject& getCarriedItem();
 
-	void removeCarriedItem();
+	CarriedGameObject removeCarriedItem();
 
 private:
 	bool _hasItem = false;

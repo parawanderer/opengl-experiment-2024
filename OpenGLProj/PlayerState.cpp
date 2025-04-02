@@ -19,8 +19,10 @@ CarriedGameObject& PlayerState::getCarriedItem()
 	return this->_carriedItem;
 }
 
-void PlayerState::removeCarriedItem()
+CarriedGameObject PlayerState::removeCarriedItem()
 {
 	this->_hasItem = false;
+	const auto item = this->_carriedItem;
 	this->_carriedItem = CarriedGameObject(nullptr);
+	return item;
 }

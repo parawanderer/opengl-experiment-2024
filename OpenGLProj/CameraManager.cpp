@@ -37,6 +37,12 @@ void CameraManager::beforeLoop()
 
 void CameraManager::processInput(GLFWwindow* window)
 {
+	if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) // for "observer"
+		this->switchToNoClip();
+
+	if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) // for "player"
+		this->switchToPlayer();
+
 	this->_currentCam->processInput(window);
 }
 
@@ -72,7 +78,7 @@ glm::vec3 CameraManager::getPos() const
 		: this->_playerCam.getPosIncludingJump();
 }
 
-bool CameraManager::isPlayer() const
+bool CameraManager::isPlayerCamera() const
 {
 	return this->_currentCam == &this->_playerCam;
 }

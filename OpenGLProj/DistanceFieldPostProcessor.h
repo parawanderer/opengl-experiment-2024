@@ -16,6 +16,7 @@ public:
 
 	void updateNewWidthHeight(int newWidth, int newHeight);
 	void setOutlineSize(float outlineSize);
+	void setOutlinePulsate(bool doPulsate);
 
 	void computeAndRenderOverlay(const glm::mat4& projection, const glm::mat4& view, const std::vector<RenderableGameObject*>& objects, unsigned int overlayOutputToBufferId);
 
@@ -59,6 +60,7 @@ private:
 	int _currentHeight;
 
 	float _outlineSize = 0.001f;
+	bool _outlinePulsate = false;
 
 	unsigned int _framebuffer1;
 	unsigned int _textureColorbuffer1;

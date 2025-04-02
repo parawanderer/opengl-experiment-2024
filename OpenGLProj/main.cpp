@@ -22,11 +22,13 @@
 #include "Colors.h"
 #include "ErrorUtils.h"
 #include "Font.h"
+#include "UITextRenderer.h"
 #include "Shader.h"
 #include "stb_image.h"
 #include "Terrain.h"
 #include "Camera.h"
 #include "CameraManager.h"
+#include "CameraUtils.h"
 #include "DistanceFieldPostProcessor.h"
 #include "Quad.h"
 #include "RenderableGameObject.h"
@@ -36,6 +38,7 @@
 #include "WorldMathUtils.h"
 #include "PlayerState.h"
 #include "CarriedGameObject.h"
+#include "GameObjectConstants.h"
 
 // keeping this at a power of two to support the outline-rendering JFA algorithm.
 // I could make this not a power of two but then I need to perform some annoying buffer size remappings during the JFA algo.
@@ -83,6 +86,7 @@ glm::vec3 sunLightColor = Colors::WHITE;
 
 #pragma endregion
 
+GLFWwindow* init();
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
@@ -94,45 +98,13 @@ void processInput(GLFWwindow* window);
 
 void processKey(GLFWwindow* window, int key, int scancode, int action, int mods);
 
+glm::mat4 computeOrnithroperModelTransform(const float t);
+
 
 int main()
 {
-# pragma region INIT
-	glfwInit();
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	// only for debugging:
-	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
-	GLFWwindow* window = glfwCreateWindow(INITIAL_WIDTH, INITIAL_HEIGHT, "ComputerGraphics Proj :)", NULL, NULL);
-	if (window == NULL)
-	{
-		std::cout << "Failed to create GLFW	window" << std::endl;
-		glfwTerminate();
-		return -1;
-	}
-	glfwMakeContextCurrent(window);
-	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
-		std::cout << "Failed to initialize GLAD" << std::endl;
-		return -1;
-	}
-
-	glViewport(0, 0, INITIAL_WIDTH, INITIAL_HEIGHT);
-
-	glEnable(GL_DEPTH_TEST);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glFrontFace(GL_CW);
-
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetCursorPosCallback(window, mouseCallback);
-	glfwSetScrollCallback(window, scrollCallback);
-	glfwSetKeyCallback(window, processKey);
-
-# pragma endregion
+	GLFWwindow* window = init();
+	if (window == nullptr) return -1;
 
 #pragma region SHADERS_AND_POSTPROCESSING
 	Shader genericShader = Shader::fromFiles("mesh.vert", "mesh.frag");
@@ -143,33 +115,24 @@ int main()
 	genericShader.setVec3("light.specular", sunLightColor * 0.1f);
 
 	Quad quad;
-	DistanceFieldPostProcessor distanceFieldPostProcessor(
-		&quad,
-		currentWidth,
-		currentHeight
-	);
+	DistanceFieldPostProcessor distanceFieldPostProcessor(&quad, currentWidth, currentHeight);
 	distanceFieldPostProcessor.setOutlineSize(0.003f);
+	distanceFieldPostProcessor.setOutlinePulsate(true);
 
 #pragma endregion
 
 #pragma region GAME_MODELS
-	
-
 	// backpack
 	//Model backpack("resources/models/backpack/backpack.obj");
 	// glm::mat4 backpackModel = glm::mat4(1.0f);
 	// backpackModel = glm::translate(backpackModel, glm::vec3(0.0f, 80.0f, 0.0f));
 	// backpackModel = glm::scale(backpackModel, glm::vec3(1.0f, 1.0f, 1.0f));	
 
-	// some models
 	RenderableGameObject ornithopter("resources/models/dune-ornithopter/ornithopter_edit.dae");
-
 
 	Model thumperModel("resources/models/thumper_dune/thumper_dune.dae"); // reuse the model
 	SphericalBoxedGameObject thumper(&thumperModel, 0.4f);
 	SphericalBoxedGameObject thumper2(&thumperModel, 0.4f);
-	//thumper.setShowBoundingSphere(true);
-	//thumper2.setShowBoundingSphere(true);
 
 	RenderableGameObject nomad("resources/models/rust-nomad/RustNomad.fbx");
 
@@ -182,6 +145,7 @@ int main()
 	fontShader.use();
 	fontShader.setMat4("projection", textProjection);
 	Font font("resources/font/play/Play-Regular.ttf", &fontShader);
+	UITextRenderer uiText(&font);
 #pragma endregion
 
 #pragma region SKYBOX
@@ -198,7 +162,7 @@ int main()
 #pragma endregion
 
 #pragma region SUN
-	// this is currently a cube which is not necessarily ideal
+	// this is currently a cube which is not necessarily ideal (however it's far out of range to see when spawning in the map)
 	Shader lightCubeShader = Shader::fromFiles("shader_lightsource.vert", "shader_lightsource.frag");
 	glm::mat4 lightCubeModel = glm::mat4(1.0f);
 	lightCubeModel = glm::translate(lightCubeModel, sunPos);
@@ -207,8 +171,6 @@ int main()
 #pragma endregion
 
 #pragma region TERRAIN
-	const float yScaleMult = 192.0f;
-	const float yShift = 32.0f;
 	Shader terrainShader = Shader::fromFiles("terrain.vert", "terrain.frag");
 	Terrain sandTerrain(
 		&terrainShader, 
@@ -216,8 +178,8 @@ int main()
 		"resources/terrain/texture/sand_texture.jpg",
 		"resources/terrain/texture/sand_texture2.jpg",
 		"resources/terrain/texture/testtt.jpg",
-		yScaleMult, 
-		yShift,
+		192.0f,
+		32.0f,
 		sunPos,
 		sunLightColor
 	);
@@ -227,28 +189,22 @@ int main()
 #pragma region MODELTRANSFORMS
 
 	const glm::vec3 smallOffsetY = glm::vec3(0.0, 0.1, 0.0);
-
+	const float thumperScale = 0.7f;
 
 	glm::mat4 thumper1Model = glm::mat4(1.0f);
 	thumper1Model = glm::translate(thumper1Model, sandTerrain.getWorldHeightVecFor(5.0f, 6.0f) + smallOffsetY);
-	thumper1Model = glm::scale(thumper1Model, glm::vec3(0.7f));
+	thumper1Model = glm::scale(thumper1Model, glm::vec3(thumperScale));
 	thumper.setModelTransform(thumper1Model);
 
 	glm::mat4 thumper2Model = glm::mat4(1.0f);
 	thumper2Model = glm::translate(thumper2Model, sandTerrain.getWorldHeightVecFor(9.0f, 10.0f) + smallOffsetY);
-	thumper2Model = glm::scale(thumper2Model, glm::vec3(0.7f));
+	thumper2Model = glm::scale(thumper2Model, glm::vec3(thumperScale));
 	thumper2.setModelTransform(thumper2Model);
 
 	glm::mat4 nomadModel = glm::mat4(1.0f);
 	nomadModel = glm::translate(nomadModel, sandTerrain.getWorldHeightVecFor(6.0f, 6.0f) + smallOffsetY);
 	nomadModel = glm::rotate(nomadModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	nomad.setModelTransform(nomadModel);
-
-	// droneModel = glm::translate(droneModel, glm::vec3(-24.0f, sandTerrain.getWorldHeightAt(-24.0f, 24.0f) + 2.0f, 24.0f));
-	// droneModel = glm::scale(droneModel, glm::vec3(0.003f));
-
-	// sandRocksModel = glm::translate(sandRocksModel, glm::vec3(980.0f, sandTerrain.getWorldHeightAt(980.0f, 15.0f) - 20.0f, 15.0f));
-	// sandRocksModel = glm::scale(sandRocksModel, glm::vec3(0.25f, 0.5f, 0.25f));
 
 	glm::mat4 sandWormModel = glm::mat4(1.0f);
 	sandWormModel = glm::translate(sandWormModel, sandTerrain.getWorldHeightVecFor(80.0f, 50.0f));
@@ -257,10 +213,8 @@ int main()
 
 #pragma endregion
 
-
 	// state
 	PlayerState player;
-
 	std::set dynamicItems = { &thumper, &thumper2 };
 
 	// ============ [ MAIN LOOP ] ============
@@ -268,43 +222,28 @@ int main()
 	while (!glfwWindowShouldClose(window))
 	{
 		camMgr.onNewFrame();
-
-		// ------ ** input ** ------
 		processInput(window);
 		camMgr.processInput(window);
 
-		// ------ ** model/view/projection matrices ** ------
 #pragma region PROJECTING
 		const glm::vec3 cameraPos = camMgr.getPos();
 		const glm::vec3 cameraFront = camMgr.getCurrentCamera()->getFront(); // direction
 		const glm::mat4 view = camMgr.getCurrentCamera()->getView();
 		const float fov = camMgr.getCurrentCamera()->getFov();
-
-		const glm::mat4 projection = glm::perspective(
-			glm::radians(fov),
-			(float)currentWidth / (float)currentHeight,
-			0.1f,
-			RENDER_DISTANCE
-		);
+		const glm::mat4 projection = glm::perspective(glm::radians(fov),(float)currentWidth / (float)currentHeight,0.1f, RENDER_DISTANCE);
 #pragma endregion
 
-		// ------ ** mouse ray picking ** ------
-#pragma region MOUSE_RAY_PICKING
 
+#pragma region MOUSE_RAY_PICKING
 		SphericalBoxedGameObject* result = nullptr;
 		if (!player.hasCarriedItem()) {
 			std::vector considered(dynamicItems.begin(), dynamicItems.end());
-			result = WorldMathUtils::findClosestIntersection(
-				considered,
-				cameraPos,
-				cameraFront,
-				5.0f
-			);
+			result = WorldMathUtils::findClosestIntersection(considered,cameraPos,cameraFront,5.0f);
 		}
-
 #pragma endregion
 
 #pragma region RENDERING
+		const float t = (float)glfwGetTime();
 
 		glBindFramebuffer(GL_FRAMEBUFFER, SCREEN_OUTPUT_BUFFER_ID); // back to default (output to screen)
 		glEnable(GL_DEPTH_TEST);
@@ -313,10 +252,8 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glCheckError();
 
-		// ------ ** skybox ** ------
+		// WORLD
 		skybox.render(view, projection);
-
-		// ------ ** terrain ** ------
 		sandTerrain.render(view, projection, cameraPos);
 
 		// ------ ** light cube ** ------
@@ -336,15 +273,7 @@ int main()
 		// genericShader.setMat4("normalMatrix", backpackNormalMatrix);
 		// backpack.draw(genericShader);
 
-		// ornithopter
-		float orniZDisplacement = sin(-glfwGetTime() / 3.0f) * 1500.f;
-		float orniYDisplacement = (cos(glfwGetTime()) - 1) * 25.0f;
-		float orniXDisplacement = sin(glfwGetTime()) * -10.f;
-		glm::mat4 orniModel = glm::mat4(1.0f);
-		orniModel = glm::translate(orniModel, glm::vec3(orniXDisplacement, 400.0f + orniYDisplacement, orniZDisplacement));
-		orniModel = glm::rotate(orniModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		orniModel = glm::scale(orniModel, glm::vec3(2.0f));
-		ornithopter.setModelTransform(orniModel);
+		ornithopter.setModelTransform(computeOrnithroperModelTransform(t));
 		ornithopter.draw(genericShader);
 
 		// nomad
@@ -354,9 +283,6 @@ int main()
 		sandWorm.draw(genericShader);
 
 		// *dynamic items*
-		// thumpers
-		// thumper.draw(genericShader);
-		// thumper2.draw(genericShader);
 		for (auto thump : dynamicItems) // dynamic world items
 		{
 			thump->draw(genericShader);
@@ -365,67 +291,22 @@ int main()
 		if (player.hasCarriedItem()) // dynamic "in player hand" items
 		{
 			// (the perspective on this thing doesn't really make sense in the world)
-			CarriedGameObject& item = player.getCarriedItem();
-			glm::mat4 model = view;
-			model = glm::inverse(model); // cancel view transformation (makes object stick to the camera)
-			const float t = glfwGetTime();
-			const float speedMultiplier = camMgr.getCurrentCamera()->isSpeeding() ? 1.5f : 1.0f;
-			const float xWobble = camMgr.getCurrentCamera()->isMoving() ? (sin(t * 2.0f * M_PI * speedMultiplier) / 200.0f) * speedMultiplier : 0.0;
-			const float yWobble = camMgr.getCurrentCamera()->isMoving() ? sin(t * 4.0f * M_PI * speedMultiplier) / 200.0f : 0.0;
-			const float xRotate = camMgr.getCurrentCamera()->isMoving() ? (float)glm::radians(sin(t * 2.0f * M_PI * speedMultiplier) * 2.0f * speedMultiplier) : 0.0;
-			model = glm::translate(model, glm::vec3(0.5f + xWobble, -0.4f + yWobble, -1.0f)); // move "forwards", "right" and "down"
-			model = glm::scale(model, glm::vec3(0.7f)); // scale it down
-			model = glm::rotate(model, -xRotate, glm::vec3(0.0f, 0.0f, 1.0f)); // wobble-related rotate
-			model = glm::rotate(model, glm::radians(-15.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // rotate to make position look better perspective-wise
-
-			item.getModel()->setModelTransform(model);
-			item.getModel()->draw(genericShader);
+			SphericalBoxedGameObject* item = player.getCarriedItem().getModel();
+			glm::mat4 model = getCarriedItemModelTransform(view, t, camMgr.getCurrentCamera()->isMoving(), camMgr.getCurrentCamera()->isSpeeding(), thumperScale);
+			item->setModelTransform(model);
+			item->draw(genericShader);
 		}
 
 		glCheckError();
 
 		// ------ ** post-processing ** ------
-
-
 		fontShader.use();
 		fontShader.setMat4("projection", textProjection);
 
 		// highlight selectable item
 		if (result != nullptr) {
-			distanceFieldPostProcessor.computeAndRenderOverlay(
-				projection, 
-				view, 
-				{ result }, 
-				SCREEN_OUTPUT_BUFFER_ID
-			);
-
-			// text overlay (inspired by bethesda games because it is simple to do)
-			// obviously the font isn't really all that nice looking.
-			// but I don't feel like fiddling with fonts/implementing distance-fields *again*,
-			// but this time for fonts.
-			font.renderText(
-				"Thumper",
-				(currentWidth * (5.0f / 8.0f)), 
-				(currentHeight / 2.0f), 
-				0.6f, 
-				Colors::WHITE
-			);
-
-			font.renderText(
-				"C) TAKE",
-				(currentWidth * (5.0f / 8.0f)),
-				(currentHeight / 2.0f) - 40.0f,
-				0.5f,
-				Colors::WHITE
-			);
-			// TODO: this should toggle an animation with sound effects, I'd say
-			font.renderText(
-				"E) ACTIVATE",
-				(currentWidth * (5.0f / 8.0f)),
-				(currentHeight / 2.0f) - 80.0f,
-				0.5f,
-				Colors::WHITE * 0.8f
-			);
+			distanceFieldPostProcessor.computeAndRenderOverlay(projection, view, { result }, SCREEN_OUTPUT_BUFFER_ID);
+			uiText.renderItemInteractOverlay(THUMPER, currentWidth, currentHeight);
 
 			if (!player.hasCarriedItem() && glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS) // only pick up if "hands are free"
 			{
@@ -437,33 +318,18 @@ int main()
 
 		if (player.hasCarriedItem())
 		{
-			font.renderText(
-				"Thumper",
-				(currentWidth - 150.0f),
-				55.0f,
-				0.45f,
-				Colors::WHITE
-			);
+			uiText.renderCarriedItemInfo(THUMPER, currentWidth, currentHeight);
 
-			font.renderText(
-				"E) DROP",
-				(currentWidth - 150.0f),
-				30.0f,
-				0.35f,
-				Colors::WHITE
-			);
-
-			if (camMgr.isPlayer() && glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+			if (camMgr.isPlayerCamera() && glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
 			{
 				// drop the item
-				SphericalBoxedGameObject* model = player.getCarriedItem().getModel();
-				player.removeCarriedItem();
+				SphericalBoxedGameObject* model = player.removeCarriedItem().getModel();
 
 				// update its position
 				glm::mat4 newModel = glm::mat4(1.0f);
-
+				// translate position just comes out to a nice "in front of the player" position
 				newModel = glm::translate(newModel, sandTerrain.getWorldHeightVecFor(cameraPos.x + (cameraFront.x * 2.5f), cameraPos.z + (cameraFront.z * 2.5f)) + smallOffsetY);
-				newModel = glm::scale(newModel, glm::vec3(0.7f));
+				newModel = glm::scale(newModel, glm::vec3(thumperScale));
 				model->setModelTransform(newModel);
 
 				// add it back to the dynamic items (for next loop)
@@ -473,19 +339,7 @@ int main()
 
 
 		// ------ ** text overlay ** ------
-		
-		font.renderText(
-			std::format("X:{:.2f} Y:{:.2f}, Z:{:.2f}", cameraPos.x, cameraPos.y, cameraPos.z),
-			25.0f,
-			currentHeight - 25.0f,
-			0.5f,
-			Colors::WHITE
-		);
-
-		// actually going to do a trick to get a center-of-the-screen "." indicator like in this game: https://youtu.be/6QZAhsxwNU0?si=J7eN6p2nRvc4Z_tW
-		// mostly because I think it is useful/helpful for object-picking purposes
-		font.renderText(".", currentWidth / 2.0f, currentHeight / 2.0f, 0.5f, Colors::WHITE);
-
+		uiText.renderMainUIOverlay(cameraPos, currentWidth, currentHeight);
 		glCheckError();
 
 #pragma endregion
@@ -500,6 +354,45 @@ int main()
 #pragma endregion
 
 	return 0;
+}
+
+GLFWwindow* init()
+{
+	glfwInit();
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+	// only for debugging:
+	glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
+	GLFWwindow* window = glfwCreateWindow(INITIAL_WIDTH, INITIAL_HEIGHT, "ComputerGraphics Proj :)", NULL, NULL);
+	if (window == NULL)
+	{
+		std::cout << "Failed to create GLFW	window" << std::endl;
+		glfwTerminate();
+		return nullptr;
+	}
+	glfwMakeContextCurrent(window);
+	glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	{
+		std::cout << "Failed to initialize GLAD" << std::endl;
+		return nullptr;
+	}
+
+	glViewport(0, 0, INITIAL_WIDTH, INITIAL_HEIGHT);
+
+	glEnable(GL_DEPTH_TEST);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glFrontFace(GL_CW);
+
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPosCallback(window, mouseCallback);
+	glfwSetScrollCallback(window, scrollCallback);
+	glfwSetKeyCallback(window, processKey);
+
+	return window;
 }
 
 void framebufferSizeCallback(GLFWwindow* window, int width, int height)
@@ -523,15 +416,20 @@ void processInput(GLFWwindow* window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
-
-	if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) // for "observer"
-		camMgr.switchToNoClip();
-
-	if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) // for "player"
-		camMgr.switchToPlayer();
 }
 
 void processKey(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
 	camMgr.processKey(window, key, scancode, action, mods);
+}
+
+
+glm::mat4 computeOrnithroperModelTransform(const float t)
+{
+	// ornithopter "fly effect" (it's not the best animation but it's interesting as a placeholder)
+	glm::mat4 orniModel = glm::mat4(1.0f);
+	orniModel = glm::translate(orniModel, glm::vec3(sin(t) * -10.f, 400.0f + ((cos(t) - 1) * 25.0f), sin(-t / 3.0f) * 1500.f));
+	orniModel = glm::rotate(orniModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	orniModel = glm::scale(orniModel, glm::vec3(2.0f));
+	return orniModel;
 }

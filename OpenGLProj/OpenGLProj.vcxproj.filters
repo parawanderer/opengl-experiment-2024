@@ -22,12 +22,6 @@
     <Filter Include="Header Files\old">
       <UniqueIdentifier>{de164cc7-a357-4d3f-97b8-39093fb08e79}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\user">
-      <UniqueIdentifier>{5247ade8-031f-4007-9e07-f3f91790c1bb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\user">
-      <UniqueIdentifier>{892ed730-c4fe-4b62-bc13-c70422c4338c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\util">
       <UniqueIdentifier>{9ea124f5-8a27-400f-9fef-22366a722ce0}</UniqueIdentifier>
     </Filter>
@@ -79,6 +73,18 @@
     <Filter Include="Source Files\game">
       <UniqueIdentifier>{17441d32-783d-468a-93ad-f553d34369e1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\camera">
+      <UniqueIdentifier>{892ed730-c4fe-4b62-bc13-c70422c4338c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\camera">
+      <UniqueIdentifier>{5247ade8-031f-4007-9e07-f3f91790c1bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\UI">
+      <UniqueIdentifier>{17390806-755f-4fcf-9e5a-0239451d0d00}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\UI">
+      <UniqueIdentifier>{784b39e3-b233-4abd-9a7d-9c821743577c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\glad\src\glad.c">
@@ -115,10 +121,10 @@
       <Filter>Source Files\gameobject\models</Filter>
     </ClCompile>
     <ClCompile Include="PlayerCamera.cpp">
-      <Filter>Source Files\user</Filter>
+      <Filter>Source Files\camera</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
-      <Filter>Source Files\user</Filter>
+      <Filter>Source Files\camera</Filter>
     </ClCompile>
     <ClCompile Include="ErrorUtils.cpp">
       <Filter>Source Files\util</Filter>
@@ -127,7 +133,7 @@
       <Filter>Source Files\util</Filter>
     </ClCompile>
     <ClCompile Include="CameraManager.cpp">
-      <Filter>Source Files\user</Filter>
+      <Filter>Source Files\camera</Filter>
     </ClCompile>
     <ClCompile Include="RenderableGameObject.cpp">
       <Filter>Source Files\gameobject</Filter>
@@ -152,6 +158,12 @@
     </ClCompile>
     <ClCompile Include="CarriedGameObject.cpp">
       <Filter>Source Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="CameraUtils.cpp">
+      <Filter>Source Files\camera</Filter>
+    </ClCompile>
+    <ClCompile Include="UITextRenderer.cpp">
+      <Filter>Source Files\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -258,10 +270,10 @@
       <Filter>Header Files\gameobject\models</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
-      <Filter>Header Files\user</Filter>
+      <Filter>Header Files\camera</Filter>
     </ClInclude>
     <ClInclude Include="PlayerCamera.h">
-      <Filter>Header Files\user</Filter>
+      <Filter>Header Files\camera</Filter>
     </ClInclude>
     <ClInclude Include="ErrorUtils.h">
       <Filter>Header Files\util</Filter>
@@ -276,7 +288,7 @@
       <Filter>Header Files\world</Filter>
     </ClInclude>
     <ClInclude Include="CameraManager.h">
-      <Filter>Header Files\user</Filter>
+      <Filter>Header Files\camera</Filter>
     </ClInclude>
     <ClInclude Include="RenderableGameObject.h">
       <Filter>Header Files\gameobject</Filter>
@@ -313,6 +325,15 @@
     </ClInclude>
     <ClInclude Include="CarriedGameObject.h">
       <Filter>Header Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraUtils.h">
+      <Filter>Header Files\camera</Filter>
+    </ClInclude>
+    <ClInclude Include="UITextRenderer.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObjectConstants.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
