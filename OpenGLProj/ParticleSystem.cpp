@@ -5,6 +5,7 @@
 #include <glm/mat4x4.hpp>
 
 #include "Colors.h"
+#include "ConfigConstants.h"
 #include "ErrorUtils.h"
 #include "FileUtils.h"
 #include "WorldMathUtils.h"
@@ -34,7 +35,7 @@ _centerPosition(particlesCenter),
 _particleSize(particleSize)
 {
 	// particle texture
-	this->_textureId = loadTextureFromFile(particleTexturePath.c_str(), PROJ_CURRENT_DIR, GL_TEXTURE0);
+	this->_textureId = loadSRGBColorSpaceTexture(particleTexturePath.c_str(), PROJ_CURRENT_DIR, GL_TEXTURE0);
 	
 	for (unsigned int i = 0; i < this->_nrParticles; ++i)
 	{
@@ -151,7 +152,9 @@ void ParticleSystem::respawnParticle(Particle& particle, const glm::vec3& partic
 	particle.position = particleCenterPosition + glm::vec3(X, Y, Z); // +offset;
 
 	// color of the particle
-	particle.color = glm::vec4(0.878, 0.624, 0.376, 0.0f);
+
+	const glm::vec3 rgbColor = USE_SRGB_COLORS ? glm::vec3(0.722, 0.318, 0.082) : glm::vec3(0.878, 0.624, 0.376);
+	particle.color = glm::vec4(rgbColor, 0.0f);
 
 	// lifetime of the particle (it gets removed/replaced after this)
 	particle.life = this->_particleLifetime;

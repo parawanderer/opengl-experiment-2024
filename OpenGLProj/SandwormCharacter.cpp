@@ -14,7 +14,7 @@ const std::string MOVING_BELOWGROUND_ANIM = "moveunder";
 const std::string BACKGROUND_RUMBLE_TRACK = "distant_earth_rumble.mp3";
 const float BACKGROUND_RUMBLE_MIN_DISTANCE = 250.0f;
 const std::string IN_FRONT_EARTH_BREAKING_TRACK = "ripping_earth.mp3";
-const float IN_FRONT_EARTH_RIPPING_MIN_DISTANCE = 10.0f;
+const float IN_FRONT_EARTH_RIPPING_MIN_DISTANCE = 20.0f;
 
 
 const float HEAD_OFFSET_LENGTH_FROM_MIDDLE = 150.0f; // the head is 150m removed from the middle of the character
@@ -40,11 +40,11 @@ SandWormCharacter::SandWormCharacter(
 	_currentPos(terrain->getWorldHeightVecFor(initialX, initialZ) + UNDERGROUND_OFFSET),
 	_currentFront(glm::vec3(0.0, 0.0, -1.0))
 {
-	this->_animator.playAnimation(CHASING_ABOVEGROUND_ANIM);
+	this->_animator.playAnimation(TPOSE_ANIM);
 	
 	this->_backgroundNoise = this->_sound->playTracked3D(BACKGROUND_RUMBLE_TRACK, true, this->_currentPos - HEAD_OFFSET_VECTOR);
 	this->_backgroundNoise->setMinDistance(BACKGROUND_RUMBLE_MIN_DISTANCE);
-	this->_backgroundNoise->setVolume(0.5f);
+	this->_backgroundNoise->setVolume(0.75f);
 
 	this->_inFrontNoise = this->_sound->playTracked3D(IN_FRONT_EARTH_BREAKING_TRACK, true, this->_currentPos - HEAD_OFFSET_VECTOR);
 	this->_inFrontNoise->setMinDistance(IN_FRONT_EARTH_RIPPING_MIN_DISTANCE);

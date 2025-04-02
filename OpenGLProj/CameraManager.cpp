@@ -1,6 +1,6 @@
 #include "CameraManager.h"
 
-constexpr auto PLAYER_HEIGHT_WOLD_SPACE = 2.0f;
+constexpr auto PLAYER_HEIGHT_WOLD_SPACE = 1.8f;
 constexpr auto STARTING_VELOCITY_OF_JUMP = 5.0f;
 
 CameraManager::CameraManager(
@@ -11,8 +11,8 @@ CameraManager::CameraManager(
 	int initialWidth,
 	int initialHeight,
 	float speedMultiplier) :
-_noclipCam(Camera(time, initialPos, initialFront, initialWidth, initialHeight, speedMultiplier)),
-_playerCam(PlayerCamera(time, initialPos, initialFront, initialWidth, initialHeight, speedMultiplier, PLAYER_HEIGHT_WOLD_SPACE, STARTING_VELOCITY_OF_JUMP)),
+_noclipCam(Camera(time, initialPos, initialFront, initialWidth, initialHeight, speedMultiplier * 2.0f)),
+_playerCam(PlayerCamera(time, initialPos, initialFront, initialWidth, initialHeight, speedMultiplier / 2.0f, PLAYER_HEIGHT_WOLD_SPACE, STARTING_VELOCITY_OF_JUMP)),
 _currentCam(startWithPlayer ? &this->_playerCam : &this->_noclipCam)
 {}
 

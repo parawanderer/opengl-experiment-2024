@@ -252,9 +252,9 @@ _terrainNormalMatrix(glm::mat3(glm::transpose(glm::inverse(_terrainModel))))
 	this->populateModelMatrices(); // for terrain "tiling"
 
 	// load textures
-	this->_textureId0 = loadTextureFromFile(texturePath0.c_str(), PROJ_CURRENT_DIR, GL_TEXTURE0); //loadTextureJpg(texturePath0.c_str(), GL_TEXTURE0); // texture0
-	this->_textureId1 = loadTextureFromFile(texturePath1.c_str(), PROJ_CURRENT_DIR, GL_TEXTURE1);  //loadTextureJpg(texturePath1.c_str(), GL_TEXTURE1); // texture1
-	this->_textureNormalId = loadTextureFromFile(textureNormalMap.c_str(), PROJ_CURRENT_DIR, GL_TEXTURE2); //loadTextureJpg(textureNormalMap.c_str(), GL_TEXTURE2); // texture2 (normal map)
+	this->_textureId0 = loadSRGBColorSpaceTexture(texturePath0.c_str(), PROJ_CURRENT_DIR, GL_TEXTURE0); // texture0
+	this->_textureId1 = loadSRGBColorSpaceTexture(texturePath1.c_str(), PROJ_CURRENT_DIR, GL_TEXTURE1);  // texture1
+	this->_textureNormalId = loadDataTexture(textureNormalMap.c_str(), PROJ_CURRENT_DIR, GL_TEXTURE2); // texture2 (normal map)
 
 	// vertex generation
 	const float yScale = yScaleMult / 65536.0f; // 16-bit image gives more possible levels...
@@ -290,12 +290,19 @@ void Terrain::setupMesh()
 	glGenBuffers(1, &this->_VBO);
 	glBindBuffer(GL_ARRAY_BUFFER, this->_VBO);
 	glBufferData(GL_ARRAY_BUFFER, this->_vertices.size() * sizeof(TerrainVertex), &this->_vertices[0], GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)0);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)offsetof(TerrainVertex, texture));
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)0);
 	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)offsetof(TerrainVertex, normal));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)offsetof(TerrainVertex, texture));
 	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)offsetof(TerrainVertex, normal));
+	
+	// normal texture mapping
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)offsetof(TerrainVertex, tangent));
+	glEnableVertexAttribArray(4);
+	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(TerrainVertex), (void*)offsetof(TerrainVertex, normal));
+	
 
 	glGenBuffers(1, &this->_EBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->_EBO);
@@ -313,12 +320,12 @@ void Terrain::setupShader(const glm::vec3& sunPos, const glm::vec3& sunLightColo
 	this->_shader->setInt("material.ambient", 1); // material (texture references) -- texture1
 	this->_shader->setInt("material.normal", 2); // material (texture references) -- texture2
 	this->_shader->setVec3("material.specular", glm::vec3(0.949, 0.776, 0.431));
-	this->_shader->setFloat("material.shininess", 1);
+	this->_shader->setFloat("material.shininess", 0.5f);
 	// light (sun)
 	this->_shader->setVec3("light.position", sunPos);
 	this->_shader->setVec3("light.ambient", sunLightColor * 0.4f);
 	this->_shader->setVec3("light.diffuse", sunLightColor * 0.9f);
-	this->_shader->setVec3("light.specular", sunLightColor * 0.0f);
+	this->_shader->setVec3("light.specular", sunLightColor * 0.00f);
 }
 
 void Terrain::render(const glm::mat4& view, const glm::mat4& projection, const glm::vec3& viewPos)

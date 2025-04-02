@@ -41,6 +41,7 @@
 #include "WorldMathUtils.h"
 #include "PlayerState.h"
 #include "CarriedGameObject.h"
+#include "ConfigConstants.h"
 #include "EffectConstants.h"
 #include "FileConstants.h"
 #include "GameObjectConstants.h"
@@ -100,6 +101,7 @@ CameraManager camMgr(
 constexpr float RENDER_DISTANCE = 2000.0f;
 
 glm::vec3 sunPos(1024.0f, 750.0f, -2000.0f);
+//glm::vec3 sunPos(0.0f, 140.0f, -2000.0f);
 glm::vec3 sunLightColor = Colors::WHITE;
 
 #pragma endregion
@@ -142,7 +144,8 @@ int main()
 #pragma region SHADERS_AND_POSTPROCESSING
 	Shader genericShader = Shader::fromFiles(SHADER_MESH_VERT, SHADER_MESH_FRAG);
 	genericShader.use();
-	genericShader.setVec3("light.position", sunPos);
+	//genericShader.setVec3("light.position", sunPos);
+	genericShader.setVec3("lightPos", sunPos);
 	genericShader.setVec3("light.ambient", sunLightColor * 0.5f);
 	genericShader.setVec3("light.diffuse", sunLightColor * 1.0f);
 	genericShader.setVec3("light.specular", sunLightColor * 1.0f);
@@ -297,7 +300,7 @@ int main()
 	PlayerState player = PlayerState(&sound, camMgr.getPlayerCamera());
 	camMgr.getPlayerCamera()->addSubscriber(&player);
 
-	NomadCharacter nomadCharacter(&timeMgr, &sandTerrain, &sound, &nomadObject, &nomadAnimations, 20.0f, -20.0f);
+	NomadCharacter nomadCharacter(&timeMgr, &sandTerrain, &sound, &nomadObject, &nomadAnimations, 55.0f, -200.0f);
 	SandWormCharacter sandWormCharacter(&timeMgr, &sandTerrain, &sound, &sandWormObject, &sandWormAnimations, 80.0f, 50.0f);
 	OrnithopterCharacter ornithopterCharacter(&timeMgr, &sound, &ornithopterObject, &ornithopterAnimations);
 
@@ -354,6 +357,7 @@ int main()
 #pragma region RENDERING
 		glBindFramebuffer(GL_FRAMEBUFFER, SCREEN_OUTPUT_BUFFER_ID);
 		glEnable(GL_DEPTH_TEST);
+		if (USE_SRGB_COLORS) glEnable(GL_FRAMEBUFFER_SRGB); // Gamma correction for better looking colours! https://learnopengl.com/Advanced-Lighting/Gamma-Correction
 		glClearColor(Colors::CUSTOM_BLUE.r, Colors::CUSTOM_BLUE.g, Colors::CUSTOM_BLUE.b, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -432,6 +436,7 @@ int main()
 		glCheckError();
 #pragma endregion
 
+		if (USE_SRGB_COLORS) glDisable(GL_FRAMEBUFFER_SRGB); // only the LAST step is allowed to apply gamma correction, otherwise our colours would get all messed-up: https://learnopengl.com/Advanced-Lighting/Gamma-Correction
 #pragma endregion
 
 		// check and call events and swap the buffers
@@ -534,7 +539,7 @@ std::vector<glm::vec3> computeAttenuatedLightSpheresPos(Terrain& terrain, const 
 	std::vector<glm::vec3> smallLightSpherePositions = { // MAX size = 4 (as per terrain.frag)
 			terrain.getWorldHeightVecFor(-160, 50) + glm::vec3(sin(t) * 10.0f, 7.0 + cos(t / 2) * 3.0f, cos(t) * 10.0f),
 			terrain.getWorldHeightVecFor(-170, 60) + glm::vec3(sin(t) * 80.0f, 6.0 + sin(t) * 3.0f, cos(t) * 3.0f),
-			terrain.getWorldHeightVecFor(-170, 40) + glm::vec3(sin(t) * 2.0f, 6.0 + sin(t) * 10.0f, cos(t) * 2.0f),
+			terrain.getWorldHeightVecFor(-170, 40) + glm::vec3(sin(t) * 2.0f, 10.5 + sin(t) * 10.0f, cos(t) * 2.0f),
 	};
 
 	return smallLightSpherePositions;

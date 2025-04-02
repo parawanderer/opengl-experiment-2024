@@ -5,7 +5,7 @@
 #include "WorldMathUtils.h"
 
 Camera::Camera(WorldTimeManager* time, glm::vec3 initialPos, glm::vec3 initialFront, int initialWidth, int initialHeight, float speedMultiplier)
-: _time(time), _cameraPos(initialPos), _cameraFront(initialFront), _lastX(initialWidth / 2), _lastY(initialHeight / 2), _speedMultiplier(speedMultiplier)
+: _time(time), _cameraPos(initialPos), _cameraFront(initialFront), _lastX(initialWidth / 2), _lastY(initialHeight / 2), _speedMultiplierBase(speedMultiplier)
 {}
 
 glm::mat4 Camera::getView() const
@@ -30,7 +30,7 @@ glm::vec3 Camera::getFront() const
 
 void Camera::processInput(GLFWwindow* window)
 {
-	const float cameraSpeed = this->getDeltaTime() * this->_speedMultiplier;
+	const float cameraSpeed = this->getDeltaTime() * this->_speedMultiplierBase;
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		this->_cameraPos += cameraSpeed * this->_cameraFront;
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)

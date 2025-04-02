@@ -58,9 +58,9 @@ constexpr auto MODEL_NOMAD = "resources/models/rust-nomad/RustNomad.fbx"; // ani
 
 constexpr auto MODEL_SANDWORM = "resources/models/sandworm2/Sandworm.fbx"; // model and animations by me (followed a tutorial)
 
-constexpr auto MODEL_CONTAINER_SMALL = "resources/models/military-container-free/Military_Container.dae";
+constexpr auto MODEL_CONTAINER_SMALL = "resources/models/military-container-free/Military_Container.fbx";
 
-constexpr auto MODEL_CONTAINER_LARGE = "resources/models/cargo-container/Container.dae";
+constexpr auto MODEL_CONTAINER_LARGE = "resources/models/cargo-container/Container.fbx";
 
 
 // TEXTURES
@@ -83,15 +83,15 @@ constexpr auto FONT_PLAY_REGULAR = "resources/font/play/Play-Regular.ttf";
 // TERRAIN-RELATED
 
 constexpr auto TERRAIN_HEIGHTMAP = "resources/terrain/heightmap/yetanothermap2.png";
-constexpr auto TERRAIN_TEXTURE_PRIMARY = "resources/terrain/texture/sand_texture.jpg";
-constexpr auto TERRAIN_TEXTURE_DARKER = "resources/terrain/texture/sand_texture2.jpg";
-constexpr auto TERRAIN_NORMAL_MAP = "resources/terrain/texture/testtt.jpg";
+constexpr auto TERRAIN_TEXTURE_PRIMARY = "resources/terrain/texture/Ground055S_4K-JPG_Color.jpg";
+constexpr auto TERRAIN_TEXTURE_DARKER = "resources/terrain/texture/Ground055S_4K-JPG_Color_darker.jpg";
+constexpr auto TERRAIN_NORMAL_MAP = "resources/terrain/texture/Ground055S_4K-JPG_NormalGL.jpg";
 constexpr auto TERRAIN_Y_SCALE_MULTIPLIER = 192.0f;
 constexpr auto TERRAIN_Y_SHIFT = 32.0f;
 
 
 // PARTICLES
 
-constexpr auto TEXTURE_PARTICLE_DUST = "resources/textures/smoke-particle-texture2.png";
+constexpr auto TEXTURE_PARTICLE_DUST = "resources/particles/smoke-particle-texture2.png";
 
 #endif

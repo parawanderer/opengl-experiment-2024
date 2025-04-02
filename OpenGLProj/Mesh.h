@@ -20,10 +20,12 @@ struct Texture
 	std::string path;
 };
 
-struct VertexBoneData : Vertex
+struct ModelVertex : Vertex
 {
 	int boneIds[MAX_NUM_BONES_PER_VERTEX] = { -1, -1, -1, -1 }; // consider -1 as "unset"
 	float weights[MAX_NUM_BONES_PER_VERTEX] = { 0.0f };
+	glm::vec3 tangent; // normal mapping purposes: https://learnopengl.com/Advanced-Lighting/Normal-Mapping
+	glm::vec3 bitangent; // ^
 };
 
 struct BoneInfo
@@ -38,12 +40,16 @@ struct BoneInfo
 class Mesh
 {
 public:
+	inline static const std::string TEXTURE_DIFFUSE = "texture_diffuse";
+	inline static const std::string TEXTURE_SPECULAR = "texture_specular";
+	inline static const std::string TEXTURE_NORMAL = "texture_normal";
+
 	// mesh data
-	std::vector<VertexBoneData> vertices;
+	std::vector<ModelVertex> vertices;
 	std::vector<unsigned int> indices;
 	std::vector<Texture> textures;
 
-	Mesh(std::vector<VertexBoneData> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
+	Mesh(std::vector<ModelVertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
 	void draw(Shader& shader);
 private:
 	// render data

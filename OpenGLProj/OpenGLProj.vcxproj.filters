@@ -422,6 +422,9 @@
     <ClInclude Include="PlayerCameraEventSubscriber.h">
       <Filter>Header Files\camera</Filter>
     </ClInclude>
+    <ClInclude Include="ConfigConstants.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="container.jpg">

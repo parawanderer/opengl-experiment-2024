@@ -68,7 +68,7 @@ void PlayerCamera::processInput(GLFWwindow* window)
 	const bool isSprinting = this->_isShiftPressed;
 	const float sprintingMultiplier = isSprinting ? 2.0f : 1.0f;
 	const float jumpingMultiplier = this->_isJumping ? 0.5 : 1.0f; // decrease amount of (x,z) movement we can do while jumping
-	const float cameraSpeed = this->getDeltaTime() * (this->_speedMultiplier * sprintingMultiplier * jumpingMultiplier);
+	const float cameraSpeed = this->getDeltaTime() * (this->_speedMultiplierBase * sprintingMultiplier * jumpingMultiplier);
 	bool hasMoved = false;
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)

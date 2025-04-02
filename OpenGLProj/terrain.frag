@@ -38,16 +38,15 @@ const int MAX_ATTENUATED_LIGHTS = 4;
 uniform Light attLights[MAX_ATTENUATED_LIGHTS];
 uniform Attenuation attConsts[MAX_ATTENUATED_LIGHTS];
 uniform int numAttLights;
-//uniform Light light2;
-//uniform float c1;
-//uniform float c2;
-//uniform float c3;
 
 
 // fog
-const float FogEnd = 6000.0;
+const float FogEnd = 8000.0;
 const float ExpDensityFactor = 1.0;
-const vec3 FogColor = vec3(0.537, 0.506, 0.6);
+const vec3 FogColor = vec3(0.357, 0.325, 0.42);// vec3(0.537, 0.506, 0.6);
+
+
+const bool useBlinnPhong = true;
 
 
 // ref: https://www.youtube.com/watch?v=oQksg57qsRA
@@ -67,24 +66,45 @@ float computeAttenuationFactor(float c1, float c2, float c3, float d) {
 }
 
 
+float computeSpecPhong(vec3 lightDir, vec3 norm, vec3 viewDir) {
+    // Phong lighting model
+    vec3 reflectDir = reflect(-lightDir, norm);   
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    return spec;
+}
+
+float computeSpecBlinnPhong(vec3 lightDir, vec3 norm, vec3 viewDir) {
+    // Blinn-Phong lighting model: https://learnopengl.com/Advanced-Lighting/Advanced-Lighting
+    // !! only difference between Phong and Blinn-Phong is that we measure the angle between 
+    // the normal and the halfway vector instead of the angle between the view and the reflection dir!
+    vec3 halfwayDir = normalize(lightDir + viewDir);
+    float spec = pow(max(dot(norm, halfwayDir), 0.0), material.shininess);
+    return spec;
+}
+
+
 void main() 
 {
     vec3 norm = normalize(Normal);
+    
+    // TODO: make normal mapping work for terrain
+    //vec3 norm = texture(material.normal, TexCoord).rgb; // normal map value in range [0,1] as stored in texture
+    //norm = normalize(norm * 2.0 - 1.0); // map it back to the actual range [-1, 1]
+
+    vec3 lightDir = normalize(light.position - FragPos);
+    vec3 viewDir = normalize(viewPos - FragPos);
+    vec3 halfwayDir = normalize(lightDir + viewDir);
 
     // ambient
     vec3 ambientTex = vec3(texture(material.ambient, TexCoord));
     vec3 ambient = light.ambient * ambientTex;
     
     // diffuse 
-    vec3 lightDir = normalize(light.position - FragPos);
     float diff = max(dot(norm, lightDir), 0.0);
     vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoord));
 
     // specular
-    vec3 viewDir = normalize(viewPos - FragPos);
-
-    vec3 reflectDir = reflect(-lightDir, norm);  
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+    float spec = useBlinnPhong ? computeSpecBlinnPhong(lightDir, norm, viewDir) : computeSpecPhong(lightDir, norm, viewDir);
     vec3 specular = light.specular * (spec * material.specular); 
 
     vec3 totalAmbient = vec3(0.0);
@@ -102,8 +122,7 @@ void main()
         totalDiffuseAtt += diffuse2;
 
         // specular2 with attenuation
-        vec3 reflectDir2 = reflect(-lightDirAtt, norm);  
-        float spec2 = pow(max(dot(viewDir, reflectDir2), 0.0), material.shininess);
+        float spec2 =  useBlinnPhong ? computeSpecBlinnPhong(lightDirAtt, norm, viewDir) : computeSpecPhong(lightDirAtt, norm, viewDir);
         vec3 specular2 = fatt * attLights[i].specular * (spec2 * material.specular); 
         totalSpecularAtt += specular2;
     }

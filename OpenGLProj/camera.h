@@ -57,7 +57,7 @@ protected:
 
 	float _fov = 45.0f;
 
-	float _speedMultiplier;
+	float _speedMultiplierBase;
 
 	float getDeltaTime() const;
 };

@@ -37,10 +37,10 @@ private:
 	void loadModel(std::string path);
 	void processNode(aiNode* node, const aiScene* scene);
 	Mesh processMesh(aiMesh* mesh, const aiScene* scene);
-	void processBones(aiMesh* mesh, std::vector<VertexBoneData>& vertices);
+	void processBones(aiMesh* mesh, std::vector<ModelVertex>& vertices);
 	std::vector<Texture> loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 
-	static void setVertexBoneData(VertexBoneData& data, int boneId, float weight);
+	static void setVertexBoneData(ModelVertex& data, int boneId, float weight);
 
 };
 

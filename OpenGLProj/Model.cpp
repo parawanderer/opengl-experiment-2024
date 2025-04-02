@@ -4,6 +4,7 @@
 #include <map>
 #include <assimp/postprocess.h>
 
+#include "ConfigConstants.h"
 #include "FileUtils.h"
 #include "MathConversionUtil.h"
 
@@ -32,6 +33,7 @@ void Model::loadModel(std::string path)
 		aiProcess_Triangulate // if the model does not (entirely) consist of triangles, it should transform all the model's primitive shapes to triangles first
 		| aiProcess_FlipUVs // flips the texture coordinates on the y-axis where necessary during processing
 		| aiProcess_GenNormals
+		| aiProcess_CalcTangentSpace
 		// more interesting options available: https://learnopengl.com/Model-Loading/Model
 		// https://assimp.sourceforge.net/lib_html/postprocess_8h.html
 	);
@@ -65,19 +67,21 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 {
 	std::cout << "Processing mesh: '" << mesh->mName.C_Str() << "'" << std::endl;
 
-	std::vector<VertexBoneData> vertices;
+	std::vector<ModelVertex> vertices;
 	std::vector<unsigned int> indices;
 	std::vector<Texture> textures;
 
 	for (unsigned int i = 0; i < mesh->mNumVertices; i++)
 	{
-		VertexBoneData vertex = {
+		ModelVertex vertex = {
 			{
 				.position = MathConversionUtil::convert(mesh->mVertices[i]),
 			   .normal = MathConversionUtil::convert(mesh->mNormals[i])
 			},
 			{ -1, -1, -1, -1 },
-			{0.0f, 0.0f, 0.0f, 0.0f }
+			{0.0f, 0.0f, 0.0f, 0.0f },
+			MathConversionUtil::convert(mesh->mTangents[i]),
+			MathConversionUtil::convert(mesh->mBitangents[i])
 		};
 
 		// does the mesh contain texture coordinates?
@@ -103,11 +107,14 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 	{
 		aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-		std::vector<Texture> diffuseMaps = this->loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
+		std::vector<Texture> diffuseMaps = this->loadMaterialTextures(material, aiTextureType_DIFFUSE, Mesh::TEXTURE_DIFFUSE);
 		textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 
-		std::vector<Texture> specularMaps = this->loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
+		std::vector<Texture> specularMaps = this->loadMaterialTextures(material, aiTextureType_SPECULAR, Mesh::TEXTURE_SPECULAR);
 		textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+
+		std::vector<Texture> normalMaps = this->loadMaterialTextures(material, aiTextureType_NORMALS, Mesh::TEXTURE_NORMAL); // TODO: need to check if "aiTextureType_NORMALS" is OK or if we have to use "aiTextureType_HEIGHT"
+		textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
 	}
 
 
@@ -135,7 +142,7 @@ void Model::setBoneCount(int count)
 	this->_boneCounter = count;
 }
 
-void Model::processBones(aiMesh* mesh, std::vector<VertexBoneData>& vertices)
+void Model::processBones(aiMesh* mesh, std::vector<ModelVertex>& vertices)
 {
 	std::cout << "Processing " << mesh->mNumBones << " bones" << std::endl;
 	for (unsigned int i = 0; i < mesh->mNumBones; i++)
@@ -201,7 +208,7 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType 
 		{
 			// if texture hasn't been loaded already, load it
 			Texture texture = {
-			.id = loadTextureFromFile(str.C_Str(), this->_directory),
+			.id = loadTextureFromFile(str.C_Str(), this->_directory, std::nullopt, USE_SRGB_COLORS && typeName != Mesh::TEXTURE_NORMAL),
 			.type = typeName,
 			.path = str.C_Str()
 			};
@@ -211,7 +218,7 @@ std::vector<Texture> Model::loadMaterialTextures(aiMaterial* mat, aiTextureType 
 	return textures;
 }
 
-void Model::setVertexBoneData(VertexBoneData& data, int boneId, float weight)
+void Model::setVertexBoneData(ModelVertex& data, int boneId, float weight)
 {
 	for (int i = 0; i < MAX_NUM_BONES_PER_VERTEX; ++i)
 	{
