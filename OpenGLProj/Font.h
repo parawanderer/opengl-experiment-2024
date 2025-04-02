@@ -22,13 +22,17 @@ class Font
 public:
 	Font(const std::string &fontPath, Shader* fontShader);
 
-	void renderText(std::string text, float x, float y, float scale, glm::vec3 color);
+	void renderText(const std::string& text, float x, float y, float scale, glm::vec3 color);
+
+	void renderTextCenter(const std::string& text, float x, float y, float scale, glm::vec3 color);
 
 private:
 	std::map<char, Character> _characters;
 	unsigned int _VBO;
 	unsigned int _VAO;
 	Shader* _fontShader;
+
+	float precomputeFullWidth(const std::string& text, float scale);
 };
 
 #endif

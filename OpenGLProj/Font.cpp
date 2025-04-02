@@ -84,10 +84,16 @@ Font::Font(const std::string& fontPath, Shader* fontShader) : _fontShader(fontSh
 	glBindVertexArray(0);
 }
 
+void Font::renderTextCenter(const std::string& text, float x, float y, float scale, glm::vec3 color)
+{
+	float textWidth = this->precomputeFullWidth(text, scale);
+	this->renderText(text, x - (textWidth / 2.0f), y, scale, color);
+}
+
 /**
  * Essentially derived from https://learnopengl.com/In-Practice/Text-Rendering
  */
-void Font::renderText(std::string text, float x, float y, float scale, glm::vec3 color)
+void Font::renderText(const std::string& text, float x, float y, float scale, glm::vec3 color)
 {
 	glEnable(GL_BLEND);
 	this->_fontShader->use();
@@ -132,4 +138,16 @@ void Font::renderText(std::string text, float x, float y, float scale, glm::vec3
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glDisable(GL_BLEND);
 
+}
+
+float Font::precomputeFullWidth(const std::string& text, float scale)
+{
+	float width = 0.0;
+	std::string::const_iterator c;
+	for (c = text.begin(); c != text.end(); c++)
+	{
+		Character ch = this->_characters[*c];
+		width += ((ch.advance >> 6) * scale); // get value in pixels
+	}
+	return width;
 }

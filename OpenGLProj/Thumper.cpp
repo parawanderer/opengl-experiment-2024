@@ -17,7 +17,7 @@ const std::string ACTIVE_ANIM = "thump";
 const std::string ROTATING_TOP_ANIM = "activate";
 
 
-const float THUMPER_MODEL_SCALE = 1.0f;
+const float THUMPER_MODEL_SCALE = 0.7f;
 
 
 Thumper::Thumper(const WorldTimeManager* time, SoundManager* sound, SphericalBoxedGameObject* thumper, AnimationSet* animations):

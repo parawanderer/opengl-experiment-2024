@@ -209,6 +209,7 @@
     <ClInclude Include="CameraManager.h" />
     <ClInclude Include="CameraUtils.h" />
     <ClInclude Include="ConfigConstants.h" />
+    <ClInclude Include="DialogueRequester.h" />
     <ClInclude Include="EffectConstants.h" />
     <ClInclude Include="FileConstants.h" />
     <ClInclude Include="CarriedGameObject.h" />
@@ -245,6 +246,7 @@
     <ClInclude Include="Sun.h" />
     <ClInclude Include="Terrain.h" />
     <ClInclude Include="Thumper.h" />
+    <ClInclude Include="UICharacterDialogueDisplayManager.h" />
     <ClInclude Include="UITextRenderer.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="WorldMathUtils.h" />

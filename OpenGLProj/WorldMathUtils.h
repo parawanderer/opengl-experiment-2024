@@ -139,6 +139,12 @@ namespace WorldMathUtils
 			sin(angleRadians), cos(angleRadians)
 		);
 	}
+
+	inline float distance2(const glm::vec3& one, const glm::vec3& other)
+	{
+		glm::vec3 diff = one - other;
+		return glm::dot(diff, diff); //<- is equal to squared distance
+	}
 }
 
 #endif 

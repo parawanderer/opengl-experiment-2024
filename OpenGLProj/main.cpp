@@ -167,7 +167,7 @@ int main()
 	SphericalBoxedGameObject thumperObj1(&thumperModel, 0.4f);
 	SphericalBoxedGameObject thumperObj2(&thumperModel, 0.4f);
 
-	RenderableGameObject nomadObject(MODEL_NOMAD);
+	SphericalBoxedGameObject nomadObject(MODEL_NOMAD, 0.6f, glm::vec3(0.0, 1.45f, 0.0), 100.0f);
 	AnimationSet nomadAnimations(MODEL_NOMAD, nomadObject.getObjectModel());
 
 	RenderableGameObject sandWormObject(MODEL_SANDWORM);
@@ -197,7 +197,6 @@ int main()
 	fontShader.use();
 	fontShader.setMat4("projection", textProjection);
 	Font font(FONT_PLAY_REGULAR, &fontShader);
-	UITextRenderer uiText(&font);
 #pragma endregion
 
 #pragma region SKYBOX
@@ -266,20 +265,20 @@ int main()
 	glm::mat4 containerS1Model = glm::mat4(1.0f);
 	containerS1Model = glm::translate(containerS1Model, sandTerrain.getWorldHeightVecFor(150.0f, -150.0f) + glm::vec3(0.0, -0.1f, 0.0f));
 	containerS1Model = glm::rotate(containerS1Model, glm::radians(4.0f), glm::vec3(0.0, 0.0, 1.0));
-	containerS1Model = glm::scale(containerS1Model, glm::vec3(0.01f));
+	containerS1Model = glm::scale(containerS1Model, glm::vec3(0.005f));
 	containerSObject1.setModelTransform(containerS1Model);
 
 	glm::mat4 containerS2Model = glm::mat4(1.0f);
 	containerS2Model = glm::translate(containerS2Model, sandTerrain.getWorldHeightVecFor(155.0, -155.0f) + glm::vec3(0.0, -0.1f, 0.0f));
 	containerS2Model = glm::rotate(containerS2Model, glm::radians(-32.0f), glm::vec3(0.0, 0.0, 1.0));
-	containerS2Model = glm::scale(containerS2Model, glm::vec3(0.01f));
+	containerS2Model = glm::scale(containerS2Model, glm::vec3(0.005f));
 	containerSObject2.setModelTransform(containerS2Model);
 
 	glm::mat4 containerL1Model = glm::mat4(1.0f);
 	containerL1Model = glm::translate(containerL1Model, sandTerrain.getWorldHeightVecFor(160.0f, -160.0f) + glm::vec3(0.0, -1.8f, 0.0f));
 	containerL1Model = glm::rotate(containerL1Model, glm::radians(35.0f), glm::vec3(1.0, 0.0, 0.0));
 	containerL1Model = glm::rotate(containerL1Model, glm::radians(10.0f), glm::vec3(0.0, 1.0, 0.0));
-	containerL1Model = glm::scale(containerL1Model, glm::vec3(0.02f));
+	containerL1Model = glm::scale(containerL1Model, glm::vec3(0.025f));
 	containerLObject1.setModelTransform(containerL1Model);
 
 	glm::mat4 containerL2Model = glm::mat4(1.0f);
@@ -287,7 +286,7 @@ int main()
 	containerL2Model = glm::rotate(containerL2Model, glm::radians(74.0f), glm::vec3(1.0, 0.0, 0.0));
 	containerL2Model = glm::rotate(containerL2Model, glm::radians(112.0f), glm::vec3(0.0, 1.0, 0.0));
 	containerL2Model = glm::rotate(containerL2Model, glm::radians(-12.0f), glm::vec3(0.0, 0.0, 1.0));
-	containerL2Model = glm::scale(containerL2Model, glm::vec3(0.02f));
+	containerL2Model = glm::scale(containerL2Model, glm::vec3(0.025f));
 	containerLObject2.setModelTransform(containerL2Model);
 
 	glm::mat4 containerL3Model = glm::mat4(1.0f);
@@ -295,15 +294,18 @@ int main()
 	containerL3Model = glm::rotate(containerL3Model, glm::radians(-21.0f), glm::vec3(1.0, 0.0, 0.0));
 	containerL3Model = glm::rotate(containerL3Model, glm::radians(-3.0f), glm::vec3(0.0, 1.0, 0.0));
 	containerL3Model = glm::rotate(containerL3Model, glm::radians(15.0f), glm::vec3(0.0, 0.0, 1.0));
-	containerL3Model = glm::scale(containerL3Model, glm::vec3(0.02f));
+	containerL3Model = glm::scale(containerL3Model, glm::vec3(0.025f));
 	containerLObject3.setModelTransform(containerL3Model);
 #pragma endregion
+
+	UITextRenderer uiText(&timeMgr, camMgr.getPlayerCamera(), &font);
 
 	// state
 	PlayerState player = PlayerState(&sound, camMgr.getPlayerCamera());
 	camMgr.getPlayerCamera()->addSubscriber(&player);
 
-	NomadCharacter nomadCharacter(&timeMgr, &sandTerrain, &sound, &nomadObject, &nomadAnimations, 55.0f, -200.0f);
+
+	NomadCharacter nomadCharacter(&timeMgr, &sandTerrain, &sound, &uiText, &nomadObject, &nomadAnimations, 152.0f, -210.0f);
 	SandWormCharacter sandWormCharacter(&timeMgr, &sandTerrain, &sound, &sandWormObject, &sandWormAnimations, 80.0f, 50.0f);
 	OrnithopterCharacter ornithopterCharacter(&timeMgr, &sound, &ornithopterObject, &ornithopterAnimations);
 
@@ -316,9 +318,9 @@ int main()
 	const std::vector<FrameRequester*> frameRequesters = { &nomadCharacter, &sandWormCharacter, &thumper1, &thumper2, &ornithopterCharacter, &particles1, &particles2 };
 
 	std::set<Thumper*> worldItemsThatPlayerCanPickUp = { &thumper1, &thumper2 };
+	std::set<NomadCharacter*> charactersThatPlayerCanTalkTo = { &nomadCharacter };
 	std::vector<RenderableGameObject*> staticGameObjects = { &containerSObject1, &containerSObject2, &containerLObject1, &containerLObject2, &containerLObject3 };
 	std::vector<AnimatedEntity*> independentAnimatedEntities = { &nomadCharacter, &sandWormCharacter, &ornithopterCharacter };
-
 
 	PlayerInteractionManger interactionManger(
 		&timeMgr, 
@@ -327,8 +329,10 @@ int main()
 		&sandTerrain, 
 		&player, 
 		0.2f, 
-		&worldItemsThatPlayerCanPickUp
+		&worldItemsThatPlayerCanPickUp,
+		&charactersThatPlayerCanTalkTo
 	);
+
 
 	// ============ [ MAIN LOOP ] ============
 	camMgr.beforeLoop();
@@ -339,6 +343,7 @@ int main()
 
 		timeMgr.onNewFrame();
 		camMgr.processInput(window);
+		uiText.setCurrentWidthHeight(currentWidth, currentHeight);
 
 #pragma region PROJECTING
 		const glm::vec3 cameraPos = camMgr.getPos();
@@ -353,7 +358,7 @@ int main()
 		for (auto frameRequestor : frameRequesters) frameRequestor->onNewFrame();
 
 #pragma region MOUSE_RAY_PICKING_AND_PLAYER_INTERACTIONS
-		Thumper* result = interactionManger.getMouseTarget();
+		SphericalBoundingBoxedEntity* result = interactionManger.getMouseTarget();
 		interactionManger.handleInteractionChecks(result);
 #pragma endregion
 
@@ -429,13 +434,28 @@ int main()
 		fontShader.setMat4("projection", textProjection);
 
 		if (result != nullptr) {
-			distanceFieldPostProcessor.computeAndRenderOverlay(projection, view, { result }, SCREEN_OUTPUT_BUFFER_ID);
-			uiText.renderItemInteractOverlay(THUMPER, currentWidth, currentHeight, result->getState() == Thumper::STATE::ACTIVATED); // highlight selectable item
+
+			if (AnimatedEntity* animatedEntity = dynamic_cast<AnimatedEntity*>(result)) // render outline (generic for all objects)
+			{
+				distanceFieldPostProcessor.computeAndRenderOverlay(projection, view, { animatedEntity }, SCREEN_OUTPUT_BUFFER_ID);
+			}
+
+			if (Thumper* thumperResult = dynamic_cast<Thumper*>(result)) // render interaction text for item
+			{
+				uiText.renderItemInteractOverlay(THUMPER, thumperResult->getState() == Thumper::STATE::ACTIVATED); // highlight selectable item
+			}
+
+			if (NomadCharacter* character = dynamic_cast<NomadCharacter*>(result)) // render interaction text for a character
+			{
+				uiText.renderSpeakToCharacterOverlay(NOMAD);
+			}
 		}
 
-		if (player.hasCarriedItem()) uiText.renderCarriedItemInfo(THUMPER, currentWidth, currentHeight);
+		if (player.hasCarriedItem()) uiText.renderCarriedItemInfo(THUMPER);
 
-		uiText.renderMainUIOverlay(cameraPos, currentWidth, currentHeight);
+		uiText.processDialogueRequests();
+		uiText.renderCurrentDialogue();
+		uiText.renderMainUIOverlay(cameraPos);
 		glCheckError();
 #pragma endregion
 

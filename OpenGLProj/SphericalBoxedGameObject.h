@@ -18,7 +18,7 @@ public:
 	 *								This is from where the bounding sphere will be extended, and is transformed
 	 *								along with the object when the object is moved using a model transform.
 	 */
-	SphericalBoxedGameObject(const char* modelFilePath, float radius, glm::vec3 localSpaceMidPoint = glm::vec3(0.0f));
+	SphericalBoxedGameObject(const char* modelFilePath, float radius, glm::vec3 localSpaceMidPoint = glm::vec3(0.0f), float boundingSphereScale = 1.0f);
 
 	/**
 	 * \brief Same as SphericalBoxedGameObject(modelFilePath, radius, localSpaceMidPoint), except this does not load the model, allowing the same model to be reused between instances.
@@ -51,6 +51,7 @@ public:
 private:
 	float _boundingSphereRadius;
 	glm::vec3 _boundingSphereMidPoint;
+	float _localBoundingSphereScale;
 
 	Sphere _sphere;
 	bool _showBoundingSphere = false;

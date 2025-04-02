@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 
 #include "CameraManager.h"
+#include "NomadCharacter.h"
 #include "PlayerState.h"
 #include "Thumper.h"
 #include "WorldTimeManager.h"
@@ -19,12 +20,13 @@ public:
 		const Terrain* terrain,
 		PlayerState* player, 
 		const float worldInteractionCooldownSecs,
-		std::set<Thumper*>* worldItemsThatPlayerCanPickUp
+		std::set<Thumper*>* worldItemsThatPlayerCanPickUp,
+		std::set<NomadCharacter*>* charactersThatPlayerCanTalkTo
 	);
 
-	Thumper* getMouseTarget();
+	SphericalBoundingBoxedEntity* getMouseTarget();
 
-	void handleInteractionChecks(Thumper* mouseRayTarget);
+	void handleInteractionChecks(SphericalBoundingBoxedEntity* mouseRayTarget);
 
 private:
 	const WorldTimeManager* _time;
@@ -34,14 +36,15 @@ private:
 	const Terrain* _terrain;
 	PlayerState* _player;
 	std::set<Thumper*>* _worldItemsThatPlayerCanPickUp;
+	std::set<NomadCharacter*>* _charactersThatPlayerCanTalkTo;
 
 	const float _worldInteractionCooldownSecs;
 
 	bool _interactionCooldownPassed = false;
 	float _lastInteractionAt = 0.0f;
 
-	bool handleActivateItemInteraction(Thumper* mouseRayTarget);
-	bool handlePickUpItemInteraction(Thumper* mouseRayTarget);
+	bool handleActivateItemInteraction(SphericalBoundingBoxedEntity* mouseRayTarget);
+	bool handlePickUpItemInteraction(SphericalBoundingBoxedEntity* mouseRayTarget);
 	bool handleDropItemInteraction(const glm::vec3& cameraPos, const glm::vec3& cameraFront);
 };
 

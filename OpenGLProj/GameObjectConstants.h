@@ -3,4 +3,6 @@
 
 constexpr auto THUMPER = "Thumper";
 
+constexpr auto NOMAD = "Nomad";
+
 #endif

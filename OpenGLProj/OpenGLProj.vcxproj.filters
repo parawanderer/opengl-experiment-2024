@@ -425,6 +425,12 @@
     <ClInclude Include="ConfigConstants.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="UICharacterDialogueDisplayManager.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
+    <ClInclude Include="DialogueRequester.h">
+      <Filter>Header Files\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="container.jpg">

@@ -13,7 +13,8 @@ PlayerInteractionManger::PlayerInteractionManger(
 	const Terrain* terrain,
 	PlayerState* player, 
 	const float worldInteractionCooldownSecs,
-	std::set<Thumper*>* worldItemsThatPlayerCanPickUp
+	std::set<Thumper*>* worldItemsThatPlayerCanPickUp,
+	std::set<NomadCharacter*>* charactersThatPlayerCanTalkTo
 ):
 _time(time),
 _camera(cameraManager),
@@ -21,24 +22,21 @@ _window(window),
 _terrain(terrain),
 _player(player),
 _worldItemsThatPlayerCanPickUp(worldItemsThatPlayerCanPickUp),
-_worldInteractionCooldownSecs(worldInteractionCooldownSecs)
+_worldInteractionCooldownSecs(worldInteractionCooldownSecs),
+_charactersThatPlayerCanTalkTo(charactersThatPlayerCanTalkTo)
 {}
 
-Thumper* PlayerInteractionManger::getMouseTarget()
+SphericalBoundingBoxedEntity* PlayerInteractionManger::getMouseTarget()
 {
 	const glm::vec3& cameraPos = this->_camera->getPos();
 	const glm::vec3& cameraFront = this->_camera->getCurrentCamera()->getFront();
 
-	if (!this->_player->hasCarriedItem()) { // only if not carrying an item already
-		std::vector<SphericalBoundingBoxedEntity*> considered(this->_worldItemsThatPlayerCanPickUp->begin(), this->_worldItemsThatPlayerCanPickUp->end());
-		Thumper* result = (Thumper*)WorldMathUtils::findClosestIntersection(considered, cameraPos, cameraFront, 5.0f);
-		// TODO: if I add more item types later, then this type cast is not valid
-		return result;
-	}
-	return nullptr;
+	std::vector<SphericalBoundingBoxedEntity*> considered(this->_worldItemsThatPlayerCanPickUp->begin(), this->_worldItemsThatPlayerCanPickUp->end());
+	considered.insert(considered.end(), this->_charactersThatPlayerCanTalkTo->begin(), this->_charactersThatPlayerCanTalkTo->end()); // textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+	return WorldMathUtils::findClosestIntersection(considered, cameraPos, cameraFront, 5.0f);
 }
 
-void PlayerInteractionManger::handleInteractionChecks(Thumper* mouseRayTarget)
+void PlayerInteractionManger::handleInteractionChecks(SphericalBoundingBoxedEntity* mouseRayTarget)
 {
 	const float t = this->_time->getCurrentTime();
 	const glm::vec3& cameraPos = this->_camera->getPos();
@@ -60,33 +58,51 @@ void PlayerInteractionManger::handleInteractionChecks(Thumper* mouseRayTarget)
 	}
 }
 
-bool PlayerInteractionManger::handleActivateItemInteraction(Thumper* mouseRayTarget)
+bool PlayerInteractionManger::handleActivateItemInteraction(SphericalBoundingBoxedEntity* mouseRayTarget)
 {
-	if (mouseRayTarget != nullptr && glfwGetKey(this->_window, GLFW_KEY_E) == GLFW_PRESS)
+	// TODO: rewrite interactions using a pattern like *Visitor* to keep this generic
+
+	if (Thumper* thumper = dynamic_cast<Thumper*>(mouseRayTarget))
 	{
-		switch (mouseRayTarget->getState())
+		if (glfwGetKey(this->_window, GLFW_KEY_E) == GLFW_PRESS)
 		{
-		case Thumper::STATE::DISABLED:
-			mouseRayTarget->setState(Thumper::STATE::ACTIVATED); // start animating!
-			return true;
-		case Thumper::STATE::ACTIVATED:
-			mouseRayTarget->setState(Thumper::STATE::DISABLED);
+			switch (thumper->getState())
+			{
+			case Thumper::STATE::DISABLED:
+				thumper->setState(Thumper::STATE::ACTIVATED); // start animating!
+				return true;
+			case Thumper::STATE::ACTIVATED:
+				thumper->setState(Thumper::STATE::DISABLED);
+				return true;
+			}
+		}
+	}
+	else if (NomadCharacter* character = dynamic_cast<NomadCharacter*>(mouseRayTarget))
+	{
+		if (glfwGetKey(this->_window, GLFW_KEY_C) == GLFW_PRESS)
+		{
+			character->saySomething(this->_camera->getCurrentCamera()->getPos());
 			return true;
 		}
 	}
+	
 	return false;
 }
 
-bool PlayerInteractionManger::handlePickUpItemInteraction(Thumper* mouseRayTarget)
+bool PlayerInteractionManger::handlePickUpItemInteraction(SphericalBoundingBoxedEntity* mouseRayTarget)
 {
-	if (mouseRayTarget != nullptr && !this->_player->hasCarriedItem() && glfwGetKey(this->_window, GLFW_KEY_C) == GLFW_PRESS) // pick up the item
+	if (Thumper* thumper = dynamic_cast<Thumper*>(mouseRayTarget))
 	{
-		mouseRayTarget->setState(Thumper::STATE::DISABLED); // disable when picking up
-		mouseRayTarget->setIsCarried(true);
-		this->_worldItemsThatPlayerCanPickUp->erase(mouseRayTarget);
-		this->_player->setCarriedItem(CarriedGameObject(mouseRayTarget));
-		return true;
+		if (thumper != nullptr && !this->_player->hasCarriedItem() && glfwGetKey(this->_window, GLFW_KEY_C) == GLFW_PRESS) // pick up the item
+		{
+			thumper->setState(Thumper::STATE::DISABLED); // disable when picking up
+			thumper->setIsCarried(true);
+			this->_worldItemsThatPlayerCanPickUp->erase(thumper);
+			this->_player->setCarriedItem(CarriedGameObject(thumper));
+			return true;
+		}
 	}
+
 	return false;
 }
 
@@ -96,14 +112,6 @@ bool PlayerInteractionManger::handleDropItemInteraction(const glm::vec3& cameraP
 	{
 		// drop the item
 		Thumper* thump = this->_player->removeCarriedItem().getObject();
-
-		// glm::mat4 newModel = glm::mat4(1.0f);
-		// // translate position just comes out to a nice "in front of the player" position
-		// newModel = glm::translate(newModel, 
-		// 	this->_terrain->getWorldHeightVecFor(cameraPos.x + (cameraFront.x * 2.5f), cameraPos.z + (cameraFront.z * 2.5f)) 
-		// 	+ ITEM_PLACEMENT_SMALL_OFFSET_Y);
-		//thump->updateModelTransform(newModel);
-
 		thump->setPosition(this->_terrain->getWorldHeightVecFor(cameraPos.x + (cameraFront.x * 2.5f), cameraPos.z + (cameraFront.z * 2.5f)) + ITEM_PLACEMENT_SMALL_OFFSET_Y);
 		thump->setIsCarried(false);
 
