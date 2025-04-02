@@ -9,6 +9,11 @@
 #include "Shader.h"
 #include "WorldTimeManager.h"
 
+// TODO: Some interesting particles I'd like to do (later):
+// - jump sand displacement particles (sand in all directions in circle, reuse texture for the current particles (among others?) https://www.youtube.com/watch?v=WFfS7HcG8qE
+// - footstep particles (footsteps following player and human characters). They should orient themselves on the ground and use a texture like this: https://ambientcg.com/view?id=Footsteps005
+// - ground displacement particles after sandworm travelled through an area?
+
 /**
  * \brief Particles implementation based on https://learnopengl.com/In-Practice/2D-Game/Particles
  */

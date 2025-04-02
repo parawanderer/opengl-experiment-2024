@@ -222,6 +222,9 @@
     <ClCompile Include="AudioUtilities.cpp">
       <Filter>Source Files\audio</Filter>
     </ClCompile>
+    <ClCompile Include="GenericAnimatedCharacter.cpp">
+      <Filter>Source Files\game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -463,6 +466,12 @@
     </ClInclude>
     <ClInclude Include="AudioUtilities.h">
       <Filter>Header Files\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="GenericAnimatedCharacter.h">
+      <Filter>Header Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelConstants.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

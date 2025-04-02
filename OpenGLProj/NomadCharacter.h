@@ -1,9 +1,9 @@
 ﻿#ifndef NOMADCHARACTER_MINE_H
 #define NOMADCHARACTER_MINE_H
 
-#include "AnimatedEntity.h"
 #include "Animator.h"
 #include "DialogueRequester.h"
+#include "GenericAnimatedCharacter.h"
 #include "RenderableGameObject.h"
 #include "SphericalBoundingBoxedEntity.h"
 #include "SoundManager.h"
@@ -12,7 +12,9 @@
 #include "UICharacterDialogueDisplayManager.h"
 #include "WorldTimeManager.h"
 
-
+/**
+ * \brief Nomad's dialogues
+ */
 struct TalkLineInfo
 {
 	const std::string line;
@@ -24,7 +26,7 @@ struct TalkLineInfo
 /**
  * \brief Represents a "Nomad" NPC character in the game. Manages a single Nomad's state
  */
-class NomadCharacter : public AnimatedEntity, public SphericalBoundingBoxedEntity, public DialogueRequester
+class NomadCharacter : public GenericAnimatedCharacter, public SphericalBoundingBoxedEntity
 {
 public:
 	enum class MOVEMENT_STATE
@@ -45,8 +47,9 @@ public:
 		float initialX, 
 		float initialZ);
 
+	~NomadCharacter() override = default;
+
 	void onNewFrame() override;
-	void draw(Shader& shader) override;
 
 	float getRadiusSphericalBoundingBox() override;
 	glm::vec3 getBoundMidPoint() override;
@@ -69,8 +72,6 @@ public:
 	 */
 	void askAboutLostItem(const glm::vec3 lookInDirectionOfCoords);
 
-	glm::vec3 getCurrentPosition() const override;
-
 	/**
 	 * \brief Makes the character run over to the position.
 	 * \param runOverTo				Position to run over to. y component gets ignored as the y position will be taken from the world map.
@@ -79,10 +80,8 @@ public:
 	 */
 	void runOverTo(const glm::vec3 runOverTo, const float offsetByUnits = 0.0f, const bool doFunnyRun = false);
 
-	const glm::vec3& getCurrentPosition();
 
-
-	// TODO: remove this:
+	// TODO: remove these:
 
 	/**
 	 * \brief Temporary! TODO: remove this after assignment
@@ -104,29 +103,20 @@ public:
 	 */
 	void runStopByFallingAndStayDown();
 
+protected:
+	void updateModelTransform() override;
+
 private:
-	const WorldTimeManager* _time;
 	const Terrain* _terrain;
 
 	SoundManager* _sound;
-
 	UICharacterDialogueDisplayManager* _dialogueManager;
 
 	SphericalBoxedGameObject* _model;
-	Animator _animator;
-
-	float _animationInterpolationStart = 0.0f;
-	std::string _animation1 = "";
-	std::string _animation2 = "";
-
-	glm::vec3 _currentPos;
-	glm::vec3 _currentFront;
-	float _pitch = 0.0f;
-	float _yaw = -90.0f;
 
 	MOVEMENT_STATE _movementState = MOVEMENT_STATE::IDLE;
 
-	AudioPlayer _currentSound;
+	AudioPlayer _currentMovementSound;
 	AudioPlayer _currentVoiceLine;
 
 	glm::vec3 _movementStartPos = glm::vec3(0.0f);
@@ -136,13 +126,16 @@ private:
 	float _nextBehaviourChoiceAt = 0.0f;
 	const TalkLineInfo* _voiceLineUponCompletionBehaviour = nullptr;
 
+	int _tmp_thumperLinesIndex = 0; // TODO: REMOVE! ASSIGNMENT ONLY
+	int _tmp_lines2Index = 0; // TODO: REMOVE! ASSIGNMENT ONLY
+	float _tmp_nextBehaviourChoiceOverride = -1.0f; // TODO: REMOVE! ASSIGNMENT ONLY
+
 	void decideNextBehaviour(const float currentTime);
 
 	void interpolateMoveState(float currentTime);
 	void defineWalkPlan(const float currentTime);
 	void defineIdlePlan(const float currentTime);
 	void performQueuedDialogue();
-	void updateModelTransform();
 
 	void sayVoiceLine(const std::string& voicelineFileName);
 
@@ -152,14 +145,10 @@ private:
 	 * \param lookInDirectionOfCoords		If this is provided, then the character will turn in this direction while performing the animation. If not, the character retains their current direction.
 	 * \param playAnimationForSecs			How long the animation will be performed for
 	 */
-	void doDialogueAnimation(const std::string& animationName, std::optional<const glm::vec3> lookInDirectionOfCoords, float playAnimationForSecs, bool smoothTransition = true);
-	void playAnimation(const std::string& animationName);
-	void playAnimationWithTransition(const std::string& animationName);
-	void updateAnimationInterpolation();
-
-	void rotateTowards(const glm::vec3& position);
-
+	void doDialogueAnimation(const std::string& animationName, std::optional<const glm::vec3> lookInDirectionOfCoords, float playAnimationForSecs);
 	void registerVoiceLineUponCompletionCurrentBehaviour(const TalkLineInfo& voiceLine);
+
+	void sayLineFromIndexedList(const glm::vec3& lookInDirectionOfCoords, const std::vector<TalkLineInfo>& lines, int& currentIndex);
 };
 
 #endif

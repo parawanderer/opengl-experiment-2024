@@ -94,4 +94,8 @@ constexpr auto TERRAIN_Y_SHIFT = 32.0f;
 
 constexpr auto TEXTURE_PARTICLE_DUST = "resources/particles/smoke-particle-texture2.png";
 
+// AUDIO
+
+constexpr auto AUDIO_BASE_PATH = "./resources/audio";
+
 #endif

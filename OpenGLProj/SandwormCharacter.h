@@ -1,6 +1,8 @@
-﻿#pragma once
-#include "AnimatedEntity.h"
+﻿#ifndef SANDWORMCHARACTER_MINE_H
+#define SANDWORMCHARACTER_MINE_H
+
 #include "Animator.h"
+#include "GenericAnimatedCharacter.h"
 #include "ParticleSystem.h"
 #include "RenderableGameObject.h"
 #include "SoundManager.h"
@@ -16,7 +18,7 @@ struct BehaviourStage
 /**
  * \brief Represents/manages the game state for one of these: https://dune.fandom.com/wiki/Sandworm?so=search
  */
-class SandWormCharacter : public AnimatedEntity
+class SandWormCharacter : public GenericAnimatedCharacter
 {
 public:
 
@@ -38,73 +40,56 @@ public:
 		float initialZ
 	);
 
-	void onNewFrame() override;
+	~SandWormCharacter() override = default;
 
-	void draw(Shader& shader) override;
+	void onNewFrame() override;
 
 	void startQuakingEarth();
 
 	void appearAndMoveTowards(const glm::vec3& position);
 
-	void rotateTowards(const glm::vec3& position);
-
-	const glm::vec3& getCurrentPosition() const;
+protected:
+	void updateModelTransform() override;
 	
 private:
-	const WorldTimeManager* _time;
 	const Terrain* _terrain;
 	SoundManager* _sound;
 
 	RenderableGameObject* _model;
-	Animator _animator;
 
 	ParticleSystem* _dustParticle1;
 	ParticleSystem* _dustParticle2;
 	bool _showDust = false;
 
-	float _pitch;
-	float _yaw;
-	glm::vec3 _currentPos;
-	glm::vec3 _currentFront;
-	
-
 	MOVEMENT_STATE _movementState = MOVEMENT_STATE::STATIC;
-
 	glm::vec3 _movementStartPos = glm::vec3(0.0f);
 	glm::vec3 _movementTarget = glm::vec3(0.0f);
 	float _movementStartTime = 0.0f;
 
 	float _yPosOffset = 0.0f;
 
-	float _nextBehaviourChoiceAt = 0.0f;
-
-	float _animationInterpolationStart = 0.0f;
-	std::string _animation1 = "";
-	std::string _animation2 = "";
-
+	float _movementEndTime = 0.0f;
 	const BehaviourStage* _nextBehaviourStage = nullptr;
 	float _nextBehaviourStageAt = -1.0f;
 
 	AudioPlayer _backgroundNoise;
-	AudioPlayer _inFrontNoise;
+	float _bgNoiseInterpolationStart = 0.0f;
 
-	float _earthquakeInterpolationStart = 0.0f;
-	float _inFrontNoiseInterpolationStart = 0.0f;
+	AudioPlayer _foregroundNoise;
+	float _fgInterpolationStart = 0.0f;
 
 	glm::vec3 getHeadPosition() const;
 
 	void interpolateSound(const float currentTime);
-	void startCreatingPrimaryDestructionNoise();
-	void stopAndClearCurrentSounds();
 
-	void updateModelTransform();
+	static void interpolateSpecificSound(const float currentTime, AudioPlayer& soundToInterpolate, const float interpolationStartTime, const float interpolationDuration);
+
+	void startCreatingPrimaryDestructionNoise();
 
 	void interpolateMoveState(const float currentTime);
-	void playAnimationWithTransition(const std::string& animationName);
-	void playAnimation(const std::string& animationName);
-	void updateAnimationInterpolation();
 
-	void queueBehaviourStage(const BehaviourStage& behaviourStage, const float executeAfterSeconds);
+	void enqueueBehaviourStage(const BehaviourStage& behaviourStage, const float executeAfterSeconds);
+	bool hasEnqueuedBehaviourStagePending(const float currentTime) const;
 
 	void updateParticlePlacement();
 
@@ -112,3 +97,5 @@ private:
 
 	float getYDifferenceHeadAndBody() const;
 };
+
+#endif

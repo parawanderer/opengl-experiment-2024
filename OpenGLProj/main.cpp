@@ -46,6 +46,7 @@
 #include "FileConstants.h"
 #include "GameObjectConstants.h"
 #include "MilitaryContainer.h"
+#include "ModelConstants.h"
 #include "NomadCharacter.h"
 #include "OrnithopterCharacter.h"
 #include "Particle.h"
@@ -206,7 +207,7 @@ int main()
 	GLFWwindow* window = init();
 	if (window == nullptr) return -1;
 
-	SoundManager sound("./resources/audio");
+	SoundManager sound(AUDIO_BASE_PATH);
 
 #pragma region SHADERS_AND_POSTPROCESSING
 	Shader genericShader = Shader::fromFiles(SHADER_MESH_VERT, SHADER_MESH_FRAG);
@@ -219,11 +220,10 @@ int main()
 
 	Shader particlesShader = Shader::fromFiles(SHADER_PARTICLES_VERT, SHADER_PARTICLES_FRAG);
 
-	Quad screen2Dquad;
+	Quad screen2Dquad = Quad();
 	DistanceFieldPostProcessor distanceFieldPostProcessor(&screen2Dquad, currentWidth, currentHeight);
 	distanceFieldPostProcessor.setOutlineSize(0.003f);
 	distanceFieldPostProcessor.setOutlinePulsate(true);
-
 #pragma endregion
 
 #pragma region GAME_MODELS
@@ -232,8 +232,8 @@ int main()
 
 	Model thumperModel(MODEL_THUMPER); // reuse the model
 	AnimationSet thumperAnimations(MODEL_THUMPER, &thumperModel);
-	SphericalBoxedGameObject thumperObj1(&thumperModel, 0.4f);
-	SphericalBoxedGameObject thumperObj2(&thumperModel, 0.4f);
+	SphericalBoxedGameObject thumperObject1(&thumperModel, 0.4f);
+	SphericalBoxedGameObject thumperObject2(&thumperModel, 0.4f);
 
 	SphericalBoxedGameObject nomadObject(MODEL_NOMAD, 0.6f, glm::vec3(0.0, 1.45f, 0.0), 100.0f);
 	AnimationSet nomadAnimations(MODEL_NOMAD, nomadObject.getObjectModel());
@@ -250,10 +250,8 @@ int main()
 	RenderableGameObject containerLObject2(&containerLargeModel);
 	RenderableGameObject containerLObject3(&containerLargeModel);
 
-
 	// I'll use this as my second light source
 	Sphere sphere(20, 20, 1.0f);
-
 #pragma endregion
 
 #pragma region TEXT
@@ -270,11 +268,8 @@ int main()
 #pragma endregion
 
 #pragma region SUN
-	// this is currently a cube which is not necessarily ideal (however it's far out of range to see when spawning in the map)
 	Shader lightCubeShader = Shader::fromFiles(SHADER_LIGHTSOURCE_VERT, SHADER_LIGHTSOURCE_FRAG);
-	glm::mat4 lightCubeModel = glm::mat4(1.0f);
-	lightCubeModel = glm::translate(lightCubeModel, sunPos);
-	lightCubeModel = glm::scale(lightCubeModel, glm::vec3(10.0f));
+	const glm::mat4 lightCubeModel = LIGHT_CUBE_MODEL(sunPos);
 	Sun sun(&lightCubeShader, lightCubeModel, sunLightColor);
 #pragma endregion
 
@@ -316,50 +311,13 @@ int main()
 		PARTCILE_SANDWORMDUST_SIZE_W_H
 	);
 
-	// TODO: Some interesting particles I'd like to do (later):
-	// - jump sand displacement particles (sand in all directions in circle, reuse texture for the current particles (among others?) https://www.youtube.com/watch?v=WFfS7HcG8qE
-	// - footstep particles (footsteps following player and human characters). They should orient themselves on the ground and use a texture like this: https://ambientcg.com/view?id=Footsteps005
-	// - ground displacement particles after sandworm travelled through an area?
-
 	std::vector<ParticleSystem*> particles = { &particles1, &particles2 };
 #pragma endregion
 
 #pragma region MODELTRANSFORMS
-	const glm::vec3 smallOffsetY = glm::vec3(0.0, 0.1, 0.0);
-
-	glm::mat4 containerS1Model = glm::mat4(1.0f);
-	containerS1Model = glm::translate(containerS1Model, sandTerrain.getWorldHeightVecFor(150.0f, -150.0f) + glm::vec3(0.0, -0.1f, 0.0f));
-	containerS1Model = glm::rotate(containerS1Model, glm::radians(4.0f), glm::vec3(0.0, 0.0, 1.0));
-	containerS1Model = glm::scale(containerS1Model, glm::vec3(0.005f));
-
-	glm::mat4 containerS2Model = glm::mat4(1.0f);
-	containerS2Model = glm::translate(containerS2Model, sandTerrain.getWorldHeightVecFor(167.8, -163.0f) + glm::vec3(0.0, -0.1f, 0.0f));
-	containerS2Model = glm::rotate(containerS2Model, glm::radians(-12.0f), glm::vec3(0.0, 1.0, 1.0));
-	containerS2Model = glm::rotate(containerS2Model, glm::radians(-39.0f), glm::vec3(0.0, 0.0, 1.0));
-	containerS2Model = glm::scale(containerS2Model, glm::vec3(0.005f));
-
-	glm::mat4 containerL1Model = glm::mat4(1.0f);
-	containerL1Model = glm::translate(containerL1Model, sandTerrain.getWorldHeightVecFor(160.0f, -160.0f) + glm::vec3(0.0, -1.8f, 0.0f));
-	containerL1Model = glm::rotate(containerL1Model, glm::radians(35.0f), glm::vec3(1.0, 0.0, 0.0));
-	containerL1Model = glm::rotate(containerL1Model, glm::radians(10.0f), glm::vec3(0.0, 1.0, 0.0));
-	containerL1Model = glm::scale(containerL1Model, glm::vec3(0.02f));
-	containerLObject1.setModelTransform(containerL1Model);
-
-	glm::mat4 containerL2Model = glm::mat4(1.0f);
-	containerL2Model = glm::translate(containerL2Model, sandTerrain.getWorldHeightVecFor(182.0f, -175.0f) + glm::vec3(0.0, -2.0f, 0.0f));
-	containerL2Model = glm::rotate(containerL2Model, glm::radians(74.0f), glm::vec3(1.0, 0.0, 0.0));
-	containerL2Model = glm::rotate(containerL2Model, glm::radians(112.0f), glm::vec3(0.0, 1.0, 0.0));
-	containerL2Model = glm::rotate(containerL2Model, glm::radians(-12.0f), glm::vec3(0.0, 0.0, 1.0));
-	containerL2Model = glm::scale(containerL2Model, glm::vec3(0.02f));
-	containerLObject2.setModelTransform(containerL2Model);
-
-	glm::mat4 containerL3Model = glm::mat4(1.0f);
-	containerL3Model = glm::translate(containerL3Model, sandTerrain.getWorldHeightVecFor(182, -227) + glm::vec3(0.0, -1.5f, 0.0f));
-	containerL3Model = glm::rotate(containerL3Model, glm::radians(-21.0f), glm::vec3(1.0, 0.0, 0.0));
-	containerL3Model = glm::rotate(containerL3Model, glm::radians(-3.0f), glm::vec3(0.0, 1.0, 0.0));
-	containerL3Model = glm::rotate(containerL3Model, glm::radians(15.0f), glm::vec3(0.0, 0.0, 1.0));
-	containerL3Model = glm::scale(containerL3Model, glm::vec3(0.02f));
-	containerLObject3.setModelTransform(containerL3Model);
+	containerLObject1.setModelTransform(CONTAINER_L1_MODEL(sandTerrain));
+	containerLObject2.setModelTransform(CONTAINER_L2_MODEL(sandTerrain));
+	containerLObject3.setModelTransform(CONTAINER_L3_MODEL(sandTerrain));
 #pragma endregion
 
 	UITextRenderer uiText(&timeMgr, camMgr.getPlayerCamera(), &font);
@@ -368,29 +326,42 @@ int main()
 	PlayerState player = PlayerState(&sound, camMgr.getPlayerCamera());
 	camMgr.getPlayerCamera()->addSubscriber(&player);
 
-
+	// "characters"
 	NomadCharacter nomadCharacter(&timeMgr, &sandTerrain, &sound, &uiText, &nomadObject, &nomadAnimations, 146.12f, -171.42f);
 	SandWormCharacter sandWormCharacter(&timeMgr, &sandTerrain, &sound, &sandWormObject, &sandWormAnimations, &particles1, &particles2, 944.37f, -793.97f); //726.44f, -610.75f
 	OrnithopterCharacter ornithopterCharacter(&timeMgr, &sound, &ornithopterObject, &ornithopterAnimations);
 
-	Thumper thumper1(&timeMgr, &sound, &thumperObj1, &thumperAnimations);
-	thumper1.setPosition(sandTerrain.getWorldHeightVecFor(5.0f, 6.0f) + smallOffsetY);
-	Thumper thumper2(&timeMgr, &sound, &thumperObj2, &thumperAnimations);
-	thumper2.setPosition(sandTerrain.getWorldHeightVecFor(161.61f, -157.85f) + smallOffsetY);
+	// items player can pick up
+	Thumper thumper1(&timeMgr, &sound, &thumperObject1, &thumperAnimations);
+	thumper1.setPosition(sandTerrain.getWorldHeightVecFor(5.0f, 6.0f) + SMALL_OFFSET_Y);
+	Thumper thumper2(&timeMgr, &sound, &thumperObject2, &thumperAnimations);
+	thumper2.setPosition(sandTerrain.getWorldHeightVecFor(161.61f, -157.85f) + SMALL_OFFSET_Y);
 
+	// containers the player could open in the future, maybe. They're all empty, though
 	MilitaryContainer container1(&containerSObject1);
-	container1.setModelTransform(containerS1Model);
+	container1.setModelTransform(CONTAINER_S1_MODEL(sandTerrain));
 	MilitaryContainer container2(&containerSObject2);
-	container2.setModelTransform(containerS2Model);
+	container2.setModelTransform(CONTAINER_S2_MODEL(sandTerrain));
 
-
-	// a bunch of classes that require their onNewFrame() function to be called:
-	const std::vector<FrameRequester*> frameRequesters = { &nomadCharacter, &sandWormCharacter, &thumper1, &thumper2, &ornithopterCharacter, &particles1, &particles2 };
-
+	const std::vector<FrameRequester*> frameRequesters = {
+		&nomadCharacter,
+		&sandWormCharacter,
+		&thumper1,
+		&thumper2,
+		&ornithopterCharacter,
+		&particles1,
+		&particles2
+	}; 
 	std::set<Thumper*> worldItemsThatPlayerCanPickUp = { &thumper1, &thumper2 };
 	std::set<NomadCharacter*> charactersThatPlayerCanTalkTo = { &nomadCharacter };
 	std::set<MilitaryContainer*> chestsThatPlayerCanOpen = { &container1, &container2 };
-	std::vector<RenderableGameObject*> staticGameObjects = { container1.getObjectModel(), container2.getObjectModel(), &containerLObject1, &containerLObject2, &containerLObject3 };
+	std::vector<RenderableGameObject*> staticGameObjects = {
+		container1.getObjectModel(),
+		container2.getObjectModel(),
+		&containerLObject1,
+		&containerLObject2,
+		&containerLObject3
+	};
 	std::vector<AnimatedEntity*> independentAnimatedEntities = { &nomadCharacter, &sandWormCharacter, &ornithopterCharacter };
 
 	PlayerInteractionManger interactionManger(
@@ -425,15 +396,12 @@ int main()
 #pragma endregion
 
 		sound.updateListenerPos(cameraPos, cameraFront);
-
 		for (auto frameRequester : frameRequesters) frameRequester->onNewFrame();
 
 #pragma region MOUSE_RAY_PICKING_AND_PLAYER_INTERACTIONS
 		SphericalBoundingBoxedEntity* result = interactionManger.getMouseTarget();
 		interactionManger.handleInteractionChecks(result);
-
 		handleAssignmentOnlyPuppetController(t, window, sandWormCharacter, nomadCharacter, cameraPos);
-
 #pragma endregion
 
 #pragma region RENDERING
@@ -492,12 +460,14 @@ int main()
 				camMgr.getCurrentCamera()->isSpeeding()
 			);
 		}
+#pragma endregion
 
-		// PARTICLE EFFECTS
+#pragma region PARTICLES
 		particlesShader.use();
 		particlesShader.setMat4("projection", projection);
 		particlesShader.setMat4("view", view);
 		for (auto particle : particles) particle->draw(particlesShader, view, cameraPos);
+#pragma endregion
 
 #pragma region POST_PROCESSING
 		fontShader.use();
@@ -520,16 +490,12 @@ int main()
 #pragma endregion
 
 		if (USE_SRGB_COLORS) glDisable(GL_FRAMEBUFFER_SRGB); // only the LAST step is allowed to apply gamma correction, otherwise our colours would get all messed-up: https://learnopengl.com/Advanced-Lighting/Gamma-Correction
-#pragma endregion
 
 		// check and call events and swap the buffers
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
-
-# pragma region CLEANUP
 	glfwTerminate();
-#pragma endregion
 
 	return 0;
 }

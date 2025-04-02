@@ -5,7 +5,7 @@
 #include "WorldMathUtils.h"
 
 const glm::vec3 ITEM_PLACEMENT_SMALL_OFFSET_Y = glm::vec3(0.0, 0.1, 0.0);
-bool hasSeenThumper = false; // <- temporary
+bool hasSeenThumper = false; // <- TODO: remove, temporary, for the assignment only.
 
 PlayerInteractionManger::PlayerInteractionManger(
 	const WorldTimeManager* time,

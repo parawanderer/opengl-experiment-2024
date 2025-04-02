@@ -147,6 +147,7 @@
     <ClCompile Include="CameraUtils.cpp" />
     <ClCompile Include="DistanceFieldPostProcessor.cpp" />
     <ClCompile Include="CarriedGameObject.cpp" />
+    <ClCompile Include="GenericAnimatedCharacter.cpp" />
     <ClCompile Include="InterpolationMathUtil.cpp" />
     <ClCompile Include="MathConversionUtil.cpp" />
     <ClCompile Include="MilitaryContainer.cpp" />
@@ -222,11 +223,13 @@
     <ClInclude Include="CarriedGameObject.h" />
     <ClInclude Include="FrameRequester.h" />
     <ClInclude Include="GameObjectConstants.h" />
+    <ClInclude Include="GenericAnimatedCharacter.h" />
     <ClInclude Include="InterpolationMathUtil.h" />
     <ClInclude Include="jfa_algo_old.frag" />
     <ClInclude Include="DistanceFieldPostProcessor.h" />
     <ClInclude Include="MathConversionUtil.h" />
     <ClInclude Include="MilitaryContainer.h" />
+    <ClInclude Include="ModelConstants.h" />
     <ClInclude Include="NomadCharacter.h" />
     <ClInclude Include="OrnithopterCharacter.h" />
     <ClInclude Include="Particle.h" />

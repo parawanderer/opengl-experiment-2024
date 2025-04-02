@@ -14,6 +14,7 @@ constexpr auto PARTICLE_OFFSET_FRONT = 70.0f; // in meters
 constexpr auto PARTICLE_SPAWN_ALONG_LINE_LENGTH = 8.0f; // in meters
 constexpr auto MAX_OFFSET_Y = 0.0f; // in meters
 constexpr auto GO_UP_PER_FRAME = 0.1f;
+constexpr auto INITIAL_YAW = -180.0f;
 
 // animations that I made myself (as I made this model myself, initially following along with a tutorial for the model itself)
 const std::string TPOSE_ANIM = "tpose";
@@ -57,40 +58,43 @@ SandWormCharacter::SandWormCharacter(
 	float initialX, 
 	float initialZ)
 :
-_time(time),
+GenericAnimatedCharacter(
+	time,
+	sandwormGameObject,
+	animations,
+	ANIMATION_TRANSITION_TIME,
+	terrain->getWorldHeightVecFor(initialX, initialZ),
+	INITIAL_YAW,
+	0.0f,
+	glm::vec3(1.0, 0.0, 0.0)
+),
 _terrain(terrain),
 _sound(sound),
 _model(sandwormGameObject),
-_animator(animations),
 _dustParticle1(dustParticle1),
-_dustParticle2(dustParticle2),
-_pitch(0.0f /* always 0 for now */),
-_yaw(-180.0f),
-_currentPos(terrain->getWorldHeightVecFor(initialX, initialZ)),
-_currentFront(WorldMathUtils::computeDirection(this->_pitch, this->_yaw))
+_dustParticle2(dustParticle2)
 {
-	this->playAnimationWithTransition(TPOSE_ANIM);
+	this->GenericAnimatedCharacter::playAnimationWithTransition(TPOSE_ANIM);
 	this->_yPosOffset = UNDERGROUND_OFFSET;
-	this->updateModelTransform();
+	this->SandWormCharacter::updateModelTransform();
 }
 
 void SandWormCharacter::onNewFrame()
 {
-	const float currentTime = this->_time->getCurrentTime();
-	this->updateAnimationInterpolation();
+	const float currentTime = this->getTime()->getCurrentTime();
+	this->updateAnimationInterpolationForFrame();
 
 	this->updateModelTransform();
 	this->interpolateSound(currentTime);
 
-
-	if (this->_nextBehaviourStage && this->_nextBehaviourStageAt > -1.0f && currentTime >= this->_nextBehaviourStageAt)
+	if (this->hasEnqueuedBehaviourStagePending(currentTime))
 	{
 		this->playAnimationWithTransition(this->_nextBehaviourStage->animationName);
 
 		this->_nextBehaviourStageAt = -1.0f;
 		this->_nextBehaviourStage = nullptr;
 	}
-	else if (currentTime < this->_nextBehaviourChoiceAt)
+	else if (currentTime < this->_movementEndTime)
 	{
 		switch(this->_movementState)
 		{
@@ -100,7 +104,8 @@ void SandWormCharacter::onNewFrame()
 			this->interpolateMoveState(currentTime);
 			break;
 		}
-	} else
+	}
+	else
 	{
 		this->_movementState = MOVEMENT_STATE::STATIC;
 	}
@@ -109,16 +114,7 @@ void SandWormCharacter::onNewFrame()
 
 	const glm::vec3 headPos = this->getHeadPosition();
 	this->_backgroundNoise.setPosition(headPos);
-	this->_inFrontNoise.setPosition(headPos);
-}
-
-void SandWormCharacter::draw(Shader& shader)
-{
-	const std::vector<glm::mat4> transforms = this->_animator.getFinalBoneMatrices();
-	this->setupEntityShaderForAnim(shader, transforms);
-
-	this->_model->draw(shader);
-	this->clearEntityShaderForAnim(shader);
+	this->_foregroundNoise.setPosition(headPos);
 }
 
 void SandWormCharacter::startQuakingEarth()
@@ -128,7 +124,7 @@ void SandWormCharacter::startQuakingEarth()
 		this->_backgroundNoise = this->_sound->playTracked3D(BACKGROUND_RUMBLE_TRACK, true, this->getHeadPosition());
 		this->_backgroundNoise.setMinimumDistance(BACKGROUND_RUMBLE_MIN_DISTANCE);
 		this->_backgroundNoise.setVolume(0.0f);
-		this->_earthquakeInterpolationStart = this->_time->getCurrentTime();
+		this->_bgNoiseInterpolationStart = this->getTime()->getCurrentTime();
 
 		this->playAnimationWithTransition(MOVING_BELOWGROUND_ANIM);
 	}
@@ -136,43 +132,44 @@ void SandWormCharacter::startQuakingEarth()
 
 void SandWormCharacter::appearAndMoveTowards(const glm::vec3& position)
 {
-	// TODO: this is duplicated from NomadCharacer -> move to shared place
-	const float currentTime = this->_time->getCurrentTime();
+	const float currentTime = this->getTime()->getCurrentTime();
 	this->rotateTowards(position);
 
-	this->_movementStartPos = this->_currentPos;
+	this->_movementStartPos = this->getCurrentPosition();
 	this->_movementTarget = this->_terrain->getWorldHeightVecFor(position.x, position.z);
 	this->_movementStartTime = currentTime;
-	const float runDistance = glm::distance(this->_currentPos, position);
-	this->_nextBehaviourChoiceAt = currentTime + (runDistance / MOVEMENT_SPEED_M_PER_SEC) + ANIMATION_TRANSITION_TIME;
+	const float runDistance = glm::distance(this->getCurrentPosition(), position);
+	this->_movementEndTime = currentTime + (runDistance / MOVEMENT_SPEED_M_PER_SEC) + ANIMATION_TRANSITION_TIME;
 
 	this->_movementState = MOVEMENT_STATE::MOVING;
 
 	this->playAnimationWithTransition(CHASING_APPEARS_ABOVEGROUND_ANIM);
 	this->startCreatingPrimaryDestructionNoise();
-	this->queueBehaviourStage(CHASE_NORMAL, 1.2f);
-
+	this->enqueueBehaviourStage(CHASE_NORMAL, 1.2f);
 	this->showDust(true);
 }
 
-
 glm::vec3 SandWormCharacter::getHeadPosition() const
 {
-	return this->_currentPos + (this->_currentFront * HEAD_OFFSET_LENGTH_FROM_MIDDLE);
+	return this->getCurrentPosition() + (this->getCurrentFront() * HEAD_OFFSET_LENGTH_FROM_MIDDLE);
 }
 
 void SandWormCharacter::interpolateSound(const float currentTime)
 {
-	if (this->_backgroundNoise.hasAudio() && currentTime <= this->_earthquakeInterpolationStart + SOUND_INTERPOLATION_DURATION_BG)
-	{
-		const float volume = 1.0f - (((this->_earthquakeInterpolationStart + SOUND_INTERPOLATION_DURATION_BG) - currentTime) / SOUND_INTERPOLATION_DURATION_BG);
-		this->_backgroundNoise.setVolume(volume);
-	}
+	SandWormCharacter::interpolateSpecificSound(currentTime, this->_backgroundNoise, this->_bgNoiseInterpolationStart, SOUND_INTERPOLATION_DURATION_BG);
+	SandWormCharacter::interpolateSpecificSound(currentTime, this->_foregroundNoise, this->_fgInterpolationStart, SOUND_INTERPOLATION_DURATION_FG);
+}
 
-	if (this->_inFrontNoise.hasAudio() && currentTime <= this->_inFrontNoiseInterpolationStart + SOUND_INTERPOLATION_DURATION_FG)
+void SandWormCharacter::interpolateSpecificSound(
+	const float currentTime, 
+	AudioPlayer& soundToInterpolate, 
+	const float interpolationStartTime,
+	const float interpolationDuration)
+{
+	if (soundToInterpolate.hasAudio() && currentTime <= interpolationStartTime + interpolationDuration)
 	{
-		const float volume = 1.0f - (((this->_inFrontNoiseInterpolationStart + SOUND_INTERPOLATION_DURATION_FG) - currentTime) / SOUND_INTERPOLATION_DURATION_FG);
-		this->_inFrontNoise.setVolume(volume);
+		const float volume = 1.0f - (((interpolationStartTime + interpolationDuration) - currentTime) / interpolationDuration);
+		soundToInterpolate.setVolume(volume);
 	}
 }
 
@@ -182,113 +179,55 @@ void SandWormCharacter::updateModelTransform()
 
 	const float yOffset = this->_yPosOffset + this->getYDifferenceHeadAndBody(); // we want to offset relative to the head, not the middle of the body. So we need to convert this
 
-	model = glm::translate(model, this->_currentPos + glm::vec3(0.0f, yOffset, 0.0f)); // place worm at current position
-	model = glm::rotate(model, glm::radians(this->_yaw) + glm::radians(90.0f), glm::vec3(0.0, 1.0, 0.0));
+	model = glm::translate(model, this->getCurrentPosition() + glm::vec3(0.0f, yOffset, 0.0f)); // place worm at current position
+	model = glm::rotate(model, glm::radians(this->getYaw()) + glm::radians(90.0f), glm::vec3(0.0, 1.0, 0.0));
 	model = glm::scale(model, glm::vec3(2.0f)); // rotate it
 	this->_model->setModelTransform(model);
 }
 
-void SandWormCharacter::rotateTowards(const glm::vec3& position)
-{ // TODO: this IS **very similar** to NomadCharacer -> move to shared place
-
-	glm::vec3 newDirection = position - this->_currentPos;
-	newDirection.y = 0.0f;
-	newDirection = glm::normalize(newDirection);
-
-	this->_currentFront = newDirection;
-
-	this->_pitch = 0.0f;
-	this->_yaw = glm::degrees(acos(glm::dot(this->_currentFront, glm::vec3(1.0, 0.0, 0.0))));
-	if (glm::dot(this->_currentFront, glm::vec3(0.0, 0.0, 1.0)) > 0.0f)
-		this->_yaw = 360.0f - this->_yaw;
-	this->updateModelTransform();
-}
-
-const glm::vec3& SandWormCharacter::getCurrentPosition() const
-{
-	return this->_currentPos;
-}
-
 void SandWormCharacter::interpolateMoveState(const float currentTime)
-{ // TODO: this is similar to NomadCharacer -> move to shared place
-	float t = (currentTime - this->_movementStartTime) / (this->_nextBehaviourChoiceAt - this->_movementStartTime); // t = range [0, 1]
+{
+	float t = (currentTime - this->_movementStartTime) / (this->_movementEndTime - this->_movementStartTime); // t = range [0, 1]
 	// linear interpolation
 	const glm::vec3 pos = (1 - t) * this->_movementStartPos + t * this->_movementTarget; // at t = 0, completely @ start, otherwise completely at end
-	this->_currentPos = this->_terrain->getWorldHeightVecFor(pos.x, pos.z);
+	this->setCurrentPosition(this->_terrain->getWorldHeightVecFor(pos.x, pos.z));
 	this->_yPosOffset = std::min(_yPosOffset + GO_UP_PER_FRAME, MAX_OFFSET_Y);
 	this->updateModelTransform();
 }
 
-void SandWormCharacter::playAnimationWithTransition(const std::string& animationName)
-{ // TODO: this is duplicated from NomadCharacer -> move to shared place
-	if (!this->_animation1.empty())
-	{
-		this->_animationInterpolationStart = this->_time->getCurrentTime();
-		this->_animator.startPlaying2ndAnimation(
-			this->_animator.getAnimationByName(animationName)
-		);
-		this->_animation2 = animationName;
-		//std::cout << "Start interpolating " << this->_animation1 << " -> " << this->_animation2 << std::endl;
-	}
-	else
-	{
-		this->playAnimation(animationName);
-	}
-}
-
-void SandWormCharacter::playAnimation(const std::string& animationName)
-{ // TODO: this is duplicated from NomadCharacer -> move to shared place
-	this->_animator.clearAnimation2();
-	this->_animator.playAnimation(animationName);
-	this->_animation1 = animationName;
-}
-
-void SandWormCharacter::updateAnimationInterpolation()
-{ // TODO: this is duplicated from NomadCharacer -> move to shared place
-	if (!this->_animation2.empty() && (this->_time->getCurrentTime() <= this->_animationInterpolationStart + ANIMATION_TRANSITION_TIME))
-	{
-		// interpolate between two animations based on time (within the time span of ANIMATION_TRANSITION_TIME)
-		float interpolationFactor = (this->_time->getCurrentTime() - this->_animationInterpolationStart) / ANIMATION_TRANSITION_TIME;
-		interpolationFactor = InterpolationMathUtil::easeInOutCosine(interpolationFactor);
-		//std::cout << "Interpolating " << this->_animation1 << " -> " << this->_animation2 << " @ " << interpolationFactor << std::endl;
-		this->_animator.updateAnimation2(this->_time->getDeltaTime(), interpolationFactor);
-	}
-	else
-	{
-		if (!this->_animation2.empty())
-		{
-			this->_animation1 = this->_animation2;
-			this->_animation2 = ""; // reset the second. Now the first will be played *strictly*
-			this->_animator.flipAnimation1And2();
-			this->_animator.clearAnimation2();
-		}
-		this->_animator.updateAnimation(this->_time->getDeltaTime());
-	}
-}
-
-void SandWormCharacter::queueBehaviourStage(const BehaviourStage& behaviourStage, const float executeAfterSeconds)
+void SandWormCharacter::enqueueBehaviourStage(const BehaviourStage& behaviourStage, const float executeAfterSeconds)
 {
 	this->_nextBehaviourStage = &behaviourStage;
-	this->_nextBehaviourStageAt = this->_time->getCurrentTime() + executeAfterSeconds;
+	this->_nextBehaviourStageAt = this->getTime()->getCurrentTime() + executeAfterSeconds;
+}
+
+bool SandWormCharacter::hasEnqueuedBehaviourStagePending(const float currentTime) const
+{
+	return this->_nextBehaviourStage && this->_nextBehaviourStageAt > -1.0f && currentTime >= this->_nextBehaviourStageAt;
 }
 
 void SandWormCharacter::updateParticlePlacement()
 {
 	const glm::vec3 headPos = this->getHeadPosition();
+	const glm::vec3& currentFront = this->getCurrentFront();
 	// we switch to 2d now because we can ignore "y" (which will be taken from the terrain)
 	//const glm::vec3 head2DPos = glm::vec3(headPos.x, 0.0f, headPos.z);
-	const glm::vec3 headDirXZPerpendicularUnitVector = glm::vec3(-this->_currentFront.z, 0.0f /* <- notably this is ignored, we take this perpendicular vector in 2D */, this->_currentFront.x);
-	// ^ currently I won't normalize this as the worm can't really look up or down anyway, so this->_currentFront.y is necessarily always 0...
+	const glm::vec3 headDirXZPerpendicularUnitVector = glm::vec3(
+		-currentFront.z, 
+		0.0f /* <- notably this is ignored, we take this perpendicular vector in 2D */, 
+		currentFront.x
+	);
+	// ^ currently I won't normalize this as the worm can't really look up or down anyway, so currentFront.y is necessarily always 0...
 
 	// pos 1
-	glm::vec3 posLeft = headPos + (this->_currentFront * PARTICLE_OFFSET_FRONT) + (HEAD_RADIUS * headDirXZPerpendicularUnitVector);
+	glm::vec3 posLeft = headPos + (currentFront * PARTICLE_OFFSET_FRONT) + (HEAD_RADIUS * headDirXZPerpendicularUnitVector);
 	posLeft = this->_terrain->getWorldHeightVecFor(posLeft.x, posLeft.z);
 
 	// pos 2
-	glm::vec3 posRight = headPos + (this->_currentFront * PARTICLE_OFFSET_FRONT) - (HEAD_RADIUS * headDirXZPerpendicularUnitVector);
+	glm::vec3 posRight = headPos + (currentFront * PARTICLE_OFFSET_FRONT) - (HEAD_RADIUS * headDirXZPerpendicularUnitVector);
 	posRight = this->_terrain->getWorldHeightVecFor(posRight.x, posRight.z);
 
-	const glm::vec3 spawnAlongVectorFromCenter = -this->_currentFront * PARTICLE_SPAWN_ALONG_LINE_LENGTH;
+	const glm::vec3 spawnAlongVectorFromCenter = -currentFront * PARTICLE_SPAWN_ALONG_LINE_LENGTH;
 
 	// apply
 	this->_dustParticle1->setCenterPosition(posLeft);
@@ -317,11 +256,11 @@ float SandWormCharacter::getYDifferenceHeadAndBody() const
 
 void SandWormCharacter::startCreatingPrimaryDestructionNoise()
 {
-	if (!this->_inFrontNoise.hasAudio())
+	if (!this->_foregroundNoise.hasAudio())
 	{
-		this->_inFrontNoise = this->_sound->playTracked3D(IN_FRONT_EARTH_BREAKING_TRACK, true, this->getHeadPosition());
-		this->_inFrontNoise.setMinimumDistance(IN_FRONT_EARTH_RIPPING_MIN_DISTANCE);
-		this->_inFrontNoise.setVolume(0.0f);
-		this->_inFrontNoiseInterpolationStart = this->_time->getCurrentTime();
+		this->_foregroundNoise = this->_sound->playTracked3D(IN_FRONT_EARTH_BREAKING_TRACK, true, this->getHeadPosition());
+		this->_foregroundNoise.setMinimumDistance(IN_FRONT_EARTH_RIPPING_MIN_DISTANCE);
+		this->_foregroundNoise.setVolume(0.0f);
+		this->_fgInterpolationStart = this->getTime()->getCurrentTime();
 	}
 }
