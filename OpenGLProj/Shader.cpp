@@ -82,6 +82,7 @@ Shader Shader::fromFiles(const char* vertexPath, const char* fragmentPath, const
     std::string vertexCode = readFile(vertexPath);
     std::string fragmentCode = readFile(fragmentPath);
     std::string geomShaderCode = "";
+
     if (geomShaderPath != nullptr) {
         assertFileExists(geomShaderPath);
         geomShaderCode = readFile(geomShaderPath);

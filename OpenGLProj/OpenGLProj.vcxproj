@@ -159,8 +159,16 @@
     <None Include=".gitignore" />
     <None Include="basic.frag" />
     <None Include="basic.vert" />
+    <None Include="distancefield.frag" />
     <None Include="font.frag" />
     <None Include="font.vert" />
+    <None Include="jfa_algo.frag" />
+    <None Include="jfa_init.frag" />
+    <None Include="jfa.vert" />
+    <None Include="justrenderthe2dtex.frag" />
+    <None Include="justrenderthe2dtex.vert" />
+    <None Include="masking.frag" />
+    <None Include="masking.vert" />
     <None Include="mesh.frag" />
     <None Include="mesh.vert" />
     <None Include="shader_lightsource.frag" />
@@ -178,6 +186,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CameraManager.h" />
     <ClInclude Include="camera_m.h" />
+    <ClInclude Include="jfa_algo_old.frag" />
     <ClInclude Include="Sphere.h" />
     <ClInclude Include="SphericalBoxedGameObject.h" />
     <ClInclude Include="Colors.h" />

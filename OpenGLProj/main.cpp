@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -11,6 +12,7 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 
+#include <filesystem>
 #include <GL/gl.h>
 
 #include "Colors.h"
@@ -27,8 +29,21 @@
 #include "Sun.h"
 #include "WorldMathUtils.h"
 
-#define INITIAL_WIDTH 1280
-#define INITIAL_HEIGHT 800
+// keeping this at a power of two to support the outline-rendering JFA algorithm.
+// I could make this not a power of two but then I need to perform some annoying buffer size remappings during the JFA algo.
+// (take the not power of two, not n x n width and height, insert the generated image into a buffer of n x n with n a
+// power of two such that n is the next 2^m with ceil(max(width, height)) = m. Then I would execute the JFA algo in this buffer.
+// a question would be if I should upscale or downscale the buffer, and how bad of an effect would we see if e.g. downscaling
+// to the previous power of two (2^(m-1)), and then upscaling the generated outline linearly.
+// But regardless my computer can handle rendering the current implementation just fine.
+// The main problem is that JFA does not generate nice outlines in non power of two. I think the original authors of the JFA
+// paper address exactly this (https://www.comp.nus.edu.sg/~tants/jfa/i3d06.pdf) with their generality principle.
+// I have also seen this post: https://computergraphics.stackexchange.com/a/2119 but it does not appear to be practically accurate.
+// I'm not sure if that is an implementation issue on my behalf or not, as all examples of JFA depth-field outlines that I have seen
+// work with powers of two
+#define INITIAL_WIDTH 1024
+#define INITIAL_HEIGHT 1024
+
 
 
 #pragma region STATE
@@ -56,39 +71,15 @@ glm::vec3 sunLightColor = Colors::WHITE;
 #pragma endregion
 
 
-void framebufferSizeCallback(GLFWwindow* window, int width, int height)
-{
-	glViewport(0, 0, width, height);
-	currentWidth = width;
-	currentHeight = height;
-}
+void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 
-void mouseCallback(GLFWwindow* window, double xpos, double ypos)
-{
-	camMgr.mouseCallback(window, xpos, ypos);
-}
+void mouseCallback(GLFWwindow* window, double xpos, double ypos);
 
-void scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
-{
-	camMgr.scrollCallback(window, xoffset, yoffset);
-}
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
-void processInput(GLFWwindow* window)
-{
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, true);
+void processInput(GLFWwindow* window);
 
-	if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) // for "observer"
-		camMgr.switchToNoClip();
-
-	if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) // for "player"
-		camMgr.switchToPlayer();
-}
-
-void processKey(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-	camMgr.processKey(window, key, scancode, action, mods);
-}
+void processKey(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 
 int main()
@@ -130,13 +121,60 @@ int main()
 
 # pragma endregion
 
-#pragma region GAME_MODELS
 	Shader genericShader = Shader::fromFiles("mesh.vert", "mesh.frag");
 	genericShader.use();
 	genericShader.setVec3("light.position", sunPos);
 	genericShader.setVec3("light.ambient", sunLightColor * 0.3f);
 	genericShader.setVec3("light.diffuse", sunLightColor * 1.0f);
 	genericShader.setVec3("light.specular", sunLightColor * 0.1f);
+
+	Shader maskingShader = Shader::fromFiles("masking.vert", "masking.frag"); // for creating black background white model renderings
+
+	Shader orthogonalUV2DShader = Shader::fromFiles("jfa.vert", "jfa_init.frag");
+	orthogonalUV2DShader.use();
+	orthogonalUV2DShader.setInt("mask", 0);
+
+	Shader jfaAlgorithmShader = Shader::fromFiles("jfa.vert", "jfa_algo.frag");
+	jfaAlgorithmShader.use();
+	jfaAlgorithmShader.setInt("UVtexture", 0);
+	jfaAlgorithmShader.setInt("textureWidth", currentWidth);
+	jfaAlgorithmShader.setInt("textureHeight", currentHeight);
+
+	Shader justRenderThe2DTextureShader = Shader::fromFiles("justrenderthe2dtex.vert", "justrenderthe2dtex.frag");
+	justRenderThe2DTextureShader.use();
+	justRenderThe2DTextureShader.setInt("screenTexture", 0);
+
+	Shader distanceFieldConvertor = Shader::fromFiles("justrenderthe2dtex.vert", "distancefield.frag");
+	distanceFieldConvertor.use();
+	distanceFieldConvertor.setInt("screenTexture", 0);
+	 
+
+	float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
+
+		// positions   // texCoords
+		-1.0f,  1.0f,  0.0f, 1.0f,
+		-1.0f, -1.0f,  0.0f, 0.0f,
+		 1.0f, -1.0f,  1.0f, 0.0f,
+
+		-1.0f,  1.0f,  0.0f, 1.0f,
+		 1.0f, -1.0f,  1.0f, 0.0f,
+		 1.0f,  1.0f,  1.0f, 1.0f
+	};
+
+	unsigned int quadVAO, quadVBO;
+	glGenVertexArrays(1, &quadVAO);
+	glGenBuffers(1, &quadVBO);
+	glBindVertexArray(quadVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+
+
+#pragma region GAME_MODELS
+	
 
 	// backpack
 	//Model backpack("resources/models/backpack/backpack.obj");
@@ -161,7 +199,7 @@ int main()
 
 #pragma region TEXT
 	Shader fontShader = Shader::fromFiles("font.vert", "font.frag");
-	glm::mat4 textProjection = glm::ortho(0.0f, (float)INITIAL_WIDTH, 0.0f, (float)INITIAL_HEIGHT);
+	glm::mat4 textProjection = glm::ortho(0.0f, (float)currentWidth, 0.0f, (float)currentHeight);
 	fontShader.use();
 	fontShader.setMat4("projection", textProjection);
 	Font font("resources/calibri.ttf", &fontShader);
@@ -207,18 +245,20 @@ int main()
 	camMgr.setTerrain(&sandTerrain);
 #pragma endregion
 
-	//glm::mat3 backpackNormalMatrix = glm::mat3(glm::transpose(glm::inverse(backpackModel)));
+#pragma region MODELTRANSFORMS
+
+	const glm::vec3 smallOffsetY = glm::vec3(0.0, 0.1, 0.0);
 
 	thumper.setModelTransform(
-		glm::translate(glm::mat4(1.0f), sandTerrain.getWorldHeightVecFor(5.0f, 6.0f) + glm::vec3(0.0, 0.1, 0.0))
+		glm::translate(glm::mat4(1.0f), sandTerrain.getWorldHeightVecFor(0.0f, 0.0f) + smallOffsetY)
 	);
 
 	thumper2.setModelTransform(
-		glm::translate(glm::mat4(1.0f), sandTerrain.getWorldHeightVecFor(9.0f, 10.0f) + glm::vec3(0.0, 0.1, 0.0))
+		glm::translate(glm::mat4(1.0f), sandTerrain.getWorldHeightVecFor(9.0f, 10.0f) + smallOffsetY)
 	);
 
 	glm::mat4 nomadModel = glm::mat4(1.0f);
-	nomadModel = glm::translate(nomadModel, sandTerrain.getWorldHeightVecFor(-20.0f, 15.0f) + glm::vec3(0.0, 0.1, 0.0));
+	nomadModel = glm::translate(nomadModel, sandTerrain.getWorldHeightVecFor(-20.0f, 15.0f) + smallOffsetY);
 	nomadModel = glm::rotate(nomadModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	nomad.setModelTransform(nomadModel);
 
@@ -233,7 +273,69 @@ int main()
 	sandWormModel = glm::scale(sandWormModel, glm::vec3(3.0f));
 	sandWorm.setModelTransform(sandWormModel);
 
-# pragma region MAIN_LOOP
+#pragma endregion
+
+	// ============ [ MAIN LOOP ] ============
+
+
+	// personal notes RE: value clamping/blending as it is relevant for the JFA algo: https://stackoverflow.com/questions/54873828/blend-negative-value-into-framebuffer-0-opengl
+
+	unsigned int framebuffer1; // https://learnopengl.com/Advanced-OpenGL/Framebuffers
+	glGenFramebuffers(1, &framebuffer1); // for "off-screen rendering"
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer1);
+
+
+	// generate texture
+	unsigned int textureColorbuffer1;
+	glGenTextures(1, &textureColorbuffer1);
+	glBindTexture(GL_TEXTURE_2D, textureColorbuffer1);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, currentWidth, currentHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); // must be GL_NEAREST to do point-sampling (i.e. don't interpolate between colours). Not doing point-sampling (=interpolating) messes up the Distance Field
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer1, 0);
+	glCheckError();
+
+
+	unsigned int rbo1;
+	glGenRenderbuffers(1, &rbo1);
+	glBindRenderbuffer(GL_RENDERBUFFER, rbo1);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, currentWidth, currentHeight); // use a single renderbuffer object for both a depth AND stencil buffer.
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo1); // now actually attach it
+	// now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "ERROR::FRAMEBUFFER:: Framebuffer 1 is not complete!" << std::endl;
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+	// second one for multiple pass switching
+	unsigned int framebuffer2;
+	glGenFramebuffers(1, &framebuffer2);
+	glBindFramebuffer(GL_FRAMEBUFFER, framebuffer2);
+
+	// generate texture
+	unsigned int textureColorbuffer2;
+	glGenTextures(1, &textureColorbuffer2);
+	glBindTexture(GL_TEXTURE_2D, textureColorbuffer2);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, currentWidth, currentHeight, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer2, 0);
+	glCheckError();
+
+
+	unsigned int rbo2;
+	glGenRenderbuffers(1, &rbo2);
+	glBindRenderbuffer(GL_RENDERBUFFER, rbo2);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, currentWidth, currentHeight);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo2);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "ERROR::FRAMEBUFFER:: Framebuffer 2 is not complete!" << std::endl;
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
+	float outlineSize = 0.001f;
+	int showResult = 1;
+	int passes = 0;
 
 	camMgr.beforeLoop();
 	while(!glfwWindowShouldClose(window))
@@ -245,6 +347,7 @@ int main()
 		camMgr.processInput(window);
 
 		// ------ ** model/view/projection matrices ** ------
+#pragma region PROJECTING
 		const glm::vec3 cameraPos = camMgr.getPos();
 		const glm::vec3 cameraFront = camMgr.getCurrentCamera()->getFront(); // direction
 		const glm::mat4 view = camMgr.getCurrentCamera()->getView();
@@ -256,8 +359,10 @@ int main()
 			0.1f, 
 			RENDER_DISTANCE
 		);
+#pragma endregion
 
-		// ------ ** mouse picking ** ------
+		// ------ ** mouse ray picking ** ------
+#pragma region MOUSE_RAY_PICKING
 		const SphericalBoxedGameObject* result = WorldMathUtils::findClosestIntersection(
 			{ &thumper, &thumper2 }, 
 			cameraPos, 
@@ -266,84 +371,392 @@ int main()
 
 		if (result != nullptr)
 		{
-			std::cout << "now pointing at: " << (result == &thumper ? "thumper 1" : "tumper2") << "\n";
+			//std::cout << "now pointing at: " << (result == &thumper ? "thumper 1" : "tumper 2") << "\n";
 		}
+#pragma endregion
 
-		// ======== RENDERING ========
+#pragma region RENDERING
 
-		// ------ ** clear previous image ** ------
-		glClearColor(0.45f, 0.49f, 0.61f, 1.0f);
+		// **** RENDER *TO* FRAME BUFFER1 *****
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer1);
+		glEnable(GL_DEPTH_TEST);
+		glClearColor(Colors::BLACK.r, Colors::BLACK.g, Colors::BLACK.b, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-		// ------ ** skybox ** ------
-		skybox.render(view, projection);
-
-		// ------ ** terrain ** ------
-		sandTerrain.render(view, projection, cameraPos);
-
-		// ------ ** light cube ** ------
-		lightCubeShader.use();
-		lightCubeShader.setMat4("projection", projection);
-		lightCubeShader.setMat4("view", view);
-		sun.draw();
-
-		// ------ ** models ** ------
-		genericShader.use();
-		genericShader.setMat4("projection", projection);
-		genericShader.setMat4("view", view);
-		genericShader.setVec3("viewPos", cameraPos);
-
-		//backpack
-		// genericShader.setMat4("model", backpackModel);
-		// genericShader.setMat4("normalMatrix", backpackNormalMatrix);
-		// backpack.draw(genericShader);
-
-		// ornithopter
-		float orniZDisplacement = sin(-glfwGetTime() / 3.0f) * 1500.f;
-		float orniYDisplacement = (cos(glfwGetTime()) - 1) * 25.0f;
-		float orniXDisplacement = sin(glfwGetTime()) * -10.f;
-		glm::mat4 orniModel = glm::mat4(1.0f);
-		orniModel = glm::translate(orniModel, glm::vec3(orniXDisplacement, 400.0f + orniYDisplacement, orniZDisplacement));
-		orniModel = glm::rotate(orniModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		orniModel = glm::scale(orniModel, glm::vec3(2.0f));
-		ornithopter.setModelTransform(orniModel);
-		ornithopter.draw(genericShader);
-
-		// thumper
-		thumper.draw(genericShader);
-		thumper2.draw(genericShader);
-
-		// nomad
-		nomad.draw(genericShader);
-
-		// sand worm
-		sandWorm.draw(genericShader);
+		// trying to create an outline following https://bgolus.medium.com/the-quest-for-very-wide-outlines-ba82ed442cd9
+		// https://www.youtube.com/watch?v=nKJgUsAU2d0
+		// I chose to not follow this one: https://learnopengl.com/Advanced-OpenGL/Stencil-testing
+		// because I want a fixed-width outline like you can make in photoshop (same thing the author of that blog post wants)
+		// I also chose not to do anything using a vertex shader with displacement along the normal based on distance because
+		// I read in the same blog post that it is not a generic enough solution, and that that solution breaks with certain models
+		// The final rendering solution is going to be based on https://cdn.cloudflare.steamstatic.com/apps/valve/2007/SIGGRAPH2007_AlphaTestedMagnification.pdf
+		// I suppose, which was linked in https://learnopengl.com/In-Practice/Text-Rendering too, which would look like this:
+		// https://www.youtube.com/watch?v=1b5hIMqz_wM
+		//
+		// this "Jump Flood Algorithm" also seemed pretty interesting with it's O(log n) time complexity
+		// https://en.wikipedia.org/wiki/Jump_flooding_algorithm
+		// I also looked up what "compute shaders" were here
 
 
-		// ------ ** text overlay ** ------
-		font.renderText(
-			std::format("X:{:.2f} Y:{:.2f}, Z:{:.2f}", cameraPos.x, cameraPos.y, cameraPos.z),
-			25.0f,
-			currentHeight - 25.0f,
-			0.5f,
-			Colors::WHITE
-		);
+		// 1. generate a photoshop like "mask" for the object we want to create
+		maskingShader.use();
+		maskingShader.setMat4("projection", projection);
+		maskingShader.setMat4("view", view);
 
-		// actually going to do a trick to get a center-of-the-screen "." indicator like in this game: https://youtu.be/6QZAhsxwNU0?si=J7eN6p2nRvc4Z_tW
-		// mostly because I think it is useful/helpful for object-picking purposes
-		font.renderText(".", currentWidth / 2.0f, currentHeight / 2.0f, 0.5f, Colors::WHITE);
+		thumper.setShowBoundingSphere(false);
+		thumper.draw(maskingShader);
+		thumper.setShowBoundingSphere(true);
+		glCheckError();
 
-		// check and call events and swap the buffers
+
+
+
+		// **** RENDER *TO* 2D QUAD ON REGULAR SCREEN *****
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer2);
+		glDisable(GL_DEPTH_TEST);
+		glClearColor(Colors::BLACK.r, Colors::BLACK.g, Colors::BLACK.b, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		
+		orthogonalUV2DShader.use();
+		//orthogonalUV2DShader.setInt("mask", 0);
+
+		glBindVertexArray(quadVAO);
+		glBindTexture(GL_TEXTURE_2D, textureColorbuffer1);
+		glDrawArrays(GL_TRIANGLES, 0, 6);  
+		glBindVertexArray(0);
+
+		glCheckError();
+
+
+		// TODO: check this out because our solution is bad
+
+
+		// **** RENDER LOOP TO CREATE OUTLINE EFFECT (ALTERNATE BETWEEN OFF-SCREEN RENDER FBO'S) ****
+		// https://www.youtube.com/watch?v=nKJgUsAU2d0
+		jfaAlgorithmShader.use();
+		
+		glCheckError();
+
+		unsigned int currentFrameBuffer = framebuffer1;
+		unsigned int currentTexture = textureColorbuffer1;
+		unsigned int lastFrameBuffer = framebuffer2;
+		unsigned int lastTexture = textureColorbuffer2;
+
+		// JFA algo to create "outline" effect
+		// main reference here: https://computergraphics.stackexchange.com/questions/2102/is-jump-flood-algorithm-separable
+		const int nrOfJFAPasses = showResult == 3 || showResult == 1 ? passes : (int) ceil( log2(std::max(currentWidth, currentHeight)));
+		//glBindVertexArray(quadVAO);
+		for (int i = 1; i <= nrOfJFAPasses; ++i)
+		{
+			const float stepSize = 1 / pow(2, i); // for jfa_algo.frag
+			//const float stepSize = 1 / pow(2, (nrOfJFAPasses - i + 1));
+			jfaAlgorithmShader.setFloat("stepSize", stepSize);
+
+			glBindFramebuffer(GL_FRAMEBUFFER, currentFrameBuffer); // bind to the next buffer/texture
+			glDisable(GL_DEPTH_TEST);
+			glClearColor(Colors::BLACK.r, Colors::BLACK.g, Colors::BLACK.b, 1.0f); // clear out buffer
+			glClear(GL_COLOR_BUFFER_BIT);
+			glCheckError();
+
+			// draw
+			glBindVertexArray(quadVAO);
+			glBindTexture(GL_TEXTURE_2D, lastTexture); // bind to the texture that was written to in the last run
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			glCheckError();
+
+			// switch them back up
+			unsigned int tmpBuff = currentFrameBuffer;
+			currentFrameBuffer = lastFrameBuffer;
+			lastFrameBuffer = tmpBuff;
+
+			unsigned int tmpTex = currentTexture;
+			currentTexture = lastTexture;
+			lastTexture = tmpTex;
+		}
+		//glBindVertexArray(0); // unbind
+		glCheckError();
+
+
+		// *** perform the final conversion to a distance field after the above loops  ***
+
+		glBindFramebuffer(GL_FRAMEBUFFER, currentFrameBuffer); // back to default (output to screen)
+		glDisable(GL_DEPTH_TEST);
+		glClearColor(Colors::BLACK.r, Colors::BLACK.g, Colors::BLACK.b, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		glCheckError();
+
+		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+		{
+			outlineSize += 0.001f;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+		{
+			outlineSize -= 0.001f;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+		{
+			showResult = 1;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
+		{
+			showResult = 2;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS)
+		{
+			showResult = 3;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS)
+		{
+			passes = 0;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_9) == GLFW_PRESS)
+		{
+			passes = 1;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_8) == GLFW_PRESS)
+		{
+			passes = 2;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_7) == GLFW_PRESS)
+		{
+			passes = 3;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_6) == GLFW_PRESS)
+		{
+			passes = 4;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_5) == GLFW_PRESS)
+		{
+			passes = 5;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
+		{
+			passes = 6;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_4) == GLFW_PRESS)
+		{
+			passes = 6;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
+		{
+			passes = 7;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
+		{
+			passes = 8;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+		{
+			passes = 9;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS)
+		{
+			passes = 10;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS)
+		{
+			passes = 11;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_N) == GLFW_PRESS)
+		{
+			passes = 12;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS)
+		{
+			passes = 13;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
+		{
+			passes = 14;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
+		{
+			passes = 15;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
+		{
+			passes = 16;
+		}
+		else if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS)
+		{
+			passes = 17;
+		}
+
+		if (showResult == 2 || showResult == 3)
+		{
+			justRenderThe2DTextureShader.use();
+		}
+		else if (showResult == 1)
+		{
+			distanceFieldConvertor.use();
+			distanceFieldConvertor.setFloat("outlinePlacementOffset", outlineSize);
+		}
+
+
+		glBindVertexArray(quadVAO);
+		glBindTexture(GL_TEXTURE_2D, lastTexture);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		//glBindVertexArray(0); // unbind
+		glCheckError();
+
+
+
+		// *** draw it out  to the actual screen ***
+
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default (output to screen)
+		glDisable(GL_DEPTH_TEST);
+		glClearColor(Colors::BLACK.r, Colors::BLACK.g, Colors::BLACK.b, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		glCheckError();
+
+		justRenderThe2DTextureShader.use();
+
+
+		glBindVertexArray(quadVAO);
+		glBindTexture(GL_TEXTURE_2D, currentTexture);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+		glBindVertexArray(0); // unbind
+		glCheckError();
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
+
+
+
+
+
+		// **** RENDER *TO* 2D QUAD ON REGULAR SCREEN *****
+		// glBindFramebuffer(GL_FRAMEBUFFER, 0); // back to default
+		// glDisable(GL_DEPTH_TEST);
+		// glClearColor(Colors::BLACK.r, Colors::BLACK.g, Colors::BLACK.b, 1.0f);
+		// glClear(GL_COLOR_BUFFER_BIT);
+		//
+		// orthogonalUV2DShader.use();
+		// orthogonalUV2DShader.setInt("mask", 0);
+		//
+		//
+		// glBindVertexArray(quadVAO);
+		// glBindTexture(GL_TEXTURE_2D, textureColorbuffer1);
+		// glDrawArrays(GL_TRIANGLES, 0, 6);  
+		// glBindVertexArray(0);
+
+
+
+
+
+
+
+
+		// ------ ** clear previous image ** ------
+		// glClearColor(Colors::CUSTOM_BLUE.r, Colors::CUSTOM_BLUE.g, Colors::CUSTOM_BLUE.b, 1.0f);
+		// glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		//
+		// // ------ ** skybox ** ------
+		// skybox.render(view, projection);
+		//
+		// // ------ ** terrain ** ------
+		// sandTerrain.render(view, projection, cameraPos);
+		//
+		// // ------ ** light cube ** ------
+		// lightCubeShader.use();
+		// lightCubeShader.setMat4("projection", projection);
+		// lightCubeShader.setMat4("view", view);
+		// sun.draw();
+		//
+		// // ------ ** models ** ------
+		// genericShader.use();
+		// genericShader.setMat4("projection", projection);
+		// genericShader.setMat4("view", view);
+		// genericShader.setVec3("viewPos", cameraPos);
+		//
+		// //backpack
+		// // genericShader.setMat4("model", backpackModel);
+		// // genericShader.setMat4("normalMatrix", backpackNormalMatrix);
+		// // backpack.draw(genericShader);
+		//
+		// // ornithopter
+		// float orniZDisplacement = sin(-glfwGetTime() / 3.0f) * 1500.f;
+		// float orniYDisplacement = (cos(glfwGetTime()) - 1) * 25.0f;
+		// float orniXDisplacement = sin(glfwGetTime()) * -10.f;
+		// glm::mat4 orniModel = glm::mat4(1.0f);
+		// orniModel = glm::translate(orniModel, glm::vec3(orniXDisplacement, 400.0f + orniYDisplacement, orniZDisplacement));
+		// orniModel = glm::rotate(orniModel, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		// orniModel = glm::scale(orniModel, glm::vec3(2.0f));
+		// ornithopter.setModelTransform(orniModel);
+		// ornithopter.draw(genericShader);
+		//
+		// // thumper
+		// thumper.draw(genericShader);
+		// thumper2.draw(genericShader);
+		//
+		// // nomad
+		// nomad.draw(genericShader);
+		//
+		// // sand worm
+		// sandWorm.draw(genericShader);
+		//
+		//
+		// // ------ ** text overlay ** ------
+		// fontShader.setMat4("projection", textProjection);
+		// font.renderText(
+		// 	std::format("X:{:.2f} Y:{:.2f}, Z:{:.2f}", cameraPos.x, cameraPos.y, cameraPos.z),
+		// 	25.0f,
+		// 	currentHeight - 25.0f,
+		// 	0.5f,
+		// 	Colors::WHITE
+		// );
+		//
+		// // actually going to do a trick to get a center-of-the-screen "." indicator like in this game: https://youtu.be/6QZAhsxwNU0?si=J7eN6p2nRvc4Z_tW
+		// // mostly because I think it is useful/helpful for object-picking purposes
+		// font.renderText(".", currentWidth / 2.0f, currentHeight / 2.0f, 0.5f, Colors::WHITE);
+
+#pragma endregion
+		//
+		// // check and call events and swap the buffers
+		// glfwSwapBuffers(window);
+		// glfwPollEvents();
 	}
 
-# pragma endregion
+	glDeleteFramebuffers(1, &framebuffer1);
 
 # pragma region CLEANUP
 	glfwTerminate();
 #pragma endregion
 
 	return 0;
+}
+
+void framebufferSizeCallback(GLFWwindow* window, int width, int height)
+{
+	glViewport(0, 0, width, height);
+	currentWidth = width;
+	currentHeight = height;
+}
+
+void mouseCallback(GLFWwindow* window, double xpos, double ypos)
+{
+	camMgr.mouseCallback(window, xpos, ypos);
+}
+
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
+{
+	camMgr.scrollCallback(window, xoffset, yoffset);
+}
+
+void processInput(GLFWwindow* window)
+{
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+
+	if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS) // for "observer"
+		camMgr.switchToNoClip();
+
+	if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) // for "player"
+		camMgr.switchToPlayer();
+}
+
+void processKey(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	camMgr.processKey(window, key, scancode, action, mods);
 }

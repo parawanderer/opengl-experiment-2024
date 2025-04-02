@@ -180,6 +180,30 @@
     <None Include="shader_lightsource.vert">
       <Filter>Source Files\world\sun</Filter>
     </None>
+    <None Include="masking.frag">
+      <Filter>Source Files\gameobject\models</Filter>
+    </None>
+    <None Include="jfa_init.frag">
+      <Filter>Source Files\gameobject\models</Filter>
+    </None>
+    <None Include="jfa.vert">
+      <Filter>Source Files\gameobject\models</Filter>
+    </None>
+    <None Include="masking.vert">
+      <Filter>Source Files\gameobject\models</Filter>
+    </None>
+    <None Include="jfa_algo.frag">
+      <Filter>Source Files\gameobject\models</Filter>
+    </None>
+    <None Include="justrenderthe2dtex.vert">
+      <Filter>Source Files\gameobject\models</Filter>
+    </None>
+    <None Include="justrenderthe2dtex.frag">
+      <Filter>Source Files\gameobject\models</Filter>
+    </None>
+    <None Include="distancefield.frag">
+      <Filter>Source Files\gameobject\models</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Shader.h">
@@ -247,6 +271,9 @@
     </ClInclude>
     <ClInclude Include="Sun.h">
       <Filter>Header Files\world</Filter>
+    </ClInclude>
+    <ClInclude Include="jfa_algo_old.frag">
+      <Filter>Source Files\gameobject\models</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
