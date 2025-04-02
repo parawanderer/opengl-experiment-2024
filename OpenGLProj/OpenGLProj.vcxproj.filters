@@ -64,6 +64,9 @@
     <Filter Include="Source Files\gameobject\primitives">
       <UniqueIdentifier>{247f3bdd-06de-4285-9dc8-f11deaaa3405}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\world\sun">
+      <UniqueIdentifier>{776261a4-4faf-4fe5-9991-14a96e853a6d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\glad\src\glad.c">
@@ -123,6 +126,9 @@
     <ClCompile Include="Sphere.cpp">
       <Filter>Source Files\gameobject\primitives</Filter>
     </ClCompile>
+    <ClCompile Include="Sun.cpp">
+      <Filter>Source Files\world\sun</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -131,12 +137,6 @@
     </None>
     <None Include="font.vert">
       <Filter>Source Files\font</Filter>
-    </None>
-    <None Include="shader_lightsource.vert">
-      <Filter>Source Files\old</Filter>
-    </None>
-    <None Include="shader_lightsource.frag">
-      <Filter>Source Files\old</Filter>
     </None>
     <None Include="shader2.vert">
       <Filter>Source Files\old</Filter>
@@ -173,6 +173,12 @@
     </None>
     <None Include="mesh.frag">
       <Filter>Source Files\gameobject\models</Filter>
+    </None>
+    <None Include="shader_lightsource.frag">
+      <Filter>Source Files\world\sun</Filter>
+    </None>
+    <None Include="shader_lightsource.vert">
+      <Filter>Source Files\world\sun</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -238,6 +244,9 @@
     </ClInclude>
     <ClInclude Include="WorldMathUtils.h">
       <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="Sun.h">
+      <Filter>Header Files\world</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

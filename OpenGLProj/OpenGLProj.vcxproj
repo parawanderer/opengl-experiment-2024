@@ -152,6 +152,7 @@
     <ClCompile Include="ResourceUtils.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Skybox.cpp" />
+    <ClCompile Include="Sun.cpp" />
     <ClCompile Include="Terrain.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -192,6 +193,7 @@
     <ClInclude Include="shader_m.h" />
     <ClInclude Include="Skybox.h" />
     <ClInclude Include="stb_image.h" />
+    <ClInclude Include="Sun.h" />
     <ClInclude Include="Terrain.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="WorldMathUtils.h" />

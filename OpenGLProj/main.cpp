@@ -24,6 +24,7 @@
 #include "RenderableGameObject.h"
 #include "Skybox.h"
 #include "SphericalBoxedGameObject.h"
+#include "Sun.h"
 #include "WorldMathUtils.h"
 
 #define INITIAL_WIDTH 1280
@@ -129,9 +130,10 @@ int main()
 
 # pragma endregion
 
+#pragma region GAME_MODELS
 	Shader genericShader = Shader::fromFiles("mesh.vert", "mesh.frag");
 	genericShader.use();
-	genericShader.setVec3("light.position", sunPos); // glm::vec3(-19, 160, 19)
+	genericShader.setVec3("light.position", sunPos);
 	genericShader.setVec3("light.ambient", sunLightColor * 0.3f);
 	genericShader.setVec3("light.diffuse", sunLightColor * 1.0f);
 	genericShader.setVec3("light.specular", sunLightColor * 0.1f);
@@ -146,24 +148,16 @@ int main()
 	RenderableGameObject ornithopter("resources/models/dune-ornithopter/ornithopter_edit.dae");
 
 
-	Model thumperModel("resources/models/thumper_dune/thumper_dune.dae");
-	SphericalBoxedGameObject thumper(&thumperModel, 1.0f);
-	SphericalBoxedGameObject thumper2(&thumperModel, 1.0f);
+	Model thumperModel("resources/models/thumper_dune/thumper_dune.dae"); // reuse the model
+	SphericalBoxedGameObject thumper(&thumperModel, 0.4f);
+	SphericalBoxedGameObject thumper2(&thumperModel, 0.4f);
 	thumper.setShowBoundingSphere(true);
 	thumper2.setShowBoundingSphere(true);
-	//Model thumper("resources/models/thumper_dune/thumper_dune.dae");
-	//glm::mat4 thumperModel = glm::mat4(1.0f);
-
 
 	RenderableGameObject nomad("resources/models/rust-nomad/RustNomad.fbx");
 
-	// Model drone("resources/models/scifi-drone-11/drone.fbx");
-	// glm::mat4 droneModel = glm::mat4(1.0f);
-
-	// Model sandRocks("resources/models/sand-rock-pack-08/Mesher2.dae");
-	// glm::mat4 sandRocksModel = glm::mat4(1.0f);
-
 	RenderableGameObject sandWorm("resources/models/dune-sandworm/sandworm_edit.dae");
+#pragma endregion
 
 #pragma region TEXT
 	Shader fontShader = Shader::fromFiles("font.vert", "font.frag");
@@ -187,66 +181,12 @@ int main()
 #pragma endregion
 
 #pragma region SUN
+	// this is currently a cube which is not necessarily ideal
 	Shader lightCubeShader = Shader::fromFiles("shader_lightsource.vert", "shader_lightsource.frag");
 	glm::mat4 lightCubeModel = glm::mat4(1.0f);
 	lightCubeModel = glm::translate(lightCubeModel, sunPos);
 	lightCubeModel = glm::scale(lightCubeModel, glm::vec3(10.0f));
-	lightCubeShader.use();
-	lightCubeShader.setMat4("model", lightCubeModel);
-	lightCubeShader.setVec3("lightColor", sunLightColor);
-	float lightCubeVerts[] = {
-		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-		 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-		 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-
-		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-		 0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f,  0.0f, 1.0f,
-
-		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-		-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-		-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-		-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-		-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-
-		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-		 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-		 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-		 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-		 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-
-		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-		 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-		 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-		-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-		-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-
-		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-		 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-		 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-		-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-		-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
-	};
-	unsigned int VBO;
-	unsigned int lightCubeVAO;
-	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(lightCubeVerts), lightCubeVerts, GL_STATIC_DRAW);
-	glGenVertexArrays(1, &lightCubeVAO);
-	glBindVertexArray(lightCubeVAO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
-
+	Sun sun(&lightCubeShader, lightCubeModel, sunLightColor);
 #pragma endregion
 
 #pragma region TERRAIN
@@ -298,33 +238,30 @@ int main()
 	camMgr.beforeLoop();
 	while(!glfwWindowShouldClose(window))
 	{
-		// ** view/projection transformations **
 		camMgr.onNewFrame();
 
-		// ** input **
+		// ------ ** input ** ------
 		processInput(window);
 		camMgr.processInput(window);
 
+		// ------ ** model/view/projection matrices ** ------
 		const glm::vec3 cameraPos = camMgr.getPos();
+		const glm::vec3 cameraFront = camMgr.getCurrentCamera()->getFront(); // direction
 		const glm::mat4 view = camMgr.getCurrentCamera()->getView();
 		const float fov = camMgr.getCurrentCamera()->getFov();
 
-		// ** rendering **
-		glClearColor(0.45f, 0.49f, 0.61f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
 		const glm::mat4 projection = glm::perspective(
 			glm::radians(fov),
-			(float)INITIAL_WIDTH / (float)INITIAL_HEIGHT, 
+			(float)currentWidth / (float)currentHeight, 
 			0.1f, 
 			RENDER_DISTANCE
 		);
 
-		// ** mouse picking **
+		// ------ ** mouse picking ** ------
 		const SphericalBoxedGameObject* result = WorldMathUtils::findClosestIntersection(
 			{ &thumper, &thumper2 }, 
 			cameraPos, 
-			camMgr.getCurrentCamera()->getFront()
+			cameraFront
 		);
 
 		if (result != nullptr)
@@ -332,24 +269,26 @@ int main()
 			std::cout << "now pointing at: " << (result == &thumper ? "thumper 1" : "tumper2") << "\n";
 		}
 
-
 		// ======== RENDERING ========
 
-		// ** skybox **
+		// ------ ** clear previous image ** ------
+		glClearColor(0.45f, 0.49f, 0.61f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+		// ------ ** skybox ** ------
 		skybox.render(view, projection);
 
-		// ** terrain **
+		// ------ ** terrain ** ------
 		sandTerrain.render(view, projection, cameraPos);
 
-		// ** light cube **
+		// ------ ** light cube ** ------
 		lightCubeShader.use();
 		lightCubeShader.setMat4("projection", projection);
 		lightCubeShader.setMat4("view", view);
-		glBindVertexArray(lightCubeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
+		sun.draw();
 
-		// ** model loading **
-
+		// ------ ** models ** ------
 		genericShader.use();
 		genericShader.setMat4("projection", projection);
 		genericShader.setMat4("view", view);
@@ -378,28 +317,22 @@ int main()
 		// nomad
 		nomad.draw(genericShader);
 
-		// drone
-		// genericShader.setMat4("model", droneModel);
-		// drone.draw(genericShader);
-
-		// sand rocks
-		// genericShader.setMat4("model", sandRocksModel);
-		// genericShader.setMat3("normalMatrix", sandRocksNormalMatrix);
-		// sandRocks.draw(genericShader);
-
 		// sand worm
 		sandWorm.draw(genericShader);
 
 
-
-		// ** text overlay **
+		// ------ ** text overlay ** ------
 		font.renderText(
 			std::format("X:{:.2f} Y:{:.2f}, Z:{:.2f}", cameraPos.x, cameraPos.y, cameraPos.z),
 			25.0f,
-			INITIAL_HEIGHT - 25.0f,
+			currentHeight - 25.0f,
 			0.5f,
 			Colors::WHITE
 		);
+
+		// actually going to do a trick to get a center-of-the-screen "." indicator like in this game: https://youtu.be/6QZAhsxwNU0?si=J7eN6p2nRvc4Z_tW
+		// mostly because I think it is useful/helpful for object-picking purposes
+		font.renderText(".", currentWidth / 2.0f, currentHeight / 2.0f, 0.5f, Colors::WHITE);
 
 		// check and call events and swap the buffers
 		glfwSwapBuffers(window);

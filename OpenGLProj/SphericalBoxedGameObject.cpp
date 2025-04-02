@@ -44,7 +44,9 @@ void SphericalBoxedGameObject::draw(Shader& shader)
 	if (this->_showBoundingSphere)
 	{
 		// keep using the same transform matrices as we used above ^
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		this->_sphere.draw(shader);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 }
 
