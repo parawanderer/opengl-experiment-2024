@@ -1,5 +1,6 @@
 #include "AnimatedEntity.h"
 
+
 void AnimatedEntity::setupEntityShaderForAnim(Shader& shader, const std::vector<glm::mat4>& transforms)
 {
 	shader.setBool("doAnimate", true);

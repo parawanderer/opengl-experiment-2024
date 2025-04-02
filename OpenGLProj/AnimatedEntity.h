@@ -1,16 +1,14 @@
 ﻿#ifndef ANIMATEDENTITY_MINE_H
 #define ANIMATEDENTITY_MINE_H
 #include "Animator.h"
+#include "FrameRequester.h"
 
 /**
  * \brief An entity that defines per-frame animation
  */
-class AnimatedEntity
+class AnimatedEntity : public FrameRequester
 {
 public:
-	virtual ~AnimatedEntity() = default;
-	virtual void onNewFrame() = 0;
-
 	virtual void draw(Shader& shader) = 0;
 
 protected:

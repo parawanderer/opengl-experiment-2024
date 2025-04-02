@@ -210,6 +210,7 @@
     <ClInclude Include="EffectConstants.h" />
     <ClInclude Include="FileConstants.h" />
     <ClInclude Include="CarriedGameObject.h" />
+    <ClInclude Include="FrameRequester.h" />
     <ClInclude Include="GameObjectConstants.h" />
     <ClInclude Include="jfa_algo_old.frag" />
     <ClInclude Include="DistanceFieldPostProcessor.h" />

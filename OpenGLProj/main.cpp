@@ -307,10 +307,11 @@ int main()
 	Thumper thumper2(&timeMgr, &thumperObj2, &thumperAnimations);
 	thumper2.setModelTransform(thumper2Model);
 
+	// a bunch of classes that require their onNewFrame() function to be called:
+	const std::vector<FrameRequester*> frameRequesters = { &nomadCharacter, &sandWormCharacter, &thumper1, &thumper2, &ornithopterCharacter, &particles1, &particles2 };
 
 	std::set<Thumper*> worldItemsThatPlayerCanPickUp = { &thumper1, &thumper2 };
 	std::vector<RenderableGameObject*> staticGameObjects = { &containerSObject1, &containerSObject2, &containerLObject1, &containerLObject2, &containerLObject3 };
-	std::vector<AnimatedEntity*> animatedEntitiesWithFrames = { &nomadCharacter, &sandWormCharacter, &thumper1, &thumper2, &ornithopterCharacter };
 	std::vector<AnimatedEntity*> independentAnimatedEntities = { &nomadCharacter, &sandWormCharacter, &ornithopterCharacter };
 
 
@@ -334,8 +335,7 @@ int main()
 		timeMgr.onNewFrame();
 		camMgr.processInput(window);
 
-		for (auto animatedEntity : animatedEntitiesWithFrames) animatedEntity->onNewFrame();
-		for (auto particle : particles) particle->onNewFrame();
+		for (auto frameRequestor: frameRequesters) frameRequestor->onNewFrame();
 
 #pragma region PROJECTING
 		const glm::vec3 cameraPos = camMgr.getPos();

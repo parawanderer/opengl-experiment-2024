@@ -3,6 +3,7 @@
 #include <vector>
 #include <glm/vec3.hpp>
 
+#include "FrameRequester.h"
 #include "Particle.h"
 #include "Quad.h"
 #include "Shader.h"
@@ -11,7 +12,7 @@
 /**
  * \brief Particles implementation based on https://learnopengl.com/In-Practice/2D-Game/Particles
  */
-class ParticleSystem
+class ParticleSystem : public FrameRequester
 {
 public:
 	virtual ~ParticleSystem() = default;
@@ -26,7 +27,7 @@ public:
 		const glm::vec2& particleSize
 	);
 
-	virtual void onNewFrame();
+	virtual void onNewFrame() override;
 
 	virtual void draw(Shader& particleShader, const glm::mat4& view, const glm::vec3& cameraPos);
 

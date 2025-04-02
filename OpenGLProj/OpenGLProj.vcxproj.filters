@@ -85,6 +85,9 @@
     <Filter Include="Source Files\gameobject\particles">
       <UniqueIdentifier>{5b0ba139-a346-44bc-bbcd-6e5ab1dbd0c9}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\contracts">
+      <UniqueIdentifier>{cb0ea58f-2005-4fce-853d-2c8d072f81a6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\glad\src\glad.c">
@@ -406,6 +409,9 @@
     </ClInclude>
     <ClInclude Include="PlayerInteractionManger.h">
       <Filter>Header Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="FrameRequester.h">
+      <Filter>Header Files\contracts</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
